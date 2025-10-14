@@ -16,10 +16,10 @@ public class User {
     @Column(nullable = false, length = 50)
     private String name;
 
-    @Column(name = "student_number", unique = true, nullable = false)
+    @Column(name = "student_number", unique = true)
     private String studentNumber;
 
-    @Column(nullable = false, name = "phone_number")
+    @Column(nullable = false, name = "phone_number", unique = true)
     private String phoneNumber;
 
     @Column(nullable = false)
