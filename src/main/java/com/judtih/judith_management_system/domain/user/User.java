@@ -31,6 +31,7 @@ public class User {
 
     @Column(nullable = false, name = "phone_number", unique = true)
     private String phoneNumber;
+    
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
