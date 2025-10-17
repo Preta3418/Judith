@@ -1,6 +1,5 @@
 package com.judtih.judith_management_system.domain.user;
 
-import com.judtih.judith_management_system.domain.graduate.Graduate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,8 +44,18 @@ public class UserController {
     }
 
     @PostMapping("/{id}/graduate")
-    public Graduate graduateUser(@PathVariable Long id) {
+    public User graduateUser(@PathVariable Long id) {
         return userService.graduateUser(id);
+    }
+
+    @GetMapping("/active")
+    public List<User> getActiveUsers() {
+        return userService.getActiveUsers();
+    }
+
+    @GetMapping("/graduated")
+    public List<User> getGraduatedUsers() {
+        return userService.getGraduatedUsers();
     }
 
 

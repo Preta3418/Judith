@@ -1,11 +1,16 @@
 package com.judtih.judith_management_system.domain.user;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 
 @Entity
+@Getter
+@Setter
 @Table(name = "users")
 public class User {
 
@@ -29,9 +34,9 @@ public class User {
     @Column(name = "student_number", unique = true)
     private String studentNumber;
 
-    @Column(nullable = false, name = "phone_number", unique = true)
+    @Column(name = "phone_number", unique = true)
     private String phoneNumber;
-    
+
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -40,57 +45,18 @@ public class User {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserStatus status = UserStatus.ACTIVE;
+
+    @Column(name = "graduated_at")
+    private LocalDateTime graduatedAt;
+
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getStudentNumber() {
-        return studentNumber;
-    }
-
-    public void setStudentNumber(String studentNumber) {
-        this.studentNumber = studentNumber;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
-    public UserRole getRole() {
-        return role;
-    }
-
-    public void setRole(UserRole role) {
-        this.role = role;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
 }
+
+
