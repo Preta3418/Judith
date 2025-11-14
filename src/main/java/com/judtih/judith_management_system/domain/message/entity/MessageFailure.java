@@ -1,6 +1,7 @@
 package com.judtih.judith_management_system.domain.message.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -14,10 +15,6 @@ public class MessageFailure {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name="message_id", nullable = false)
-    private Message message;
-
     @Column
     private Long userId;
 
@@ -29,4 +26,8 @@ public class MessageFailure {
 
     @Column
     private String errorMessage;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="message_id", nullable = false)
+    private Message message;
 }

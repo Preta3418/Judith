@@ -22,9 +22,6 @@ public class Message {
     @Column
     private String messageContent;
 
-    @OneToMany(mappedBy = "message", cascade = CascadeType.ALL)
-    private List<MessageFailure> failures = new ArrayList<>();
-
     @Column
     private int totalSent;
 
@@ -33,6 +30,10 @@ public class Message {
 
     @Column
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "message", cascade = CascadeType.ALL)
+    private List<MessageFailure> failures = new ArrayList<>();
+
 
     @PrePersist
     protected void onCreate() {
