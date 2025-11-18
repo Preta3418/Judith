@@ -1,15 +1,13 @@
 package com.judtih.judith_management_system.domain.message.entity;
 
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 @Getter
-@Setter
+@Builder
 public class MessageFailure {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
