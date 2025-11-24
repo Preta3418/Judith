@@ -5,8 +5,10 @@ import com.judtih.judith_management_system.domain.message.entity.Message;
 import com.judtih.judith_management_system.domain.message.entity.MessageFailure;
 import com.judtih.judith_management_system.domain.user.User;
 import com.judtih.judith_management_system.domain.user.UserService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.services.sns.SnsClient;
 import software.amazon.awssdk.services.sns.model.PublishRequest;
 import software.amazon.awssdk.services.sns.model.PublishResponse;
@@ -14,6 +16,7 @@ import software.amazon.awssdk.services.sns.model.SnsException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -84,6 +87,12 @@ public class MessageService {
                 .failures(failureList)
                 .build();
     }
+
+    @Transactional(readOnly = true)
+    public Optional<Message> getMessageDetail(long id) {
+        return messageRepository.findByIdWithFailures(id);
+    }
+
 
 
 
