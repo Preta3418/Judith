@@ -2,6 +2,7 @@ package com.judtih.judith_management_system.domain.message.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
@@ -10,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@RequiredArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
 public class Message {
