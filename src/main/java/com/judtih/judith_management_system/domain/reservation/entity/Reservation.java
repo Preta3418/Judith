@@ -1,7 +1,5 @@
 package com.judtih.judith_management_system.domain.reservation.entity;
 
-import com.judtih.judith_management_system.domain.reservation.EventStatus;
-import com.judtih.judith_management_system.domain.reservation.ReservationStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,10 +30,6 @@ public class Reservation {
 
     @Column(nullable = false)
     private Integer ticketCount;
-
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    ReservationStatus status = ReservationStatus.CONFIRMED;
 
     private LocalDateTime reservedAt;
 
