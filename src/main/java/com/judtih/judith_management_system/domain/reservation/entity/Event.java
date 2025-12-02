@@ -1,6 +1,5 @@
 package com.judtih.judith_management_system.domain.reservation.entity;
 
-import com.judtih.judith_management_system.domain.reservation.EventStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

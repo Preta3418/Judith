@@ -1,6 +1,6 @@
 package com.judtih.judith_management_system.domain.reservation.repository;
 
-import com.judtih.judith_management_system.domain.reservation.EventStatus;
+import com.judtih.judith_management_system.domain.reservation.entity.EventStatus;
 import com.judtih.judith_management_system.domain.reservation.entity.Event;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
