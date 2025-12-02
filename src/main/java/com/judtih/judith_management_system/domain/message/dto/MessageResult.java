@@ -15,8 +15,8 @@ import java.util.List;
 @AllArgsConstructor
 //back end to front end
 public class MessageResult {
-    int totalAttempted;
-    int successCount;
-    int failureCount;
-    List<MessageFailure> failures;
+    private int totalAttempted;
+    private int successCount;
+    private int failureCount;
+    private List<MessageFailure> failures;
 }

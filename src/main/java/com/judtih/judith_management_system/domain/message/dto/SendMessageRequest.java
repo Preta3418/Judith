@@ -11,5 +11,5 @@ import lombok.Setter;
 public class SendMessageRequest {
     @NotBlank
     @Size(max = 500)
-    String messageContent;
+    private String messageContent;
 }
