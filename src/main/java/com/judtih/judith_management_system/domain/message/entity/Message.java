@@ -1,11 +1,9 @@
 package com.judtih.judith_management_system.domain.message.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,8 +11,12 @@ import java.util.List;
 @Entity
 @NoArgsConstructor
 @Getter
-@Setter
 public class Message {
+
+    @Builder
+    public Message(String messageContent) {
+        this.messageContent = messageContent;
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,6 +41,13 @@ public class Message {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+    }
+
+    public void updateMessage (String messageContent, Integer totalSent, Integer failedAttempt, List<MessageFailure> failures) {
+        if (messageContent != null) this.messageContent = messageContent ;
+        if (totalSent != null) this.totalSent = totalSent;
+        if (failedAttempt != null) this.failedAttempt = failedAttempt;
+        if (failures != null) this.failures = failures;
     }
 
 }

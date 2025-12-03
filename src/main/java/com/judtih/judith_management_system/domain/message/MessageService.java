@@ -36,8 +36,7 @@ public class MessageService {
         List<User> gradUser = userService.getGraduatedUsers();
         List<MessageFailure> failureList = new ArrayList<>();
 
-        Message message = new Message();
-        message.setMessageContent(messageContent);
+        Message message = Message.builder().messageContent(messageContent).build();
 
         for (User user : gradUser) {
             try {
@@ -51,7 +50,7 @@ public class MessageService {
 
                 PublishResponse result = snsClient.publish(request);
 
-                System.out.println(result); // i have no idea what this is but i want to see.
+                System.out.println(result);
 
                 successCount++;
 
@@ -73,10 +72,7 @@ public class MessageService {
             }
         }
 
-        message.setTotalSent(successCount + failureCount);
-        message.setFailedAttempt(failureCount);
-
-        message.setFailures(failureList);
+        message.updateMessage(null, successCount + failureCount, failureCount, failureList);
 
         messageRepository.save(message);
 
