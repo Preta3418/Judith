@@ -1,6 +1,7 @@
 package com.judtih.judith_management_system.domain.reservation.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -12,7 +13,19 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class Event {
 
-    @Id
+    @Builder
+    public Event(String title, String description, LocalDateTime eventDate, String location, Integer
+            capacityLimit, LocalDateTime registrationDeadline, EventStatus status, String posterImageUrl) {
+        this.title = title;
+        this.description = description;
+        this.eventDate = eventDate;
+        this.location = location;
+        this.capacityLimit = capacityLimit;
+        this.registrationDeadline = registrationDeadline;
+        this.status = status;
+        this.posterImageUrl = posterImageUrl;
+    }
+
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -46,5 +59,18 @@ public class Event {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+    }
+
+    public void eventUpdate(String title, String description, LocalDateTime eventDate, String location, Integer
+            capacityLimit, LocalDateTime registrationDeadline, EventStatus status, String posterImageUrl) {
+
+        if (title != null) this.title = title;
+        if (description != null) this.description = description;
+        if (eventDate != null) this.eventDate = eventDate;
+        if (location != null) this.location = location;
+        if (capacityLimit != null) this.capacityLimit = capacityLimit;
+        if (registrationDeadline != null) this.registrationDeadline = registrationDeadline;
+        if (status != null) this.status = status;
+        if (posterImageUrl != null) this.posterImageUrl = posterImageUrl;
     }
 }
