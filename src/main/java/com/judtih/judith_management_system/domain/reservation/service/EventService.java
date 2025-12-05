@@ -7,6 +7,7 @@ import com.judtih.judith_management_system.domain.reservation.eventDto.EventResp
 import com.judtih.judith_management_system.domain.reservation.repository.EventRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +21,7 @@ public class EventService {
 
     //Admin methods ///////////////////////////////////////////////////////
 
+    @Transactional
     public EventResponse createEvent(EventRequest eventRequest) {
         Event event = Event.builder()
                 .title(eventRequest.getTitle())
@@ -39,6 +41,7 @@ public class EventService {
     }
 
 
+    @Transactional
     public EventResponse updateEvent(Long id, EventRequest request) {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
@@ -47,11 +50,12 @@ public class EventService {
                 ,request.getEventDate(),request.getLocation(),request.getCapacityLimit()
                 ,request.getRegistrationDeadLine(),request.getStatus(),request.getPosterImageUrl());
 
-        eventRepository.save(event);
 
         return createEventResponse(event);
     }
 
+
+    @Transactional
     public void deleteEventById(Long id) {
         eventRepository.deleteById(id);
 
@@ -59,6 +63,7 @@ public class EventService {
 
     //User method /////////////////////////////////////////////////////////
 
+    @Transactional(readOnly = true)
     public EventResponse getEventById(Long id) {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("event not found"));
@@ -66,6 +71,8 @@ public class EventService {
         return createEventResponse(event);
     }
 
+
+    @Transactional(readOnly = true)
     public List<EventListResponse> getAllEvent() {
         List<Event> events = eventRepository.findAll();
         List<EventListResponse> responseList = new ArrayList<>();
