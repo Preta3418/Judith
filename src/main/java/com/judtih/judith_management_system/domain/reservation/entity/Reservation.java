@@ -1,6 +1,7 @@
 package com.judtih.judith_management_system.domain.reservation.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -12,6 +13,15 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 public class Reservation {
+
+    @Builder
+    public Reservation(Event event, String name, String phoneNumber, Integer ticketCount) {
+        this.event = event;
+        this.name = name;
+        this.phoneNumber = phoneNumber;
+        this.ticketCount = ticketCount;
+    }
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
