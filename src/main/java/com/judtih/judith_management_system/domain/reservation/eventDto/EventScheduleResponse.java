@@ -1,6 +1,5 @@
 package com.judtih.judith_management_system.domain.reservation.eventDto;
 
-import com.judtih.judith_management_system.domain.reservation.entity.EventStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,10 +11,11 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class EventListResponse {
+public class EventScheduleResponse {
 
-    private Long id;
-    private String title;
-    private String posterImageUrl;
-    private EventStatus status;
+    private Long eventScheduleId;
+    private Long eventId;
+    private LocalDateTime eventDate;
+    private LocalDateTime registrationDeadLine;
+
 }

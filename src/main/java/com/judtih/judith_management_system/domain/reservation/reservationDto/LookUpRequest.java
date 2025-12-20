@@ -7,6 +7,6 @@ import lombok.Getter;
 @Builder
 @Getter
 public class LookUpRequest {
-    Long eventId;
+    Long eventScheduleId;
     String phoneNumber;
 }

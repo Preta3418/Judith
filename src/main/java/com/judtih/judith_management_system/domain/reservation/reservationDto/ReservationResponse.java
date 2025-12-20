@@ -16,10 +16,12 @@ public class ReservationResponse {
 
     private Long id;
     private Long eventId;
+    private Long eventScheduleId;
     private String eventName;
     private String name;
     private Integer ticketCount;
     private String phoneNumber;
     private LocalDateTime reservedAt;
+    private LocalDateTime eventDate;
 
 }

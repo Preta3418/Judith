@@ -16,10 +16,8 @@ public class EventRequest {
 
     private String title;
     private String description;
-    private LocalDateTime eventDate;
     private String location;
     private Integer capacityLimit;
-    private LocalDateTime registrationDeadLine;
     private EventStatus status;
     private String posterImageUrl;
 

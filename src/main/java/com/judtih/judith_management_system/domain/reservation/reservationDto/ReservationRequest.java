@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ReservationRequest {
 
-    private long eventId;
+    private long eventScheduleId;
     private String name;
     private String phoneNumber;
     private Integer ticketCount;
