@@ -1,9 +1,9 @@
 package com.judtih.judith_management_system.domain.reservation.service;
 
-import com.judtih.judith_management_system.domain.reservation.entity.Event;
+import com.judtih.judith_management_system.domain.reservation.entity.EventSchedule;
 import com.judtih.judith_management_system.domain.reservation.entity.EventStatus;
 import com.judtih.judith_management_system.domain.reservation.entity.Reservation;
-import com.judtih.judith_management_system.domain.reservation.repository.EventRepository;
+import com.judtih.judith_management_system.domain.reservation.repository.EventScheduleRepository;
 import com.judtih.judith_management_system.domain.reservation.repository.ReservationRepository;
 import com.judtih.judith_management_system.domain.reservation.reservationDto.ReservationRequest;
 import com.judtih.judith_management_system.domain.reservation.reservationDto.ReservationResponse;
@@ -20,14 +20,14 @@ import java.util.List;
 public class ReservationService {
 
     private final ReservationRepository reservationRepository;
-    private final EventRepository eventRepository;
+    private final EventScheduleRepository eventScheduleRepository;
 
 
     //Admin Method ///////////////////////////////////////////////////////////////
     @Transactional(readOnly = true)
-    public List<ReservationResponse> getReservationByEventId(Long eventId) {
+    public List<ReservationResponse> getReservationByEventScheduleId(Long eventId) {
 
-        List<Reservation> reservations = reservationRepository.findByEventId(eventId);
+        List<Reservation> reservations = reservationRepository.findByEventScheduleId(eventId);
         List<ReservationResponse> responseList = new ArrayList<>();
 
         for(Reservation reservation : reservations) {
@@ -41,30 +41,30 @@ public class ReservationService {
 
     @Transactional
     public ReservationResponse createReservation(ReservationRequest request) {
-        Event event = eventRepository.findByIdWithLock(request.getEventId())
-                .orElseThrow(() -> new RuntimeException("event not found"));
+        EventSchedule eventSchedule = eventScheduleRepository.findByIdWithLock(request.getEventScheduleId())
+                .orElseThrow(() -> new RuntimeException("event schedule not found"));
 
-        if (event.getStatus() != EventStatus.OPEN) {
+        if (eventSchedule.getEvent().getStatus() != EventStatus.OPEN) {
             throw new RuntimeException("closed event");
         }
 
-        if (LocalDateTime.now().isAfter(event.getRegistrationDeadline())) {
+        if (LocalDateTime.now().isAfter(eventSchedule.getRegistrationDeadLine())) {
             throw new RuntimeException("event over deadline");
         }
 
-        if (reservationRepository.existsByEventIdAndPhoneNumber(event.getId(), request.getPhoneNumber())) {
+        if (reservationRepository.existsByEventScheduleIdAndPhoneNumber(eventSchedule.getId(), request.getPhoneNumber())) {
             throw new RuntimeException("cannot make another reservation by same user");
         }
 
 
-        Integer currentCount = reservationRepository.sumConfirmedGuestsByEventId(event.getId());
-        if (currentCount + request.getTicketCount() > event.getCapacityLimit()) {
+        Integer currentCount = reservationRepository.sumTicketsByEventScheduleId(eventSchedule.getId());
+        if (currentCount + request.getTicketCount() > eventSchedule.getEvent().getCapacityLimit()) {
             throw new RuntimeException("No reservation left");
         }
 
 
         Reservation reservation = Reservation.builder()
-                .event(event)
+                .eventSchedule(eventSchedule)
                 .name(request.getName())
                 .phoneNumber(request.getPhoneNumber())
                 .ticketCount(request.getTicketCount())
@@ -76,16 +76,16 @@ public class ReservationService {
     }
 
     @Transactional(readOnly = true)
-    public ReservationResponse getReservation(Long eventId, String phoneNumber) {
-        Reservation reservation = reservationRepository.findByEventIdAndPhoneNumber(eventId, phoneNumber)
+    public ReservationResponse getReservation(Long eventScheduleId, String phoneNumber) {
+        Reservation reservation = reservationRepository.findByEventScheduleIdAndPhoneNumber(eventScheduleId, phoneNumber)
                 .orElseThrow(() -> new RuntimeException("no reservation found"));
 
         return createReservationResponse(reservation);
     }
 
     @Transactional
-    public void deleteReservation(Long eventId, String phoneNumber) {
-        Reservation reservation = reservationRepository.findByEventIdAndPhoneNumber(eventId, phoneNumber)
+    public void deleteReservation(Long eventScheduleId, String phoneNumber) {
+        Reservation reservation = reservationRepository.findByEventScheduleIdAndPhoneNumber(eventScheduleId, phoneNumber)
                 .orElseThrow(() -> new RuntimeException("no reservation found"));
 
         reservationRepository.deleteById(reservation.getId());
@@ -97,12 +97,14 @@ public class ReservationService {
     private ReservationResponse createReservationResponse (Reservation reservation) {
         return ReservationResponse.builder()
                 .id(reservation.getId())
-                .eventId(reservation.getEvent().getId())
-                .eventName(reservation.getEvent().getTitle())
+                .eventId(reservation.getEventSchedule().getEvent().getId())
+                .eventScheduleId(reservation.getEventSchedule().getId())
+                .eventName(reservation.getEventSchedule().getEvent().getTitle())
                 .name(reservation.getName())
                 .ticketCount(reservation.getTicketCount())
                 .phoneNumber((reservation.getPhoneNumber()))
                 .reservedAt(reservation.getReservedAt())
+                .eventDate(reservation.getEventSchedule().getEventDate())
                 .build();
     }
 
