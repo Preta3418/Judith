@@ -26,6 +26,7 @@ public class Event {
         this.posterImageUrl = posterImageUrl;
     }
 
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
