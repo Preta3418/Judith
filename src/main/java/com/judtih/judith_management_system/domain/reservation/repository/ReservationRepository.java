@@ -16,14 +16,14 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     @Modifying
     @Transactional
-    void deleteByEventId(Long eventId);
+    void deleteByEventScheduleId(Long eventScheduleId);
 
-    Optional<Reservation> findByEventIdAndPhoneNumber(Long eventId, String phoneNumber);
+    Optional<Reservation> findByEventScheduleIdAndPhoneNumber(Long eventScheduleId, String phoneNumber);
 
-    boolean existsByEventIdAndPhoneNumber(Long eventId, String PhoneNumber);
+    boolean existsByEventScheduleIdAndPhoneNumber(Long eventScheduleId, String PhoneNumber);
 
-    List<Reservation> findByEventId(Long eventId);
+    List<Reservation> findByEventScheduleId(Long eventScheduleId);
 
-    @Query("SELECT COALESCE(SUM(r.ticketCount), 0) FROM Reservation r WHERE r.event.id = :eventId AND r.status = 'CONFIRMED'")
-    Integer sumConfirmedGuestsByEventId(@Param("eventId") Long eventId);
+    @Query("SELECT COALESCE(SUM(r.ticketCount), 0) FROM Reservation r WHERE r.eventSchedule.id = :eventScheduleId")
+    Integer sumTicketsByEventScheduleId(@Param("eventScheduleId") Long eventScheduleId);
 }
