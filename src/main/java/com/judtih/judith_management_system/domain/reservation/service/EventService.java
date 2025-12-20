@@ -1,10 +1,10 @@
 package com.judtih.judith_management_system.domain.reservation.service;
 
 import com.judtih.judith_management_system.domain.reservation.entity.Event;
-import com.judtih.judith_management_system.domain.reservation.eventDto.EventListResponse;
-import com.judtih.judith_management_system.domain.reservation.eventDto.EventRequest;
-import com.judtih.judith_management_system.domain.reservation.eventDto.EventResponse;
+import com.judtih.judith_management_system.domain.reservation.entity.EventSchedule;
+import com.judtih.judith_management_system.domain.reservation.eventDto.*;
 import com.judtih.judith_management_system.domain.reservation.repository.EventRepository;
+import com.judtih.judith_management_system.domain.reservation.repository.EventScheduleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +17,7 @@ import java.util.List;
 public class EventService {
 
     private final EventRepository eventRepository;
+    private final EventScheduleRepository scheduleRepository;
 
 
     //Admin methods ///////////////////////////////////////////////////////
@@ -25,11 +26,9 @@ public class EventService {
     public EventResponse createEvent(EventRequest eventRequest) {
         Event event = Event.builder()
                 .title(eventRequest.getTitle())
-                .eventDate(eventRequest.getEventDate())
                 .description(eventRequest.getDescription())
                 .location(eventRequest.getLocation())
                 .capacityLimit(eventRequest.getCapacityLimit())
-                .registrationDeadline(eventRequest.getRegistrationDeadLine())
                 .status(eventRequest.getStatus())
                 .posterImageUrl(eventRequest.getPosterImageUrl())
                 .build();
@@ -40,6 +39,22 @@ public class EventService {
 
     }
 
+    @Transactional
+    public EventScheduleResponse createEventSchedule (EventScheduleRequest request) {
+        Event event = eventRepository.findById(request.getEventId())
+                .orElseThrow(() -> new RuntimeException("event not found"));
+
+        EventSchedule eventSchedule = EventSchedule.builder()
+                .eventDate(request.getEventDate())
+                .registrationDeadLine(request.getRegistrationDeadLine())
+                .event(event)
+                .build();
+
+        scheduleRepository.save(eventSchedule);
+
+        return createEventScheduleResponse(eventSchedule);
+    }
+
 
     @Transactional
     public EventResponse updateEvent(Long id, EventRequest request) {
@@ -47,11 +62,23 @@ public class EventService {
                 .orElseThrow(() -> new RuntimeException("Event not found"));
 
         event.eventUpdate(request.getTitle(),request.getDescription()
-                ,request.getEventDate(),request.getLocation(),request.getCapacityLimit()
-                ,request.getRegistrationDeadLine(),request.getStatus(),request.getPosterImageUrl());
+                ,request.getLocation(),request.getCapacityLimit()
+                ,request.getStatus(),request.getPosterImageUrl());
 
 
         return createEventResponse(event);
+    }
+
+    @Transactional
+    public EventScheduleResponse updateSchedule(Long id, EventScheduleRequest request) {
+        EventSchedule schedule = scheduleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Schedule not found"));
+
+        schedule.updateEventSchedule(request.getEventDate(),
+                request.getRegistrationDeadLine());
+
+        return createEventScheduleResponse(schedule);
+
     }
 
 
@@ -61,6 +88,11 @@ public class EventService {
 
     }
 
+    @Transactional
+    public void deleteScheduleById(Long id) {
+        scheduleRepository.deleteById(id);
+    }
+
     //User method /////////////////////////////////////////////////////////
 
     @Transactional(readOnly = true)
@@ -68,7 +100,15 @@ public class EventService {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("event not found"));
 
-        return createEventResponse(event);
+        List<EventSchedule> schedules = scheduleRepository.findByEventId(id);
+        List<EventScheduleResponse> scheduleResponses = new ArrayList<>();
+
+        for(EventSchedule schedule : schedules) {
+            scheduleResponses.add(createEventScheduleResponse(schedule));
+        }
+
+
+        return createEventResponse(event, scheduleResponses);
     }
 
 
@@ -88,19 +128,42 @@ public class EventService {
 
     //Helper method ///////////////////////////////////////////////////////
 
+    //create method without List<scheduleResponse>
     private EventResponse createEventResponse(Event event) {
 
         return EventResponse.builder()
                 .id(event.getId())
                 .title(event.getTitle())
                 .description(event.getDescription())
-                .eventDate(event.getEventDate())
                 .location(event.getLocation())
                 .capacityLimit(event.getCapacityLimit())
-                .registrationDeadLine(event.getRegistrationDeadline())
                 .status(event.getStatus())
                 .posterImageUrl((event.getPosterImageUrl()))
                 .createdAt(event.getCreatedAt())
+                .build();
+    }
+
+    //create method that have List<scheduleResponse>
+    private EventResponse createEventResponse(Event event, List<EventScheduleResponse> scheduleResponses) {
+        return EventResponse.builder()
+                .id(event.getId())
+                .title(event.getTitle())
+                .description(event.getDescription())
+                .location(event.getLocation())
+                .capacityLimit(event.getCapacityLimit())
+                .status(event.getStatus())
+                .posterImageUrl((event.getPosterImageUrl()))
+                .createdAt(event.getCreatedAt())
+                .schedules(scheduleResponses)
+                .build();
+    }
+
+    private EventScheduleResponse createEventScheduleResponse(EventSchedule schedule) {
+        return EventScheduleResponse.builder()
+                .eventScheduleId(schedule.getId())
+                .eventId(schedule.getEvent().getId())
+                .eventDate(schedule.getEventDate())
+                .registrationDeadLine(schedule.getRegistrationDeadLine())
                 .build();
     }
 
@@ -108,7 +171,6 @@ public class EventService {
         return EventListResponse.builder()
                 .id(event.getId())
                 .title(event.getTitle())
-                .eventDate(event.getEventDate())
                 .posterImageUrl(event.getPosterImageUrl())
                 .status(event.getStatus())
                 .build();
