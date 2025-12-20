@@ -14,15 +14,13 @@ import java.time.LocalDateTime;
 public class Event {
 
     @Builder
-    public Event(String title, String description, LocalDateTime eventDate, String location, Integer
-            capacityLimit, LocalDateTime registrationDeadline, EventStatus status, String posterImageUrl) {
+    public Event(String title, String description, String location, Integer
+            capacityLimit, String posterImageUrl, EventStatus status) {
         this.title = title;
         this.description = description;
-        this.eventDate = eventDate;
         this.location = location;
-        this.capacityLimit = capacityLimit;
-        this.registrationDeadline = registrationDeadline;
         this.status = status;
+        this.capacityLimit = capacityLimit;
         this.posterImageUrl = posterImageUrl;
     }
 
@@ -37,16 +35,10 @@ public class Event {
     private String description;
 
     @Column(nullable = false)
-    private LocalDateTime eventDate;
-
-    @Column(nullable = false)
     private String location;
 
     @Column(nullable = false)
     private Integer capacityLimit;
-
-    @Column(nullable = false)
-    private LocalDateTime registrationDeadline;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -62,15 +54,13 @@ public class Event {
         createdAt = LocalDateTime.now();
     }
 
-    public void eventUpdate(String title, String description, LocalDateTime eventDate, String location, Integer
-            capacityLimit, LocalDateTime registrationDeadline, EventStatus status, String posterImageUrl) {
+    public void eventUpdate(String title, String description, String location, Integer
+            capacityLimit, EventStatus status, String posterImageUrl) {
 
         if (title != null) this.title = title;
         if (description != null) this.description = description;
-        if (eventDate != null) this.eventDate = eventDate;
         if (location != null) this.location = location;
         if (capacityLimit != null) this.capacityLimit = capacityLimit;
-        if (registrationDeadline != null) this.registrationDeadline = registrationDeadline;
         if (status != null) this.status = status;
         if (posterImageUrl != null) this.posterImageUrl = posterImageUrl;
     }

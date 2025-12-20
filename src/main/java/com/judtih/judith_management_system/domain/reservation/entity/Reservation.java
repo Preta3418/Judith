@@ -9,14 +9,14 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"event_id", "phone_number"}))
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"event_schedule_id", "phone_number"}))
 @Getter
 @NoArgsConstructor
 public class Reservation {
 
     @Builder
-    public Reservation(Event event, String name, String phoneNumber, Integer ticketCount) {
-        this.event = event;
+    public Reservation(EventSchedule eventSchedule, String name, String phoneNumber, Integer ticketCount) {
+        this.eventSchedule = eventSchedule;
         this.name = name;
         this.phoneNumber = phoneNumber;
         this.ticketCount = ticketCount;
@@ -28,8 +28,8 @@ public class Reservation {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_id", nullable = false)
-    Event event;
+    @JoinColumn(name = "event_schedule_id", nullable = false)
+    EventSchedule eventSchedule;
 
     @Column(nullable = false)
     private String name;
