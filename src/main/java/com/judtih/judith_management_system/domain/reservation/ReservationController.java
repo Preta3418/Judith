@@ -80,11 +80,12 @@ public class ReservationController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/reservations/lookup")
-    public ResponseEntity<ReservationResponse> getReservation (@RequestBody LookUpRequest lookUpRequest) {
-        ReservationResponse response = reservationService.getReservation(lookUpRequest.getEventScheduleId(), lookUpRequest.getPhoneNumber());
+    @GetMapping("/reservations/lookup")
+    public ResponseEntity<List<ReservationResponse>> getReservation (@RequestParam String phoneNumber) {
 
-        return ResponseEntity.ok(response);
+        List<ReservationResponse> responses = reservationService.getReservation(phoneNumber);
+
+        return ResponseEntity.ok(responses);
     }
 
     @PostMapping("/reservations")

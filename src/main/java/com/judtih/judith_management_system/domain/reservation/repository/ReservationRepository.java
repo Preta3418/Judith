@@ -26,4 +26,9 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     @Query("SELECT COALESCE(SUM(r.ticketCount), 0) FROM Reservation r WHERE r.eventSchedule.id = :eventScheduleId")
     Integer sumTicketsByEventScheduleId(@Param("eventScheduleId") Long eventScheduleId);
+
+    @Query("SELECT r FROM Reservation r " + "JOIN r.eventSchedule es " + "JOIN es.event e " +
+            "WHERE r.phoneNumber = :phoneNumber " + "AND e.status = 'OPEN'")
+    List<Reservation> findByPhoneNumberAndEventOpen(@Param("phoneNumber") String phoneNumber);
+
 }

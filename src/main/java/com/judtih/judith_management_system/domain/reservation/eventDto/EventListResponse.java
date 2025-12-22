@@ -18,4 +18,5 @@ public class EventListResponse {
     private String title;
     private String posterImageUrl;
     private EventStatus status;
+    private Integer capacityLimit;
 }

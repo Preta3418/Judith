@@ -173,6 +173,7 @@ public class EventService {
                 .title(event.getTitle())
                 .posterImageUrl(event.getPosterImageUrl())
                 .status(event.getStatus())
+                .capacityLimit(event.getCapacityLimit())
                 .build();
     }
 }

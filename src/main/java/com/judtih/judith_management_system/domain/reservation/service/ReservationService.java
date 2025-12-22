@@ -76,11 +76,15 @@ public class ReservationService {
     }
 
     @Transactional(readOnly = true)
-    public ReservationResponse getReservation(Long eventScheduleId, String phoneNumber) {
-        Reservation reservation = reservationRepository.findByEventScheduleIdAndPhoneNumber(eventScheduleId, phoneNumber)
-                .orElseThrow(() -> new RuntimeException("no reservation found"));
+    public List<ReservationResponse> getReservation(String phoneNumber) {
+        List<Reservation> reservations = reservationRepository.findByPhoneNumberAndEventOpen(phoneNumber);
+        List<ReservationResponse> reservationResponses = new ArrayList<>();
 
-        return createReservationResponse(reservation);
+        for (Reservation reservation : reservations) {
+            reservationResponses.add(createReservationResponse(reservation));
+        }
+
+        return reservationResponses;
     }
 
     @Transactional
