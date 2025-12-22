@@ -16,7 +16,7 @@ public class LocalStorageService implements StorageService{
 
     private final Path baseLocation;
 
-    public LocalStorageService(@Value("${upload.base-path") String basePath) {
+    public LocalStorageService(@Value("${upload.base-path}") String basePath) {
         this.baseLocation = Paths.get(basePath);
     }
 
