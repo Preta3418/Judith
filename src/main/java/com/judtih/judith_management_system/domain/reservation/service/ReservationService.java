@@ -25,9 +25,9 @@ public class ReservationService {
 
     //Admin Method ///////////////////////////////////////////////////////////////
     @Transactional(readOnly = true)
-    public List<ReservationResponse> getReservationByEventScheduleId(Long eventId) {
+    public List<ReservationResponse> getReservationByEventScheduleId(Long scheduleId) {
 
-        List<Reservation> reservations = reservationRepository.findByEventScheduleId(eventId);
+        List<Reservation> reservations = reservationRepository.findByEventScheduleId(scheduleId);
         List<ReservationResponse> responseList = new ArrayList<>();
 
         for(Reservation reservation : reservations) {

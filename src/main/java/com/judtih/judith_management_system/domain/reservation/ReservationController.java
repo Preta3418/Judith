@@ -1,9 +1,7 @@
 package com.judtih.judith_management_system.domain.reservation;
 
 
-import com.judtih.judith_management_system.domain.reservation.eventDto.EventListResponse;
-import com.judtih.judith_management_system.domain.reservation.eventDto.EventRequest;
-import com.judtih.judith_management_system.domain.reservation.eventDto.EventResponse;
+import com.judtih.judith_management_system.domain.reservation.eventDto.*;
 import com.judtih.judith_management_system.domain.reservation.reservationDto.LookUpRequest;
 import com.judtih.judith_management_system.domain.reservation.reservationDto.ReservationRequest;
 import com.judtih.judith_management_system.domain.reservation.reservationDto.ReservationResponse;
@@ -31,23 +29,35 @@ public class ReservationController {
         return ResponseEntity.status(201).body(eventService.createEvent(eventRequest));
     }
 
-    @PutMapping("/admin/events/{id}")
-    public ResponseEntity<EventResponse> updateEvent (@PathVariable Long id, @RequestBody EventRequest request) {
-        EventResponse response = eventService.updateEvent(id, request);
+    @PostMapping("/admin/schedule")
+    public ResponseEntity<EventScheduleResponse> createSchedule (@RequestBody EventScheduleRequest scheduleRequest) {
+        return ResponseEntity.status(201).body(eventService.createEventSchedule(scheduleRequest));
+    }
+
+    @PutMapping("/admin/events/{eventId}")
+    public ResponseEntity<EventResponse> updateEvent (@PathVariable Long eventId, @RequestBody EventRequest request) {
+        EventResponse response = eventService.updateEvent(eventId, request);
 
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/admin/events/{id}")
-    public ResponseEntity<Void> deleteEvent (@PathVariable Long id) {
-        eventService.deleteEventById(id);
+    @PutMapping("/admin/schedule/{scheduleId}")
+    public ResponseEntity<EventScheduleResponse> updateSchedule (@PathVariable Long scheduleId, @RequestBody EventScheduleRequest scheduleRequest) {
+        EventScheduleResponse response = eventService.updateSchedule(scheduleId, scheduleRequest);
+
+        return ResponseEntity.status(200).body(response);
+    }
+
+    @DeleteMapping("/admin/events/{eventId}")
+    public ResponseEntity<Void> deleteEvent (@PathVariable Long eventId) {
+        eventService.deleteEventById(eventId);
 
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/admin/events/{id}/reservations")
-    public ResponseEntity<List<ReservationResponse>> getAllReservation (@PathVariable Long id) {
-        List<ReservationResponse> response = reservationService.getReservationByEventId(id);
+    @GetMapping("/admin/schedule/{scheduleId}/reservations")
+    public ResponseEntity<List<ReservationResponse>> getAllReservation (@PathVariable Long scheduleId) {
+        List<ReservationResponse> response = reservationService.getReservationByEventScheduleId(scheduleId);
 
         return ResponseEntity.ok(response);
 
@@ -56,9 +66,9 @@ public class ReservationController {
 
     //User Controller////////////////////////////////////////////////////////////////
 
-    @GetMapping("/events/{id}")
-    public ResponseEntity<EventResponse> getEvent (@PathVariable Long id) {
-        EventResponse response = eventService.getEventById(id);
+    @GetMapping("/events/{eventId}")
+    public ResponseEntity<EventResponse> getEvent (@PathVariable Long eventId) {
+        EventResponse response = eventService.getEventById(eventId);
 
         return ResponseEntity.ok(response);
     }
@@ -72,7 +82,7 @@ public class ReservationController {
 
     @PostMapping("/reservations/lookup")
     public ResponseEntity<ReservationResponse> getReservation (@RequestBody LookUpRequest lookUpRequest) {
-        ReservationResponse response = reservationService.getReservation(lookUpRequest.getEventId(), lookUpRequest.getPhoneNumber());
+        ReservationResponse response = reservationService.getReservation(lookUpRequest.getEventScheduleId(), lookUpRequest.getPhoneNumber());
 
         return ResponseEntity.ok(response);
     }
@@ -86,7 +96,7 @@ public class ReservationController {
 
     @DeleteMapping("/reservations")
     public ResponseEntity<Void> deleteReservation(@RequestBody LookUpRequest lookUpRequest) {
-        reservationService.deleteReservation(lookUpRequest.getEventId(), lookUpRequest.getPhoneNumber());
+        reservationService.deleteReservation(lookUpRequest.getEventScheduleId(), lookUpRequest.getPhoneNumber());
 
         return ResponseEntity.noContent().build();
     }
