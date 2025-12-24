@@ -36,7 +36,7 @@ public class LocalStorageService implements StorageService{
 
             Path filePath = folderPath.resolve(newFilename);
 
-            file.transferTo(filePath.toFile());
+            file.transferTo(filePath);
 
             return "/" + folder.getFolderName() + "/" + newFilename;
 
