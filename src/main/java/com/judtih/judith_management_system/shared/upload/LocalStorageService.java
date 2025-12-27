@@ -1,5 +1,5 @@
 package com.judtih.judith_management_system.shared.upload;
-
+import com.judtih.judith_management_system.shared.upload.exception.FileStorageException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -8,42 +8,37 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.UUID;
-
 
 @Service
 public class LocalStorageService implements StorageService{
 
-    private final Path baseLocation;
-
-    public LocalStorageService(@Value("${upload.base-path}") String basePath) {
-        this.baseLocation = Paths.get(basePath);
-    }
+    @Value("${upload.base-path}")
+    private String basePath;
 
 
-    @Override
-    public String store(MultipartFile file, StorageFolder folder) {
+    public String uploadFile (MultipartFile file, StorageFolder folder) {
 
         try {
-            Path folderPath = baseLocation.resolve(folder.getFolderName());
+            Path folderPath = Paths.get(basePath, folder.getFolderName());
 
             Files.createDirectories(folderPath);
+            String filename = file.getOriginalFilename();
 
-            String originalFileName = file.getOriginalFilename();
-            String extension = originalFileName.substring(originalFileName.lastIndexOf("."));
+            if (filename == null) {
+                throw new FileStorageException("could not find file name after upload", 500, "IO Error");
+            }
 
-            String newFilename = UUID.randomUUID().toString() + extension;
+            Path saveDir = folderPath.resolve(filename);
 
-            Path filePath = folderPath.resolve(newFilename);
+            file.transferTo(saveDir);
 
-            file.transferTo(filePath);
 
-            return "/" + folder.getFolderName() + "/" + newFilename;
-
+            return "/" + folder.getFolderName() + "/" + filename;
 
         } catch (IOException e) {
-            throw new RuntimeException("file save failed", e);
+            throw new FileStorageException("failed to save file", 500, "IO Error", e);
         }
-
     }
+
+
 }

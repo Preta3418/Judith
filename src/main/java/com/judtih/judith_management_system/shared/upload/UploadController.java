@@ -1,32 +1,38 @@
 package com.judtih.judith_management_system.shared.upload;
 
-import lombok.AllArgsConstructor;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Map;
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/upload")
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class UploadController {
 
-    private final StorageService storageService;
+    private final StorageService service;
 
-    @PostMapping("/poster")
-    public ResponseEntity<Map<String, String>> uploadPoster(
-            @RequestParam("file") MultipartFile file
-    ) {
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "no file found"));
-        }
+    @PostMapping("/{folder}")
+    public ResponseEntity<UploadResponse> uploadFile(@RequestParam MultipartFile file, @PathVariable StorageFolder folder) {
 
-        String url = storageService.store(file, StorageFolder.EVENT_POSTER);
+        String url = service.uploadFile(file, folder);
 
-        return ResponseEntity.ok(Map.of("url", url));
+        UploadResponse response = UploadResponse.builder()
+                .url(url)
+                .size(file.getSize())
+                .folder(folder.getFolderName())
+                .uploadTime(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(201).body(response);
     }
+
+
+
+
+
+
 }

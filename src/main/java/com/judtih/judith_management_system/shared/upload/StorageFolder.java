@@ -1,14 +1,23 @@
 package com.judtih.judith_management_system.shared.upload;
 
-import lombok.Getter;
-
-@Getter
 public enum StorageFolder {
-    EVENT_POSTER("Event_Poster");
+    EVENT_POSTER("Event_Poster"),
+    PHOTOS("Photos"),
+    VIDEOS("Video"),
+    SCRIPT("Script"),
+    ART("Art");
 
-    private final String folderName;
+
+
+    private String folderName;
 
     StorageFolder(String folderName) {
         this.folderName = folderName;
     }
+
+
+    public String getFolderName() {
+        return folderName;
+    }
+
 }

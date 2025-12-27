@@ -4,5 +4,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface StorageService {
 
-    String store(MultipartFile file, StorageFolder folder);
+    String uploadFile (MultipartFile file, StorageFolder folder);
+
 }
