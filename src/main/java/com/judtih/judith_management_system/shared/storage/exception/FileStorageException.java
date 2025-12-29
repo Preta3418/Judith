@@ -1,4 +1,4 @@
-package com.judtih.judith_management_system.shared.upload.exception;
+package com.judtih.judith_management_system.shared.storage.exception;
 
 import com.judtih.judith_management_system.shared.exception.BusinessException;
 
