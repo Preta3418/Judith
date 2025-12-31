@@ -15,10 +15,11 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class SeasonResponse {
 
-    Long id;
-    String name;
-    Status status;
-    LocalDate startDate;
-    LocalDate endDate;
+    private Long id;
+    private String name;
+    private Status status;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private LocalDate eventDate;
 
 }

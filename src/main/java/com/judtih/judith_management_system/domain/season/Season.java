@@ -31,27 +31,38 @@ public class Season {
     private Status status =  Status.PREPARING;
 
     @Column
-    LocalDate startDate;
+    private LocalDate startDate;
 
     @Column(nullable = true)
-    LocalDate endDate;
+    private LocalDate endDate;
 
     @Column(nullable = true)
-    LocalDate eventDate;
+    private LocalDate eventDate;
 
     @Column
-    LocalDateTime createdAt;
+    private LocalDateTime createdAt;
 
     @PrePersist
     private void onCreate() {
         createdAt = LocalDateTime.now();
     }
 
-    public void updateSeason (String name, Status status, LocalDate startDate, LocalDate endDate) {
+
+    public void updateSeason (String name, LocalDate startDate, LocalDate eventDate) {
         if(name != null) this.name = name;
-        if(status != null) this.status = status;
         if(startDate != null) this.startDate = startDate;
-        if(endDate != null) this.endDate = endDate;
+        if(eventDate != null) this.eventDate = eventDate;
     }
+
+    public void activateSeason () {
+        this.status = Status.ACTIVE;
+    }
+
+    public void closeSeason () {
+        this.status = Status.CLOSED;
+        this.endDate = LocalDate.now();
+    }
+
+
 
 }

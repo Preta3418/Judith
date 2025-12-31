@@ -14,10 +14,8 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class SeasonRequest {
 
-    String name;
-    Status status;
-    LocalDate startDate;
-    LocalDate endDate;
-    LocalDate eventDate;
+    private String name;
+    private LocalDate startDate;
+    private LocalDate eventDate;
 
 }

@@ -9,4 +9,7 @@ import java.util.Optional;
 public interface SeasonRepository extends JpaRepository<Season, Long> {
 
     Optional<Season> findByStatus(Status status);
+
+    boolean existsByStatusNot(Status status);
+    boolean existsByStatus(Status status);
 }
