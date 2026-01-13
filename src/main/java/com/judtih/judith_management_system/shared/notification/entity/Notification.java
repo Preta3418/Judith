@@ -1,9 +1,9 @@
 package com.judtih.judith_management_system.shared.notification.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.judtih.judith_management_system.shared.notification.enums.NotificationType;
+import com.judtih.judith_management_system.shared.notification.enums.SourceType;
+import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -14,6 +14,15 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class Notification {
 
+    @Builder
+    public Notification(String title, String content, NotificationType notificationType, SourceType sourceType, Long sourceId) {
+        this.title = title;
+        this.content = content;
+        this.notificationType = notificationType;
+        this.sourceType = sourceType;
+        this.sourceId = sourceId;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -22,10 +31,20 @@ public class Notification {
 
     private String content;
 
-    private NotificationType type;
+    @Enumerated(EnumType.STRING)
+    private NotificationType notificationType;
+
+    @Enumerated(EnumType.STRING)
+    private SourceType sourceType;
+
+    private Long sourceId;
 
     private LocalDateTime createdAt;
 
+    @PrePersist
+    public void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
 
 
 }
