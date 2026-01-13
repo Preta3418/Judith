@@ -70,9 +70,9 @@ public class SeasonService {
     }
 
     @Transactional
-    public SeasonResponse updateSeason(long id, SeasonRequest request) {
-        Season season = seasonRepository.findById(id)
-                .orElseThrow(() -> new NoSeasonFoundException("UpdateSeason: went wrong somewhere. No Event was found with id: " + id, 404, "Not Found")) ;
+    public SeasonResponse updateSeason(SeasonRequest request) {
+        Season season = seasonRepository.findById(request.getId())
+                .orElseThrow(() -> new NoSeasonFoundException("UpdateSeason: went wrong somewhere. No Event was found with id: " + request.getId(), 404, "Not Found")) ;
 
         season.updateSeason(request.getName(), request.getStartDate(), request.getEventDate());
 
