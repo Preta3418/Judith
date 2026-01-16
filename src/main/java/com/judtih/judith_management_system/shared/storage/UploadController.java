@@ -17,10 +17,10 @@ public class UploadController {
 
     private final StorageService service;
 
-    @PostMapping("/{folder}")
-    public ResponseEntity<StoredFileResponse> uploadFile(@RequestParam MultipartFile file, @PathVariable StorageFolder folder) {
+    @PostMapping("/{folder}/season/{seasonId}")
+    public ResponseEntity<StoredFileResponse> uploadFile(@RequestParam MultipartFile file, @PathVariable StorageFolder folder, @PathVariable Long seasonId) {
 
-        StoredFileResponse response = service.uploadFile(file, folder);
+        StoredFileResponse response = service.uploadFile(file, folder, seasonId);
 
 
         return ResponseEntity.status(201).body(response);

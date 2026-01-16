@@ -1,5 +1,6 @@
 package com.judtih.judith_management_system.shared.storage.entity;
 
+import com.judtih.judith_management_system.domain.season.Season;
 import com.judtih.judith_management_system.shared.storage.StorageFolder;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -11,12 +12,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class StoredFile {
 
-    public StoredFile(String url, String fileName, Long fileSize, StorageFolder fileType, Long eventShowcaseId) {
+    public StoredFile(String url, String fileName, Long fileSize, StorageFolder fileType, Season season) {
         this.url = url;
         this.fileName = fileName;
         this.fileSize = fileSize;
         this.fileType = fileType;
-        this.eventShowcaseId = eventShowcaseId;
+        this.season = season;
     }
 
     @Id
@@ -36,8 +37,9 @@ public class StoredFile {
     @Enumerated(EnumType.STRING)
     private StorageFolder fileType;
 
-    @Column(nullable = false)
-    private Long eventShowcaseId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "season_id", nullable = false)
+    private Season season;
 
     private LocalDateTime uploadedAt;
 

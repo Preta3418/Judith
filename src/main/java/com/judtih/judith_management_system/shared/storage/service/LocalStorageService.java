@@ -1,4 +1,7 @@
 package com.judtih.judith_management_system.shared.storage.service;
+import com.judtih.judith_management_system.domain.season.Season;
+import com.judtih.judith_management_system.domain.season.SeasonRepository;
+import com.judtih.judith_management_system.domain.season.exception.NoSeasonFoundException;
 import com.judtih.judith_management_system.shared.storage.StorageFolder;
 import com.judtih.judith_management_system.shared.storage.dto.StoredFileResponse;
 import com.judtih.judith_management_system.shared.storage.entity.StoredFile;
@@ -22,9 +25,10 @@ public class LocalStorageService implements StorageService {
     private String basePath;
 
     private final StorageRepository repository;
+    private final SeasonRepository seasonRepository;
 
 
-    public StoredFileResponse uploadFile (MultipartFile file, StorageFolder folder) {
+    public StoredFileResponse uploadFile (MultipartFile file, StorageFolder folder, Long seasonId) {
 
         try {
             Path folderPath = Paths.get(basePath, folder.getFolderName());
@@ -41,8 +45,9 @@ public class LocalStorageService implements StorageService {
 
             String url = "/" + folder.getFolderName() + "/" + filename;
 
-            //eventShowcaseId will change when session domain is created
-            StoredFile storedFile = new StoredFile(url, saveDir.getFileName().toString(),Files.size(saveDir), folder, null);
+            Season season = seasonRepository.findById(seasonId)
+                    .orElseThrow(() -> new NoSeasonFoundException("Season was not found with id: " + seasonId, 404, "Not Found"));
+            StoredFile storedFile = new StoredFile(url, saveDir.getFileName().toString(), Files.size(saveDir), folder, season);
             repository.save(storedFile);
 
             return createStoredFileResponse(storedFile);

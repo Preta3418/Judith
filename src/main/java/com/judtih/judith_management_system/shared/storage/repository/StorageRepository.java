@@ -12,7 +12,7 @@ public interface StorageRepository extends JpaRepository<StoredFile, Long> {
 
     List<StoredFile> findByFileType(StorageFolder folder);
 
-    List<StoredFile> findByEventShowcaseId(Long id);
+    List<StoredFile> findBySeasonId(Long seasonId);
 
 
 
