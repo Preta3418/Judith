@@ -5,6 +5,7 @@ import com.judtih.judith_management_system.domain.reservation.entity.EventSchedu
 import com.judtih.judith_management_system.domain.reservation.eventDto.*;
 import com.judtih.judith_management_system.domain.reservation.repository.EventRepository;
 import com.judtih.judith_management_system.domain.reservation.repository.EventScheduleRepository;
+import com.judtih.judith_management_system.domain.reservation.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ public class EventService {
 
     private final EventRepository eventRepository;
     private final EventScheduleRepository scheduleRepository;
+    private final ReservationRepository reservationRepository;
 
 
     //Admin methods ///////////////////////////////////////////////////////
@@ -52,7 +54,7 @@ public class EventService {
 
         scheduleRepository.save(eventSchedule);
 
-        return createEventScheduleResponse(eventSchedule);
+        return createEventScheduleResponse(eventSchedule, event.getCapacityLimit());
     }
 
 
@@ -77,7 +79,7 @@ public class EventService {
         schedule.updateEventSchedule(request.getEventDate(),
                 request.getRegistrationDeadLine());
 
-        return createEventScheduleResponse(schedule);
+        return createEventScheduleResponse(schedule, schedule.getEvent().getCapacityLimit());
 
     }
 
@@ -104,7 +106,7 @@ public class EventService {
         List<EventScheduleResponse> scheduleResponses = new ArrayList<>();
 
         for(EventSchedule schedule : schedules) {
-            scheduleResponses.add(createEventScheduleResponse(schedule));
+            scheduleResponses.add(createEventScheduleResponse(schedule, event.getCapacityLimit()));
         }
 
 
@@ -158,12 +160,17 @@ public class EventService {
                 .build();
     }
 
-    private EventScheduleResponse createEventScheduleResponse(EventSchedule schedule) {
+    private EventScheduleResponse createEventScheduleResponse(EventSchedule schedule, Integer capacityLimit) {
+
+        Integer bookedTickets = reservationRepository.sumTicketsByEventScheduleId(schedule.getId());
+        Integer remainingSeats = capacityLimit - bookedTickets;
+
         return EventScheduleResponse.builder()
                 .eventScheduleId(schedule.getId())
                 .eventId(schedule.getEvent().getId())
                 .eventDate(schedule.getEventDate())
                 .registrationDeadLine(schedule.getRegistrationDeadLine())
+                .remainingSeats(remainingSeats)
                 .build();
     }
 

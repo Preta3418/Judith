@@ -11,7 +11,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/season")
+@RequestMapping("/api/seasons")
 public class SeasonController {
 
     private final SeasonService service;
@@ -19,9 +19,9 @@ public class SeasonController {
 
     //admin ///////////////////////////////////////////////////////////////
     @PostMapping()
-    public ResponseEntity<SeasonResponse> createSeason(@RequestParam String name) {
+    public ResponseEntity<SeasonResponse> createSeason(@RequestBody SeasonRequest request) {
 
-        return ResponseEntity.status(201).body(service.createSeason(name));
+        return ResponseEntity.status(201).body(service.createSeason(request));
 
     }
 

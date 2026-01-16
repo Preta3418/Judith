@@ -20,13 +20,15 @@ public class SeasonService {
 
 
     @Transactional
-    public SeasonResponse createSeason(String name) {
+    public SeasonResponse createSeason(SeasonRequest request) {
 
         if(seasonRepository.existsByStatusNot(Status.CLOSED)) {
             throw new AlreadyActiveSeasonException("Cannot create season when one is already active", 409, "Conflict" );
         }
 
-        Season season = new Season(name, LocalDate.now());
+
+
+        Season season = new Season(request.getName(), request.getStartDate(), request.getEndDate());
         seasonRepository.save(season);
 
         return createSeasonResponse(season);

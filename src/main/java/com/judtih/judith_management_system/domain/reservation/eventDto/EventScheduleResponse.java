@@ -17,5 +17,6 @@ public class EventScheduleResponse {
     private Long eventId;
     private LocalDateTime eventDate;
     private LocalDateTime registrationDeadLine;
+    private Integer remainingSeats;
 
 }

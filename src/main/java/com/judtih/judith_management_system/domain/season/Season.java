@@ -14,9 +14,10 @@ import java.time.LocalDateTime;
 public class Season {
 
     @Builder
-    public Season(String name, LocalDate startDate) {
+    public Season(String name, LocalDate startDate, LocalDate endDate) {
         this.name = name;
         this.startDate = startDate;
+        this.endDate = endDate;
     }
 
     @Id
