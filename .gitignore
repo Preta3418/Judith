@@ -41,3 +41,7 @@ application-local.properties
 
 # macOS
 .DS_Store
+
+# Claude Code context files (personal notes, not for repo)
+PROJECT_SUMMARY.md
+ARCHITECTURE.md
