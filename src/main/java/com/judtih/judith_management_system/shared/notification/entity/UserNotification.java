@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class UserNotification {
 
-    @Builder
     public UserNotification(User user, Notification notification) {
         this.user = user;
         this.notification = notification;
