@@ -8,6 +8,7 @@ import com.judtih.judith_management_system.shared.notification.dto.UserNotificat
 import com.judtih.judith_management_system.shared.notification.dto.UserNotificationResponse;
 import com.judtih.judith_management_system.shared.notification.entity.Notification;
 import com.judtih.judith_management_system.shared.notification.entity.UserNotification;
+import com.judtih.judith_management_system.shared.notification.exception.NoNotificationFoundException;
 import com.judtih.judith_management_system.shared.notification.repository.NotificationRepository;
 import com.judtih.judith_management_system.shared.notification.repository.UserNotificationRepository;
 import jakarta.transaction.Transactional;
@@ -52,6 +53,54 @@ public class NotificationService {
         int count = userNotificationList.size();
 
         return createNotificationResponse(notification, count);
+
+    }
+
+    public List<UserNotificationResponse> getNotificationForUser(Long userId) {
+        List<UserNotification> userNotifications = userNotificationRepository.findByUserId(userId);
+
+        List<UserNotificationResponse> userNotificationResponses = new ArrayList<>();
+
+        for (UserNotification notification: userNotifications) {
+            UserNotificationResponse response = createUserNotificationResponse(notification);
+            userNotificationResponses.add(response);
+        }
+
+        return userNotificationResponses;
+    }
+
+    public List<UserNotificationResponse> getUnreadNotifications(Long userId) {
+        List<UserNotification> userNotifications = userNotificationRepository.findByUserIdAndIsReadFalse(userId);
+
+        List<UserNotificationResponse> userNotificationResponses = new ArrayList<>();
+
+        return userNotifications.stream()
+                .map(this::createUserNotificationResponse)
+                .toList();
+    }
+
+
+    public int getUnreadCount(Long userId) {
+        return userNotificationRepository.countByUserIdAndIsReadFalse(userId);
+    }
+
+
+    @Transactional
+    public void markAsRead(Long userNotificationId) {
+        UserNotification userNotification = userNotificationRepository.findById(userNotificationId)
+                .orElseThrow(() -> new NoNotificationFoundException("No notification was found with id: " + userNotificationId, 404, "Not Found"));
+
+        userNotification.markAsRead();
+    }
+
+
+    @Transactional
+    public void markAllAsRead(Long userId) {
+        List<UserNotification> userNotifications = userNotificationRepository.findByUserIdAndIsReadFalse(userId);
+
+        for (UserNotification notification : userNotifications) {
+            notification.markAsRead();
+        }
 
     }
 
