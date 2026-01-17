@@ -30,30 +30,30 @@ public class UserService {
                 .build();
 
         User saved = userRepository.save(user);
-        return UserResponse.from(saved);
+        return createUserResponse(saved);
     }
 
     public UserResponse getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
-        return UserResponse.from(user);
+        return createUserResponse(user);
     }
 
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll().stream()
-                .map(UserResponse::from)
+                .map(this::createUserResponse)
                 .toList();
     }
 
     public List<UserResponse> getActiveUsers() {
         return userRepository.findByStatusAndIsAdminFalse(UserStatus.ACTIVE).stream()
-                .map(UserResponse::from)
+                .map(this::createUserResponse)
                 .toList();
     }
 
     public List<UserResponse> getGraduatedUsers() {
         return userRepository.findByStatusAndIsAdminFalse(UserStatus.GRADUATED).stream()
-                .map(UserResponse::from)
+                .map(this::createUserResponse)
                 .toList();
     }
 
@@ -63,7 +63,7 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
 
         user.updateInfo(request.getName(), request.getPhoneNumber());
-        return UserResponse.from(user);
+        return createUserResponse(user);
     }
 
     @Transactional
@@ -72,7 +72,7 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
 
         user.graduate();
-        return UserResponse.from(user);
+        return createUserResponse(user);
     }
 
     @Transactional
@@ -85,6 +85,19 @@ public class UserService {
         }
 
         user.reactivate();
-        return UserResponse.from(user);
+        return createUserResponse(user);
+    }
+
+    private UserResponse createUserResponse(User user) {
+        return UserResponse.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .studentNumber(user.getStudentNumber())
+                .phoneNumber(user.getPhoneNumber())
+                .isAdmin(user.isAdmin())
+                .status(user.getStatus())
+                .createdAt(user.getCreatedAt())
+                .graduatedAt(user.getGraduatedAt())
+                .build();
     }
 }
