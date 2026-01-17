@@ -1,8 +1,13 @@
 package com.judtih.judith_management_system.shared.notification.service;
 
-import com.judtih.judith_management_system.domain.user.User;
-import com.judtih.judith_management_system.domain.user.UserRepository;
-import com.judtih.judith_management_system.domain.user.UserStatus;
+import com.judtih.judith_management_system.domain.season.Season;
+import com.judtih.judith_management_system.domain.season.SeasonRepository;
+import com.judtih.judith_management_system.domain.season.Status;
+import com.judtih.judith_management_system.domain.user.entity.User;
+import com.judtih.judith_management_system.domain.user.entity.UserSeason;
+import com.judtih.judith_management_system.domain.user.repository.UserRepository;
+import com.judtih.judith_management_system.domain.user.enums.UserStatus;
+import com.judtih.judith_management_system.domain.user.repository.UserSeasonRepository;
 import com.judtih.judith_management_system.shared.notification.dto.NotificationResponse;
 import com.judtih.judith_management_system.shared.notification.dto.UserNotificationRequest;
 import com.judtih.judith_management_system.shared.notification.dto.UserNotificationResponse;
@@ -16,7 +21,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -24,7 +31,8 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserNotificationRepository userNotificationRepository;
-    private final UserRepository userRepository;
+    private final UserSeasonRepository userSeasonRepository;
+    private final SeasonRepository seasonRepository;
 
 
     @Transactional
@@ -40,7 +48,27 @@ public class NotificationService {
 
         notificationRepository.save(notification);
 
-        List<User> targetUsers = userRepository.findByRoleInAndStatus(request.getTargetRoles(), UserStatus.ACTIVE);
+        List<User> targetUsers = new ArrayList<>();
+
+        Optional<Season> activeSeason = seasonRepository.findByStatus(Status.ACTIVE);
+
+        if (activeSeason.isPresent()) {
+            List<UserSeason> seasonUsers = userSeasonRepository.findBySeasonId(activeSeason.get().getId());
+
+            for (UserSeason userSeason : seasonUsers) {
+
+                boolean hasTargetRole = !Collections.disjoint(userSeason.getUserRoles(), request.getTargetRoles());
+
+                boolean isActive = userSeason.getUser().getStatus() == UserStatus.ACTIVE;
+                boolean notAlreadyAdded = !targetUsers.contains(userSeason.getUser());
+
+                if (hasTargetRole && isActive && notAlreadyAdded) {
+                    targetUsers.add(userSeason.getUser());
+                }
+            }
+        }
+
+
         List<UserNotification> userNotificationList = new ArrayList<>();
 
         for(User user : targetUsers) {

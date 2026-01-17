@@ -1,8 +1,7 @@
 package com.judtih.judith_management_system.shared.notification.entity;
 
-import com.judtih.judith_management_system.domain.user.User;
+import com.judtih.judith_management_system.domain.user.entity.User;
 import jakarta.persistence.*;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

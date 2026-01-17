@@ -1,6 +1,6 @@
 package com.judtih.judith_management_system.shared.notification.dto;
 
-import com.judtih.judith_management_system.domain.user.UserRole;
+import com.judtih.judith_management_system.domain.user.enums.UserRole;
 import com.judtih.judith_management_system.shared.notification.enums.NotificationType;
 import com.judtih.judith_management_system.shared.notification.enums.SourceType;
 import lombok.AllArgsConstructor;

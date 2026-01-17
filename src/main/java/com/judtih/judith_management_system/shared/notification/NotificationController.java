@@ -18,6 +18,7 @@ public class NotificationController {
     private final NotificationService service;
 
     //admin specific controller
+    //for creating custom notification. same service is used for automated notification.
     @PostMapping
     public ResponseEntity<NotificationResponse> createNotification(@RequestBody UserNotificationRequest request) {
         return ResponseEntity.status(201).body(service.createNotification(request));
