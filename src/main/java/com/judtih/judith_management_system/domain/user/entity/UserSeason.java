@@ -1,7 +1,7 @@
 package com.judtih.judith_management_system.domain.user.entity;
 
 import com.judtih.judith_management_system.domain.season.Season;
-import com.judtih.judith_management_system.domain.user.UserRole;
+import com.judtih.judith_management_system.domain.user.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
