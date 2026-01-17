@@ -13,11 +13,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class Season {
 
-    @Builder
-    public Season(String name, LocalDate startDate, LocalDate endDate) {
+    public Season(String name) {
         this.name = name;
-        this.startDate = startDate;
-        this.endDate = endDate;
     }
 
     @Id
@@ -49,14 +46,14 @@ public class Season {
     }
 
 
-    public void updateSeason (String name, LocalDate startDate, LocalDate eventDate) {
+    public void updateSeason (String name, LocalDate eventDate) {
         if(name != null) this.name = name;
-        if(startDate != null) this.startDate = startDate;
         if(eventDate != null) this.eventDate = eventDate;
     }
 
     public void activateSeason () {
         this.status = Status.ACTIVE;
+        this.startDate = LocalDate.now();
     }
 
     public void closeSeason () {

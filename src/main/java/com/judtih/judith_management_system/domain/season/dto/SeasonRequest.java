@@ -16,8 +16,6 @@ public class SeasonRequest {
 
     private Long id;
     private String name;
-    private LocalDate startDate;
     private LocalDate eventDate;
-    private LocalDate endDate;
 
 }

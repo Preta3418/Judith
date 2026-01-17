@@ -28,7 +28,7 @@ public class SeasonService {
 
 
 
-        Season season = new Season(request.getName(), request.getStartDate(), request.getEndDate());
+        Season season = new Season(request.getName());
         seasonRepository.save(season);
 
         return createSeasonResponse(season);
@@ -76,7 +76,7 @@ public class SeasonService {
         Season season = seasonRepository.findById(request.getId())
                 .orElseThrow(() -> new NoSeasonFoundException("UpdateSeason: went wrong somewhere. No Event was found with id: " + request.getId(), 404, "Not Found")) ;
 
-        season.updateSeason(request.getName(), request.getStartDate(), request.getEventDate());
+        season.updateSeason(request.getName(), request.getEventDate());
 
         return createSeasonResponse(season);
     }
