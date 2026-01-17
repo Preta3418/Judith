@@ -1,5 +1,6 @@
-package com.judtih.judith_management_system.domain.user;
+package com.judtih.judith_management_system.domain.user.repository;
 
+import com.judtih.judith_management_system.domain.user.enums.UserStatus;
 import com.judtih.judith_management_system.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -11,6 +12,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findByStatus(UserStatus status);
 
-    List<User> findByRoleInAndStatus(List<UserRole> roles, UserStatus status);
-
+    List<User> findByStatusAndIsAdminFalse(UserStatus status);
 }

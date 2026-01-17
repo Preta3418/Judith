@@ -1,6 +1,6 @@
 package com.judtih.judith_management_system.domain.user.entity;
 
-import com.judtih.judith_management_system.domain.user.UserStatus;
+import com.judtih.judith_management_system.domain.user.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -52,6 +52,21 @@ public class User {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+    }
+
+    public void updateInfo(String name, String phoneNumber) {
+        if (name != null) this.name = name;
+        if (phoneNumber != null) this.phoneNumber = phoneNumber.replaceAll("-", "");
+    }
+
+    public void graduate() {
+        this.status = UserStatus.GRADUATED;
+        this.graduatedAt = LocalDateTime.now();
+    }
+
+    public void reactivate() {
+        this.status = UserStatus.ACTIVE;
+        this.graduatedAt = null;
     }
 }
 
