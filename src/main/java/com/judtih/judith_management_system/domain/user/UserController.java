@@ -1,5 +1,6 @@
 package com.judtih.judith_management_system.domain.user;
 
+import com.judtih.judith_management_system.domain.user.entity.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

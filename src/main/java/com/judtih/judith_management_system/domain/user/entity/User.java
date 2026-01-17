@@ -1,27 +1,24 @@
-package com.judtih.judith_management_system.domain.user;
+package com.judtih.judith_management_system.domain.user.entity;
 
+import com.judtih.judith_management_system.domain.user.UserStatus;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 
 @Entity
 @Getter
-@Setter
 @Table(name = "users")
+@NoArgsConstructor
 public class User {
 
-    public User() {
-    }
-
-    public User(String name, String studentNumber, String phoneNumber, UserRole role) {
+    @Builder
+    public User(String name, String studentNumber, String phoneNumber, boolean isAdmin) {
         this.name = name;
         this.studentNumber = studentNumber;
         this.phoneNumber = phoneNumber;
-        this.role = role;
+        this.isAdmin = isAdmin;
     }
 
     @Id
@@ -37,10 +34,9 @@ public class User {
     @Column(name = "phone_number", unique = true)
     private String phoneNumber;
 
-
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private UserRole role;
+    private boolean isAdmin ;
+
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

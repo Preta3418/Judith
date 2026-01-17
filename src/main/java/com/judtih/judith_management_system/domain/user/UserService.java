@@ -1,5 +1,6 @@
 package com.judtih.judith_management_system.domain.user;
 
+import com.judtih.judith_management_system.domain.user.entity.User;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
