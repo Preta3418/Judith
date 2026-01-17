@@ -3,8 +3,9 @@ package com.judtih.judith_management_system.domain.message;
 import com.judtih.judith_management_system.domain.message.dto.MessageResult;
 import com.judtih.judith_management_system.domain.message.entity.Message;
 import com.judtih.judith_management_system.domain.message.entity.MessageFailure;
-import com.judtih.judith_management_system.domain.user.User;
-import com.judtih.judith_management_system.domain.user.UserService;
+import com.judtih.judith_management_system.domain.user.entity.User;
+import com.judtih.judith_management_system.domain.user.enums.UserStatus;
+import com.judtih.judith_management_system.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,7 @@ import java.util.Optional;
 public class MessageService {
 
     private final MessageRepository messageRepository;
-    private final UserService userService;
+    private final UserRepository userRepository;
     private final SnsClient snsClient;
 
 
@@ -33,7 +34,7 @@ public class MessageService {
         int successCount = 0;
         int failureCount = 0;
 
-        List<User> gradUser = userService.getGraduatedUsers();
+        List<User> gradUser = userRepository.findByStatus(UserStatus.GRADUATED);
         List<MessageFailure> failureList = new ArrayList<>();
 
         Message message = Message.builder().messageContent(messageContent).build();
