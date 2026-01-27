@@ -19,7 +19,7 @@ public class JwtUtil {
     public JwtUtil(
             @Value("${jwt.secret}") String secret,
             @Value("${jwt.expiration-ms}") long expirationMs) {
-        // Create a secure key from the secret string
+
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
         this.expirationMs = expirationMs;
     }
@@ -40,7 +40,7 @@ public class JwtUtil {
 
     }
 
-    // Validate token
+
     public boolean validateToken(String token) {
         try {
             Jwts.parser()
@@ -53,25 +53,25 @@ public class JwtUtil {
         }
     }
 
-    // Extract userId from token
+
     public Long getUserIdFromToken(String token) {
         Claims claims = getClaims(token);
         return claims.get("userId", Long.class);
     }
 
-    // Extract studentNumber from token
+
     public String getStudentNumberFromToken(String token) {
         Claims claims = getClaims(token);
         return claims.getSubject();
     }
 
-    // Extract isAdmin from token
+
     public boolean getIsAdminFromToken(String token) {
         Claims claims = getClaims(token);
         return claims.get("isAdmin", Boolean.class);
     }
 
-    // Helper to parse claims
+
     private Claims getClaims(String token) {
         return Jwts.parser()
                 .verifyWith(secretKey)
