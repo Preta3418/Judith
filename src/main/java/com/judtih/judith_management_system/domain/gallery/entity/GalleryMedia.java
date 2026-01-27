@@ -1,2 +1,4 @@
-package com.judtih.judith_management_system.domain.gallery.entity;public class GalleryMedia {
+package com.judtih.judith_management_system.domain.gallery.entity;
+
+public class GalleryMedia {
 }

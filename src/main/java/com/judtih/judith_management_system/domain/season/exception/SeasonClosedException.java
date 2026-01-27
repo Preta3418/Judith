@@ -1,6 +1,6 @@
 package com.judtih.judith_management_system.domain.season.exception;
 
-import com.judtih.judith_management_system.shared.exception.BusinessException;
+import com.judtih.judith_management_system.global.exception.BusinessException;
 
 public class SeasonClosedException extends BusinessException {
 
