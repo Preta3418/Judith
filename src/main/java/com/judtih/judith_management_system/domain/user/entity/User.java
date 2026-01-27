@@ -14,11 +14,12 @@ import java.time.LocalDateTime;
 public class User {
 
     @Builder
-    public User(String name, String studentNumber, String phoneNumber, boolean isAdmin) {
+    public User(String name, String studentNumber, String phoneNumber, String password, boolean isAdmin) {
         this.name = name;
         this.studentNumber = studentNumber;
         this.phoneNumber = phoneNumber;
         this.isAdmin = isAdmin;
+        this.password = password;
     }
 
     @Id
@@ -28,11 +29,17 @@ public class User {
     @Column(nullable = false, length = 50)
     private String name;
 
-    @Column(name = "student_number", unique = true)
+    @Column(nullable = false)
+    private String password;
+
+    @Column(name = "student_number", unique = true, nullable = false)
     private String studentNumber;
 
     @Column(name = "phone_number", unique = true)
     private String phoneNumber;
+
+    @Column(nullable = false)
+    private boolean passwordChanged = false;
 
     @Column(nullable = false)
     private boolean isAdmin ;
@@ -67,6 +74,11 @@ public class User {
     public void reactivate() {
         this.status = UserStatus.ACTIVE;
         this.graduatedAt = null;
+    }
+
+    public void updatePassword(String encodedPassword) {
+        this.password = encodedPassword;
+        this.passwordChanged = true;
     }
 }
 
