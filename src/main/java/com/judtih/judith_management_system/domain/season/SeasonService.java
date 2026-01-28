@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -53,6 +54,10 @@ public class SeasonService {
                 .orElseThrow(() -> new NoActiveSeasonException("there is no active season", 404, "Not Found"));
 
         return createSeasonResponse(season);
+    }
+
+    public Optional<Season> findCurrentSeason() {
+        return seasonRepository.findByStatus(Status.ACTIVE);
     }
 
 

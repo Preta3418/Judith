@@ -88,13 +88,13 @@ public class UserSeasonService {
     }
 
     public boolean hasFullAccessRole(Long userId, Long seasonId) {
+        Set<UserRole> fullAccessRoles = Set.of(
+                UserRole.LEADER, UserRole.PRODUCER, UserRole.SUB_PRODUCER, UserRole.PLANNER
+        );
 
-        Set<UserRole> fullAccessRole = Set.of(UserRole.LEADER, UserRole.PRODUCER, UserRole.SUB_PRODUCER, UserRole.PLANNER);
-        UserSeason userSeason = findUserSeasonOrThrow(userId, seasonId);
-
-
-        return userSeason.getUser().isAdmin() || !Collections.disjoint(userSeason.getUserRoles(), fullAccessRole);
-
+        return userSeasonRepository.findByUserIdAndSeasonId(userId, seasonId)
+                .map(userSeason -> !Collections.disjoint(userSeason.getUserRoles(), fullAccessRoles))
+                .orElse(false);
     }
 
 

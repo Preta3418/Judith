@@ -25,14 +25,14 @@ public class JwtUtil {
     }
 
 
-    public String generateToken(Long userId, String studentNumber, boolean isAdmin) {
+    public String generateToken(Long userId, String studentNumber, boolean hasFullAccess) {
         Date now = new Date();
         Date expireDate = new Date(now.getTime() + expirationMs);
 
         return Jwts.builder()
                 .subject(studentNumber)
                 .claim("userId", userId)
-                .claim("isAdmin", isAdmin)
+                .claim("hasFullAccess", hasFullAccess)
                 .issuedAt(now)
                 .expiration(expireDate)
                 .signWith(secretKey)
@@ -66,9 +66,9 @@ public class JwtUtil {
     }
 
 
-    public boolean getIsAdminFromToken(String token) {
+    public boolean getHasFullAccess(String token) {
         Claims claims = getClaims(token);
-        return claims.get("isAdmin", Boolean.class);
+        return claims.get("hasFullAccess", Boolean.class);
     }
 
 

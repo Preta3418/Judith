@@ -22,10 +22,13 @@ public class UserService {
 
     @Transactional
     public UserResponse createUser(UserRequest request) {
+        String defaultPassword = passwordEncoder.encode(request.getStudentNumber());
+
         User user = User.builder()
                 .name(request.getName())
                 .studentNumber(request.getStudentNumber())
                 .phoneNumber(request.getPhoneNumber().replaceAll("-", ""))
+                .password(defaultPassword)
                 .isAdmin(request.isAdmin())
                 .build();
 
