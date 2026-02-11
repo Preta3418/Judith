@@ -7,8 +7,10 @@ import com.judtih.judith_management_system.domain.user.repository.UserRepository
 import com.judtih.judith_management_system.domain.user.service.UserSeasonService;
 import com.judtih.judith_management_system.global.security.dto.LoginRequest;
 import com.judtih.judith_management_system.global.security.dto.LoginResponse;
+import com.judtih.judith_management_system.global.security.event.UserLoggedInEvent;
 import com.judtih.judith_management_system.global.security.exception.WrongUsernamePasswordException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +25,7 @@ public class AuthController {
     private final SeasonService seasonService;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final ApplicationEventPublisher publisher;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
@@ -60,6 +63,8 @@ public class AuthController {
                 .hasFullAccess(hasFullAccess)
                 .passwordChanged(user.isPasswordChanged())
                 .build();
+
+        publisher.publishEvent(new UserLoggedInEvent(user));
 
 
         return ResponseEntity.ok(response);

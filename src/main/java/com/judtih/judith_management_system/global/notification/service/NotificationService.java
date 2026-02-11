@@ -12,6 +12,8 @@ import com.judtih.judith_management_system.global.notification.dto.UserNotificat
 import com.judtih.judith_management_system.global.notification.dto.UserNotificationResponse;
 import com.judtih.judith_management_system.global.notification.entity.Notification;
 import com.judtih.judith_management_system.global.notification.entity.UserNotification;
+import com.judtih.judith_management_system.global.notification.enums.NotificationType;
+import com.judtih.judith_management_system.global.notification.enums.SourceType;
 import com.judtih.judith_management_system.global.notification.exception.NoNotificationFoundException;
 import com.judtih.judith_management_system.global.notification.repository.NotificationRepository;
 import com.judtih.judith_management_system.global.notification.repository.UserNotificationRepository;
@@ -82,6 +84,16 @@ public class NotificationService {
         return createNotificationResponse(notification, count);
 
     }
+
+    @Transactional
+    public void createNotificationForOneUser(User user, Notification notification) {
+        notificationRepository.save(notification);
+
+        UserNotification userNotification = new UserNotification(user, notification);
+        userNotificationRepository.save(userNotification);
+    }
+
+
 
     public List<UserNotificationResponse> getNotificationForUser(Long userId) {
         List<UserNotification> userNotifications = userNotificationRepository.findByUserId(userId);
