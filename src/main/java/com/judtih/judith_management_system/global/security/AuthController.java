@@ -11,10 +11,7 @@ import com.judtih.judith_management_system.global.security.exception.WrongUserna
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/public/auth")
@@ -56,12 +53,17 @@ public class AuthController {
                 hasFullAccess
         );
 
+        LoginResponse response = LoginResponse.builder()
+                .token(token)
+                .userId(user.getId())
+                .name(user.getName())
+                .hasFullAccess(hasFullAccess)
+                .passwordChanged(user.isPasswordChanged())
+                .build();
 
-        return ResponseEntity.ok(new LoginResponse(
-                token,
-                user.getId(),
-                user.getName(),
-                hasFullAccess
-        ));
+
+        return ResponseEntity.ok(response);
     }
+
+
 }
