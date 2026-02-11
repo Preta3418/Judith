@@ -11,43 +11,45 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/notifications")
 @RequiredArgsConstructor
 public class NotificationController {
 
     private final NotificationService service;
 
-    //admin specific controller
-    //for creating custom notification. same service is used for automated notification.
-    @PostMapping
+
+    // ==================== Admin Endpoints ====================
+
+    @PostMapping("/api/admin/notifications")
     public ResponseEntity<NotificationResponse> createNotification(@RequestBody UserNotificationRequest request) {
         return ResponseEntity.status(201).body(service.createNotification(request));
     }
 
-    //User controller
-    //need to change every userId to auth when auth has been made.
-    @GetMapping("/{userId}")
+
+    // ==================== Member Endpoints ====================
+    // TODO: Add @PreAuthorize to ensure users can only access their own notifications
+
+    @GetMapping("/api/notifications/{userId}")
     public ResponseEntity<List<UserNotificationResponse>> getNotificationsForUser(@PathVariable Long userId) {
         return ResponseEntity.ok(service.getNotificationForUser(userId));
     }
 
-    @GetMapping("/{userId}/unread")
+    @GetMapping("/api/notifications/{userId}/unread")
     public ResponseEntity<List<UserNotificationResponse>> getUnreadNotifications(@PathVariable Long userId) {
         return ResponseEntity.ok(service.getUnreadNotifications(userId));
     }
 
-    @GetMapping("/{userId}/unread/count")
+    @GetMapping("/api/notifications/{userId}/unread/count")
     public ResponseEntity<Integer> getUnreadCount(@PathVariable Long userId) {
         return ResponseEntity.ok(service.getUnreadCount(userId));
     }
 
-    @PostMapping("/{userNotificationId}/read")
+    @PostMapping("/api/notifications/{userNotificationId}/read")
     public ResponseEntity<Void> markAsRead(@PathVariable Long userNotificationId) {
         service.markAsRead(userNotificationId);
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/{userId}/read-all")
+    @PostMapping("/api/notifications/{userId}/read-all")
     public ResponseEntity<Void> markAllAsRead(@PathVariable Long userId) {
         service.markAllAsRead(userId);
         return ResponseEntity.noContent().build();

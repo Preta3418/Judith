@@ -11,71 +11,71 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/seasons")
 public class SeasonController {
 
     private final SeasonService service;
 
 
-    //admin ///////////////////////////////////////////////////////////////
-    @PostMapping()
+    // ==================== Public Endpoints ====================
+
+    @GetMapping("/api/public/seasons/current")
+    public ResponseEntity<SeasonResponse> getCurrentSeason() {
+
+        return ResponseEntity.ok(service.getCurrentSeason());
+    }
+
+    @GetMapping("/api/public/seasons/countdown")
+    public ResponseEntity<CountdownResponse> getCountDown() {
+
+        return ResponseEntity.ok(service.getCountDown());
+    }
+
+
+    // ==================== Admin Endpoints ====================
+
+    @GetMapping("/api/admin/seasons")
+    public ResponseEntity<List<SeasonResponse>> getAllSeason() {
+
+        return ResponseEntity.ok(service.getAllSeason());
+    }
+
+    @GetMapping("/api/admin/seasons/{id}")
+    public ResponseEntity<SeasonResponse> getSeason(@PathVariable Long id) {
+
+        return ResponseEntity.ok(service.getSeason(id));
+    }
+
+    @PostMapping("/api/admin/seasons")
     public ResponseEntity<SeasonResponse> createSeason(@RequestBody SeasonRequest request) {
 
         return ResponseEntity.status(201).body(service.createSeason(request));
 
     }
 
-    @PutMapping
+    @PutMapping("/api/admin/seasons")
     public ResponseEntity<SeasonResponse> updateSeason(@RequestBody SeasonRequest request) {
 
         return ResponseEntity.status(200).body(service.updateSeason(request));
 
     }
 
-    @PostMapping("/{id}/activate")
+    @PostMapping("/api/admin/seasons/{id}/activate")
     public ResponseEntity<SeasonResponse> activateSeason(@PathVariable Long id) {
 
         return ResponseEntity.status(200).body(service.activateSeason(id));
     }
 
-    @PostMapping("/{id}/close")
+    @PostMapping("/api/admin/seasons/{id}/close")
     public ResponseEntity<SeasonResponse> closeSeason(@PathVariable Long id) {
 
         return ResponseEntity.status(200).body(service.closeSeason(id));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/api/admin/seasons/{id}")
     public void deleteSeason(@PathVariable Long id) {
         service.deleteSeason(id);
 
         //should not do anything right now
-    }
-
-    @GetMapping
-    public ResponseEntity<List<SeasonResponse>> getAllSeason() {
-
-        return ResponseEntity.ok(service.getAllSeason());
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<SeasonResponse> getSeason(@PathVariable Long id) {
-
-        return ResponseEntity.ok(service.getSeason(id));
-    }
-
-
-    //user endpoint
-
-    @GetMapping("/current")
-    public ResponseEntity<SeasonResponse> getCurrentSeason() {
-
-        return ResponseEntity.ok(service.getCurrentSeason());
-    }
-
-    @GetMapping("/countdown")
-    public ResponseEntity<CountdownResponse> getCountDown() {
-
-        return ResponseEntity.ok(service.getCountDown());
     }
 
 }

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
 public class UserController {
 
@@ -65,6 +65,5 @@ public class UserController {
     public ResponseEntity<UserResponse> reactivateUser(@PathVariable Long id) {
         return ResponseEntity.ok(userService.reactivateUser(id));
     }
-
 
 }

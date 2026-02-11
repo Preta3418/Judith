@@ -12,7 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
-@RequestMapping("/api/messages")
+@RequestMapping("/api/admin/messages")
 @RequiredArgsConstructor
 public class MessageController {
 
@@ -40,8 +40,5 @@ public class MessageController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-
-
-
 
 }

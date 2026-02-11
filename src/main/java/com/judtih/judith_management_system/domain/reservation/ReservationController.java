@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/theatre")
 @RequiredArgsConstructor
 public class ReservationController {
 
@@ -22,65 +21,23 @@ public class ReservationController {
     private final ReservationService reservationService;
 
 
-    //Admin Controller//////////////////////////////////////////////////////////////
+    // ==================== Public Endpoints ====================
 
-    @PostMapping("/admin/events")
-    public ResponseEntity<EventResponse> createEvent (@RequestBody EventRequest eventRequest) {
-        return ResponseEntity.status(201).body(eventService.createEvent(eventRequest));
-    }
-
-    @PostMapping("/admin/schedule")
-    public ResponseEntity<EventScheduleResponse> createSchedule (@RequestBody EventScheduleRequest scheduleRequest) {
-        return ResponseEntity.status(201).body(eventService.createEventSchedule(scheduleRequest));
-    }
-
-    @PutMapping("/admin/events/{eventId}")
-    public ResponseEntity<EventResponse> updateEvent (@PathVariable Long eventId, @RequestBody EventRequest request) {
-        EventResponse response = eventService.updateEvent(eventId, request);
-
-        return ResponseEntity.ok(response);
-    }
-
-    @PutMapping("/admin/schedule/{scheduleId}")
-    public ResponseEntity<EventScheduleResponse> updateSchedule (@PathVariable Long scheduleId, @RequestBody EventScheduleRequest scheduleRequest) {
-        EventScheduleResponse response = eventService.updateSchedule(scheduleId, scheduleRequest);
-
-        return ResponseEntity.status(200).body(response);
-    }
-
-    @DeleteMapping("/admin/events/{eventId}")
-    public ResponseEntity<Void> deleteEvent (@PathVariable Long eventId) {
-        eventService.deleteEventById(eventId);
-
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/admin/schedule/{scheduleId}/reservations")
-    public ResponseEntity<List<ReservationResponse>> getAllReservation (@PathVariable Long scheduleId) {
-        List<ReservationResponse> response = reservationService.getReservationByEventScheduleId(scheduleId);
-
-        return ResponseEntity.ok(response);
-
-    }
-
-
-    //User Controller////////////////////////////////////////////////////////////////
-
-    @GetMapping("/events/{eventId}")
+    @GetMapping("/api/public/events/{eventId}")
     public ResponseEntity<EventResponse> getEvent (@PathVariable Long eventId) {
         EventResponse response = eventService.getEventById(eventId);
 
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/events")
-    public ResponseEntity<List<EventListResponse>> getAllEvent () {
-        List<EventListResponse> response = eventService.getAllEvent();
+    @PostMapping("/api/public/reservations")
+    public ResponseEntity<ReservationResponse> createReservation(@RequestBody ReservationRequest request) {
+        ReservationResponse response = reservationService.createReservation(request);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(201).body(response);
     }
 
-    @GetMapping("/reservations/lookup")
+    @GetMapping("/api/public/reservations/lookup")
     public ResponseEntity<List<ReservationResponse>> getReservation (@RequestParam String phoneNumber) {
 
         List<ReservationResponse> responses = reservationService.getReservation(phoneNumber);
@@ -88,18 +45,63 @@ public class ReservationController {
         return ResponseEntity.ok(responses);
     }
 
-    @PostMapping("/reservations")
-    public ResponseEntity<ReservationResponse> createReservation(@RequestBody ReservationRequest request) {
-        ReservationResponse response = reservationService.createReservation(request);
-
-        return ResponseEntity.status(201).body(response);
-    }
-
-    @DeleteMapping("/reservations")
+    @DeleteMapping("/api/public/reservations")
     public ResponseEntity<Void> deleteReservation(@RequestBody LookUpRequest lookUpRequest) {
         reservationService.deleteReservation(lookUpRequest.getEventScheduleId(), lookUpRequest.getPhoneNumber());
 
         return ResponseEntity.noContent().build();
+    }
+
+
+    // ==================== Member Endpoints ====================
+
+    @GetMapping("/api/events")
+    public ResponseEntity<List<EventListResponse>> getAllEvent () {
+        List<EventListResponse> response = eventService.getAllEvent();
+
+        return ResponseEntity.ok(response);
+    }
+
+
+    // ==================== Admin Endpoints ====================
+
+    @PostMapping("/api/admin/events")
+    public ResponseEntity<EventResponse> createEvent (@RequestBody EventRequest eventRequest) {
+        return ResponseEntity.status(201).body(eventService.createEvent(eventRequest));
+    }
+
+    @PutMapping("/api/admin/events/{eventId}")
+    public ResponseEntity<EventResponse> updateEvent (@PathVariable Long eventId, @RequestBody EventRequest request) {
+        EventResponse response = eventService.updateEvent(eventId, request);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/api/admin/events/{eventId}")
+    public ResponseEntity<Void> deleteEvent (@PathVariable Long eventId) {
+        eventService.deleteEventById(eventId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/api/admin/schedule")
+    public ResponseEntity<EventScheduleResponse> createSchedule (@RequestBody EventScheduleRequest scheduleRequest) {
+        return ResponseEntity.status(201).body(eventService.createEventSchedule(scheduleRequest));
+    }
+
+    @PutMapping("/api/admin/schedule/{scheduleId}")
+    public ResponseEntity<EventScheduleResponse> updateSchedule (@PathVariable Long scheduleId, @RequestBody EventScheduleRequest scheduleRequest) {
+        EventScheduleResponse response = eventService.updateSchedule(scheduleId, scheduleRequest);
+
+        return ResponseEntity.status(200).body(response);
+    }
+
+    @GetMapping("/api/admin/schedule/{scheduleId}/reservations")
+    public ResponseEntity<List<ReservationResponse>> getAllReservation (@PathVariable Long scheduleId) {
+        List<ReservationResponse> response = reservationService.getReservationByEventScheduleId(scheduleId);
+
+        return ResponseEntity.ok(response);
+
     }
 
 

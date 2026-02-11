@@ -31,18 +31,12 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/theatre/events/**").permitAll()
-                        .requestMatchers("/api/theatre/reservations/**").permitAll()
-                        .requestMatchers("/api/seasons/current").permitAll()
-                        .requestMatchers("/api/seasons/countdown").permitAll()
 
-                        // Admin only (FullAccessMembers)
-                        .requestMatchers("/api/theatre/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/users/**").hasRole("ADMIN")
-                        .requestMatchers("/api/seasons/**").hasRole("ADMIN")
-                        .requestMatchers("/api/messages/**").hasRole("ADMIN")
+                        .requestMatchers("/api/public/**").permitAll()
+
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        .requestMatchers("/", "/index.html", "/public/**", "/css/**", "/js/**", "/images/**").permitAll()
 
                         .anyRequest().authenticated()
                 )
