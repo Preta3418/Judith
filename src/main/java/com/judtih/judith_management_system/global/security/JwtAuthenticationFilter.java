@@ -37,10 +37,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        Long userId = jwtUtil.getUserIdFromToken(token);
+
         String studentNumber = jwtUtil.getStudentNumberFromToken(token);
         boolean hasFullAccess = jwtUtil.getHasFullAccess(token);
 
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(studentNumber, null, List.of(new SimpleGrantedAuthority(hasFullAccess ? "ROLE_ADMIN" : "ROLE_USER")));
+        UsernamePasswordAuthenticationToken authentication
+                = new UsernamePasswordAuthenticationToken(
+                        studentNumber, null,
+                List.of(new SimpleGrantedAuthority(hasFullAccess ? "ROLE_ADMIN" : "ROLE_USER")));
+
+        authentication.setDetails(userId);
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
