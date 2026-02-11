@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Judith - 공연</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Overlay (mobile) -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="images/logo-symbol-dark.png" alt="Judith">
+                    <img src="images/logo-text-dark.png" alt="Judith" class="sidebar-logo-text">
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">메뉴</div>
+                    <a href="main.html" class="nav-link">
+                        <span class="icon">&#x1F3E0;</span>
+                        <span>대시보드</span>
+                    </a>
+                    <a href="user.html" class="nav-link">
+                        <span class="icon">&#x1F465;</span>
+                        <span>부원 관리</span>
+                    </a>
+                    <a href="reservation.html" class="nav-link active">
+                        <span class="icon">&#x1F3AD;</span>
+                        <span>공연</span>
+                    </a>
+                </div>
+
+                <div class="nav-section admin-only">
+                    <div class="nav-section-title">관리자</div>
+                    <a href="season.html" class="nav-link">
+                        <span class="icon">&#x1F4C5;</span>
+                        <span>학기</span>
+                    </a>
+                    <a href="message.html" class="nav-link">
+                        <span class="icon">&#x1F4AC;</span>
+                        <span>문자</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-menu">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-info">
+                        <div class="user-name" id="userName">사용자</div>
+                        <div class="user-role" id="userRole">부원</div>
+                    </div>
+                </div>
+                <button class="btn btn-ghost btn-sm" onclick="showPasswordChangeModal()" style="width: 100%; margin-top: 8px;">
+                    비밀번호 변경
+                </button>
+                <button class="btn btn-ghost btn-sm" onclick="logout()" style="width: 100%; margin-top: 4px;">
+                    로그아웃
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menuToggle">&#x2630;</button>
+                    <h1 class="page-title">공연</h1>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-primary admin-only" onclick="openCreateEventModal()">
+                        + 새 공연
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Container -->
+            <div class="page-container">
+                <div id="eventList" class="grid grid-cols-3">
+                    <div class="loading" style="grid-column: 1 / -1;"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Event Detail Modal (User) -->
+    <div class="modal-overlay" id="eventDetailModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="eventTitle">공연</h3>
+                <button class="modal-close" onclick="closeModal('eventDetailModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="eventPosterContainer" class="mb-16" style="display: none;">
+                    <img id="eventPoster" src="" alt="공연 포스터" style="width: 100%; border-radius: var(--radius); max-height: 200px; object-fit: cover;">
+                </div>
+
+                <div class="mb-24">
+                    <p id="eventDescription" class="text-secondary"></p>
+                </div>
+
+                <div class="flex justify-between items-center mb-12" style="padding-bottom: 12px; border-bottom: 1px solid var(--border-light);">
+                    <span class="text-secondary">장소</span>
+                    <span id="eventLocation">-</span>
+                </div>
+                <div class="flex justify-between items-center mb-24" style="padding-bottom: 12px; border-bottom: 1px solid var(--border-light);">
+                    <span class="text-secondary">좌석 수</span>
+                    <span id="eventCapacity">-</span>
+                </div>
+
+                <h4 class="mb-12">일정 선택</h4>
+                <div class="list" id="eventSchedules" style="border: 1px solid var(--border-light); border-radius: var(--radius);"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reservation Modal -->
+    <div class="modal-overlay" id="reservationModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">예약하기</h3>
+                <button class="modal-close" onclick="closeModal('reservationModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="card mb-24" style="background: var(--gray-50);">
+                    <div class="card-body" style="padding: 16px;">
+                        <div class="flex justify-between items-center mb-8">
+                            <span class="text-secondary">공연</span>
+                            <span class="font-medium" id="reserveEventName">-</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-secondary">일시</span>
+                            <span id="reserveScheduleDate">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="reservationForm" onsubmit="createReservation(event)">
+                    <div class="form-group">
+                        <label class="form-label required" for="reserveName">이름</label>
+                        <input type="text" class="form-input" id="reserveName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label required" for="reservePhone">전화번호</label>
+                        <input type="tel" class="form-input" id="reservePhone" placeholder="010-1234-5678" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label required" for="reserveTickets">인원</label>
+                        <input type="number" class="form-input" id="reserveTickets" min="1" max="10" value="1" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('reservationModal')">취소</button>
+                <button class="btn btn-primary" onclick="document.getElementById('reservationForm').requestSubmit()">예약 확정</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Event Modal (Admin) -->
+    <div class="modal-overlay" id="createEventModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">공연 생성</h3>
+                <button class="modal-close" onclick="closeModal('createEventModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="createEventForm" onsubmit="return false;">
+                    <div class="form-group">
+                        <label class="form-label required" for="createEventTitle">제목</label>
+                        <input type="text" class="form-input" id="createEventTitle" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label required" for="createEventDescription">설명</label>
+                        <textarea class="form-textarea" id="createEventDescription" required></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label required" for="createEventLocation">장소</label>
+                            <input type="text" class="form-input" id="createEventLocation" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required" for="createEventCapacity">좌석 수</label>
+                            <input type="number" class="form-input" id="createEventCapacity" min="1" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="createEventStatus">상태</label>
+                        <select class="form-select" id="createEventStatus">
+                            <option value="CLOSED">예약 마감</option>
+                            <option value="OPEN">예약 가능</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">포스터 이미지</label>
+                        <div class="upload-area" id="createUploadArea" onclick="document.getElementById('createPosterFile').click()">
+                            <input type="file" id="createPosterFile" accept="image/*" style="display:none" onchange="handleFileSelect(this, 'create')">
+                            <div class="upload-placeholder" id="createUploadPlaceholder">
+                                <div class="upload-icon">&#x1F4C1;</div>
+                                <p class="upload-text">이미지를 클릭하거나 드래그하세요</p>
+                            </div>
+                            <div class="upload-preview" id="createUploadPreview" style="display:none">
+                                <img id="createPreviewImg" src="" alt="미리보기" style="max-height: 150px;">
+                                <button type="button" class="btn btn-sm btn-danger mt-8" onclick="clearUpload('create', event)">삭제</button>
+                            </div>
+                        </div>
+                        <input type="hidden" id="createEventPoster">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('createEventModal')">취소</button>
+                <button class="btn btn-primary" onclick="submitCreateEvent()">공연 생성</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Event Modal (Admin) -->
+    <div class="modal-overlay" id="editEventModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">공연 수정</h3>
+                <button class="modal-close" onclick="closeModal('editEventModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editEventId">
+
+                <form id="editEventForm" onsubmit="updateEvent(event)">
+                    <div class="form-group">
+                        <label class="form-label required" for="editEventTitle">제목</label>
+                        <input type="text" class="form-input" id="editEventTitle" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label required" for="editEventDescription">설명</label>
+                        <textarea class="form-textarea" id="editEventDescription" required></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label required" for="editEventLocation">장소</label>
+                            <input type="text" class="form-input" id="editEventLocation" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required" for="editEventCapacity">좌석 수</label>
+                            <input type="number" class="form-input" id="editEventCapacity" min="1" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="editEventStatus">상태</label>
+                        <select class="form-select" id="editEventStatus">
+                            <option value="CLOSED">예약 마감</option>
+                            <option value="OPEN">예약 가능</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">포스터 이미지</label>
+                        <div class="upload-area" id="editUploadArea" onclick="document.getElementById('editPosterFile').click()">
+                            <input type="file" id="editPosterFile" accept="image/*" style="display:none" onchange="handleFileSelect(this, 'edit')">
+                            <div class="upload-placeholder" id="editUploadPlaceholder">
+                                <div class="upload-icon">&#x1F4C1;</div>
+                                <p class="upload-text">이미지를 클릭하거나 드래그하세요</p>
+                            </div>
+                            <div class="upload-preview" id="editUploadPreview" style="display:none">
+                                <img id="editPreviewImg" src="" alt="미리보기" style="max-height: 150px;">
+                                <button type="button" class="btn btn-sm btn-danger mt-8" onclick="clearUpload('edit', event)">삭제</button>
+                            </div>
+                        </div>
+                        <input type="hidden" id="editEventPoster">
+                    </div>
+
+                    <!-- Schedules Section -->
+                    <div class="mt-24">
+                        <div class="flex justify-between items-center mb-12">
+                            <h4>공연 일정</h4>
+                            <button type="button" class="btn btn-sm btn-outline" onclick="openAddScheduleModal()">+ 일정 추가</button>
+                        </div>
+                        <div id="editEventSchedules" style="border: 1px solid var(--border-light); border-radius: var(--radius); overflow: hidden;"></div>
+                    </div>
+
+                    <!-- Public URL Section -->
+                    <div class="mt-24">
+                        <h4 class="mb-12">공개 예매 링크</h4>
+                        <div class="flex gap-8">
+                            <input type="text" class="form-input" id="publicEventUrl" readonly style="background: var(--gray-50);">
+                            <button type="button" class="btn btn-outline" onclick="copyPublicUrl()">복사</button>
+                        </div>
+                        <div class="form-hint">이 링크를 공유하면 누구나 예매할 수 있습니다</div>
+                    </div>
+
+                    <!-- Casting Section -->
+                    <div class="mt-24" id="editCastingSection" style="display: none;">
+                        <div class="flex justify-between items-center mb-12">
+                            <h4>출연진 및 스태프</h4>
+                            <a href="season.html" class="btn btn-sm btn-ghost text-primary">학기 관리에서 편집</a>
+                        </div>
+                        <div id="editCastingContent" style="border: 1px solid var(--border-light); border-radius: var(--radius); padding: 16px; background: var(--gray-50);"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" onclick="deleteEvent()">삭제</button>
+                <button type="button" class="btn btn-primary" onclick="document.getElementById('editEventForm').requestSubmit()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Schedule Modal (Admin) -->
+    <div class="modal-overlay" id="createScheduleModal">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3 class="modal-title">일정 추가</h3>
+                <button class="modal-close" onclick="closeModal('createScheduleModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="scheduleEventId">
+
+                <form id="createScheduleForm" onsubmit="createSchedule(event)">
+                    <div class="form-group">
+                        <label class="form-label required" for="scheduleDate">공연 일시</label>
+                        <input type="datetime-local" class="form-input" id="scheduleDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label required" for="scheduleDeadline">예약 마감일</label>
+                        <input type="datetime-local" class="form-input" id="scheduleDeadline" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('createScheduleModal')">취소</button>
+                <button class="btn btn-primary" onclick="document.getElementById('createScheduleForm').requestSubmit()">일정 추가</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reservations List Modal (Admin) -->
+    <div class="modal-overlay" id="reservationsModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="reservationsModalTitle">예약 목록</h3>
+                <button class="modal-close" onclick="closeModal('reservationsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="scheduleReservations"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/reservation.js"></script>
+    <script>
+        if (!requireAuth()) {
+            // Will redirect to login
+        }
+
+        // Update user info in sidebar
+        const roleNames = {
+            'ADMIN': '관리자', 'LEADER': '회장', 'PRODUCER': '연출',
+            'PLANNER': '기획', 'ACTOR': '배우', 'STAFF': '스태프', 'EXTERNAL': '외부인'
+        };
+
+        const userName = getCurrentUserName();
+        const userRole = getCurrentUserRole();
+        const roleName = roleNames[userRole] || userRole;
+
+        document.getElementById('userName').textContent = userName;
+        document.getElementById('userRole').textContent = roleName;
+        document.getElementById('userAvatar').textContent = userName.charAt(0).toUpperCase();
+
+        // Mobile menu toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+            sidebarOverlay.classList.toggle('active');
+        });
+
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('active');
+        });
+
+        checkPasswordChangeNeeded();
+
+        // Check for create action in URL
+        if (new URLSearchParams(window.location.search).get('action') === 'create') {
+            openModal('createEventModal');
+        }
+    </script>
+</body>
+</html>

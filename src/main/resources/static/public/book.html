@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공연 예매 - Judith</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="book.css">
+</head>
+<body class="public-page">
+    <!-- Header -->
+    <header class="public-header">
+        <div class="public-header-content">
+            <a href="#" class="public-logo">
+                <img src="../images/logo-symbol-light.png" alt="Judith">
+                <span>Judith</span>
+            </a>
+            <button class="btn btn-outline-light" onclick="openMyReservationsModal()">내 예약 확인</button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="public-main" id="mainContent">
+        <!-- Loading State -->
+        <div class="public-loading" id="loadingState">
+            <div class="spinner"></div>
+            <p>공연 정보를 불러오는 중...</p>
+        </div>
+
+        <!-- Error State -->
+        <div class="public-error" id="errorState" style="display: none;">
+            <div class="error-icon">!</div>
+            <h2>공연을 찾을 수 없습니다</h2>
+            <p id="errorMessage">요청하신 공연 정보가 존재하지 않습니다.</p>
+        </div>
+
+        <!-- Event Content (hidden until loaded) -->
+        <div id="eventContent" style="display: none;">
+            <!-- Hero Section -->
+            <section class="hero-section">
+                <div class="hero-backdrop" id="heroBackdrop"></div>
+                <div class="hero-content">
+                    <div class="hero-poster">
+                        <img id="eventPoster" src="" alt="공연 포스터">
+                    </div>
+                    <div class="hero-info">
+                        <div class="event-status-badge" id="eventStatusBadge">예매중</div>
+                        <h1 class="event-title" id="eventTitle">공연 제목</h1>
+                        <div class="event-meta">
+                            <div class="meta-item">
+                                <span class="meta-icon">&#x1F4CD;</span>
+                                <span id="eventLocation">장소</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-icon">&#x1F465;</span>
+                                <span>최대 <span id="eventCapacity">0</span>명</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Content Section -->
+            <section class="content-section">
+                <div class="content-grid">
+                    <!-- Left: Event Details -->
+                    <div class="event-details">
+                        <div class="section-card">
+                            <h2 class="section-title">공연 소개</h2>
+                            <div class="event-description" id="eventDescription">
+                                공연 설명이 여기에 표시됩니다.
+                            </div>
+                        </div>
+
+                        <!-- Casting Section -->
+                        <div class="section-card" id="castingSection" style="display: none;">
+                            <h2 class="section-title">출연진 및 스태프</h2>
+                            <div id="castingContent">
+                                <!-- Casting will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Booking Form -->
+                    <div class="booking-panel">
+                        <div class="section-card booking-card">
+                            <h2 class="section-title">예매하기</h2>
+
+                            <!-- Schedule Selection -->
+                            <div class="form-group">
+                                <label class="form-label required">회차 선택</label>
+                                <div class="schedule-list" id="scheduleList">
+                                    <!-- Schedules will be loaded here -->
+                                </div>
+                            </div>
+
+                            <!-- Booking Form -->
+                            <form id="bookingForm">
+                                <div class="form-group">
+                                    <label class="form-label required" for="guestName">예매자 이름</label>
+                                    <input type="text" class="form-input" id="guestName"
+                                           placeholder="이름을 입력하세요" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label required" for="guestPhone">연락처</label>
+                                    <input type="tel" class="form-input" id="guestPhone"
+                                           placeholder="010-0000-0000" required>
+                                    <div class="form-hint">예매 확인 및 취소 시 필요합니다</div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label required" for="ticketCount">인원</label>
+                                    <select class="form-input" id="ticketCount" required>
+                                        <option value="1">1명</option>
+                                        <option value="2">2명</option>
+                                        <option value="3">3명</option>
+                                        <option value="4">4명</option>
+                                    </select>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary btn-lg btn-block" id="submitBtn">
+                                    예매하기
+                                </button>
+                            </form>
+
+                            <p class="booking-notice">
+                                * 예매 후 취소는 '내 예약 확인'에서 가능합니다
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="public-footer">
+        <p>&copy; 2026 Judith. 중앙대학교 연극동아리</p>
+    </footer>
+
+    <!-- My Reservations Modal -->
+    <div class="modal-overlay" id="myReservationsModal">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h3 class="modal-title">내 예약 확인</h3>
+                <button class="modal-close" onclick="closeModal('myReservationsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Phone Lookup Form -->
+                <div id="lookupForm">
+                    <p class="lookup-description">예매 시 입력한 연락처로 예약을 조회합니다.</p>
+                    <div class="form-group">
+                        <label class="form-label required" for="lookupPhone">연락처</label>
+                        <div class="input-with-button">
+                            <input type="tel" class="form-input" id="lookupPhone"
+                                   placeholder="010-0000-0000">
+                            <button type="button" class="btn btn-primary" onclick="lookupReservations()">조회</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reservations List -->
+                <div id="reservationsList" style="display: none;">
+                    <div class="reservations-header">
+                        <button class="btn btn-ghost btn-sm" onclick="showLookupForm()">
+                            &larr; 다른 번호로 조회
+                        </button>
+                    </div>
+                    <div id="reservationsContent">
+                        <!-- Reservations will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal-overlay" id="successModal">
+        <div class="modal" style="max-width: 400px; text-align: center;">
+            <div class="modal-body" style="padding: 48px 32px;">
+                <div class="success-icon">&#x2714;</div>
+                <h2 style="margin: 16px 0 8px;">예매 완료!</h2>
+                <p class="text-muted" id="successMessage">예매가 성공적으로 완료되었습니다.</p>
+                <div style="margin-top: 24px;">
+                    <button class="btn btn-primary" onclick="closeModal('successModal')">확인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container"></div>
+
+    <script src="../js/api.js"></script>
+    <script src="book.js"></script>
+</body>
+</html>

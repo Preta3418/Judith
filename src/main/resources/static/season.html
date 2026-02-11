@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Judith - 학기 관리</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Overlay (mobile) -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="images/logo-symbol-dark.png" alt="Judith">
+                    <img src="images/logo-text-dark.png" alt="Judith" class="sidebar-logo-text">
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">메뉴</div>
+                    <a href="main.html" class="nav-link">
+                        <span class="icon">&#x1F3E0;</span>
+                        <span>대시보드</span>
+                    </a>
+                    <a href="user.html" class="nav-link">
+                        <span class="icon">&#x1F465;</span>
+                        <span>부원 관리</span>
+                    </a>
+                    <a href="reservation.html" class="nav-link">
+                        <span class="icon">&#x1F3AD;</span>
+                        <span>공연</span>
+                    </a>
+                </div>
+
+                <div class="nav-section admin-only">
+                    <div class="nav-section-title">관리자</div>
+                    <a href="season.html" class="nav-link active">
+                        <span class="icon">&#x1F4C5;</span>
+                        <span>학기</span>
+                    </a>
+                    <a href="message.html" class="nav-link">
+                        <span class="icon">&#x1F4AC;</span>
+                        <span>문자</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-menu">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-info">
+                        <div class="user-name" id="userName">사용자</div>
+                        <div class="user-role" id="userRole">부원</div>
+                    </div>
+                </div>
+                <button class="btn btn-ghost btn-sm" onclick="showPasswordChangeModal()" style="width: 100%; margin-top: 8px;">
+                    비밀번호 변경
+                </button>
+                <button class="btn btn-ghost btn-sm" onclick="logout()" style="width: 100%; margin-top: 4px;">
+                    로그아웃
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menuToggle">&#x2630;</button>
+                    <h1 class="page-title">학기 관리</h1>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-outline" onclick="openTransitionModal()" id="transitionBtn" style="display: none;">
+                        학기 전환
+                    </button>
+                    <button class="btn btn-primary" onclick="openCreateModal()">
+                        + 새 학기
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Container -->
+            <div class="page-container">
+                <!-- Current Season Banner -->
+                <div class="countdown-banner mb-32" id="currentSeasonBanner" style="display: none;">
+                    <div class="countdown-content">
+                        <div class="countdown-label">현재 활성 학기</div>
+                        <div class="countdown-title" id="currentSeasonName">--</div>
+                        <div class="countdown-timer" id="countdownTimer">
+                            <div class="countdown-item">
+                                <div class="countdown-value" id="countdownDays">--</div>
+                                <div class="countdown-unit">일</div>
+                            </div>
+                            <div class="countdown-item">
+                                <div class="countdown-value" id="countdownHours">--</div>
+                                <div class="countdown-unit">시간</div>
+                            </div>
+                            <div class="countdown-item">
+                                <div class="countdown-value" id="countdownMinutes">--</div>
+                                <div class="countdown-unit">분</div>
+                            </div>
+                            <div class="countdown-item">
+                                <div class="countdown-value" id="countdownSeconds">--</div>
+                                <div class="countdown-unit">초</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seasons List -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">전체 학기</h3>
+                    </div>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>학기명</th>
+                                    <th>상태</th>
+                                    <th>시작일</th>
+                                    <th>종료일</th>
+                                    <th>연극날짜</th>
+                                    <th>관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="seasonsTableBody">
+                                <tr>
+                                    <td colspan="6">
+                                        <div class="loading"><div class="spinner"></div></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create/Edit Season Modal -->
+    <div class="modal-overlay" id="seasonModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">새 학기</h3>
+                <button class="modal-close" onclick="closeModal('seasonModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="seasonForm">
+                    <input type="hidden" id="seasonId">
+
+                    <div class="form-group">
+                        <label class="form-label required" for="seasonName">학기명</label>
+                        <input type="text" class="form-input" id="seasonName"
+                               placeholder="예: 2025 봄" required>
+                        <div class="form-hint">형식: 연도 + 학기 (예: 2025 봄, 2025 가을)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="eventDate">연극날짜 (D-Day)</label>
+                        <input type="date" class="form-input" id="eventDate">
+                        <div class="form-hint">선택사항 - 카운트다운에 사용될 공연일</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('seasonModal')">취소</button>
+                <button class="btn btn-primary" onclick="saveSeason()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="confirmTitle">확인</h3>
+                <button class="modal-close" onclick="closeModal('confirmModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">계속하시겠습니까?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('confirmModal')">취소</button>
+                <button class="btn btn-primary" id="confirmBtn" onclick="confirmAction()">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Management Modal -->
+    <div class="modal-overlay" id="userManageModal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <span id="userManageSeasonName">--</span> 부원 관리
+                </h3>
+                <button class="modal-close" onclick="closeModal('userManageModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Add User Section -->
+                <div class="form-section mb-24">
+                    <h4 class="form-section-title">부원 추가</h4>
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 2;">
+                            <select class="form-input" id="addUserSelect">
+                                <option value="">부원 선택...</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex: 3;">
+                            <div id="addUserRolesContainer" class="roles-checkbox-group">
+                                <!-- Role checkboxes will be populated -->
+                            </div>
+                        </div>
+                        <div class="form-group" style="flex: 0;">
+                            <button class="btn btn-primary" onclick="addUserToCurrentSeason()">추가</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Users List -->
+                <div class="form-section">
+                    <h4 class="form-section-title">현재 부원 목록</h4>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>이름</th>
+                                    <th>역할</th>
+                                    <th>관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="seasonUsersTableBody">
+                                <tr>
+                                    <td colspan="3">
+                                        <div class="loading"><div class="spinner"></div></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('userManageModal')">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Roles Modal -->
+    <div class="modal-overlay" id="editRolesModal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title">역할 수정</h3>
+                <button class="modal-close" onclick="closeModal('editRolesModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editRolesUserId">
+                <p class="mb-16"><strong id="editRolesUserName">--</strong>님의 역할을 선택하세요:</p>
+                <div id="editRolesContainer" class="roles-checkbox-group">
+                    <!-- Role checkboxes will be populated -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('editRolesModal')">취소</button>
+                <button class="btn btn-primary" onclick="saveUserRoles()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Season Transition Modal -->
+    <div class="modal-overlay" id="transitionModal">
+        <div class="modal" style="max-width: 800px; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h3 class="modal-title">새 학기 전환</h3>
+                <button class="modal-close" onclick="closeModal('transitionModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="overflow-y: auto; flex: 1;">
+                <div class="alert alert-info mb-24">
+                    <strong>학기 전환 안내:</strong> 현재 학기를 종료하고 새 학기를 시작합니다.
+                    계속할 부원을 선택하고 역할을 지정하세요. 선택되지 않은 부원은 졸업 처리됩니다.
+                </div>
+
+                <!-- New Season Info -->
+                <div class="form-section mb-24">
+                    <h4 class="form-section-title">새 학기 정보</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label required" for="transitionSeasonName">학기명</label>
+                            <input type="text" class="form-input" id="transitionSeasonName" placeholder="예: 2026 봄" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="transitionEventDate">연극날짜 (D-Day)</label>
+                            <input type="date" class="form-input" id="transitionEventDate">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Member Selection -->
+                <div class="form-section">
+                    <div class="flex justify-between items-center mb-16">
+                        <h4 class="form-section-title" style="margin-bottom: 0;">부원 선택</h4>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-ghost" onclick="selectAllTransition(true)">전체 선택</button>
+                            <button type="button" class="btn btn-sm btn-ghost" onclick="selectAllTransition(false)">전체 해제</button>
+                        </div>
+                    </div>
+                    <div id="transitionUserList">
+                        <div class="loading"><div class="spinner"></div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('transitionModal')">취소</button>
+                <button class="btn btn-primary" onclick="executeTransition()">학기 전환 실행</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/season.js"></script>
+    <script>
+        // Check authentication and admin role
+        if (!requireAuth()) {
+            // Will redirect to login
+        }
+
+        if (!isAdmin()) {
+            window.location.href = 'main.html';
+        }
+
+        // Update user info in sidebar
+        const roleNames = {
+            'ADMIN': '관리자', 'LEADER': '회장', 'PRODUCER': '연출',
+            'PLANNER': '기획', 'ACTOR': '배우', 'STAFF': '스태프', 'EXTERNAL': '외부인'
+        };
+
+        const userName = getCurrentUserName();
+        const userRole = getCurrentUserRole();
+        const roleName = roleNames[userRole] || userRole;
+
+        document.getElementById('userName').textContent = userName;
+        document.getElementById('userRole').textContent = roleName;
+        document.getElementById('userAvatar').textContent = userName.charAt(0).toUpperCase();
+
+        // Mobile menu toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+            sidebarOverlay.classList.toggle('active');
+        });
+
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('active');
+        });
+
+        checkPasswordChangeNeeded();
+    </script>
+</body>
+</html>
