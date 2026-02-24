@@ -108,6 +108,19 @@ public class SeasonService {
     }
 
 
+    /*
+    this method is specific method for finding the effective season at the moment.
+    it will search for first season that is ACTIVE, and then PREPARING, than finally last CLOSED season.
+    Major user for this method at the moment is Full Access Member logic. When there is no active season, it will use the last CLOSED season to
+    search for the current full access member.
+     */
+    public Optional<Season> findEffectiveSeasonForAccess() {
+        return seasonRepository.findByStatus(Status.ACTIVE) //currently active season
+                .or(() -> seasonRepository.findByStatus(Status.PREPARING)) //currently preparing season
+                .or(() -> seasonRepository.findTopByStatusOrderByCreatedAtDesc(Status.CLOSED)); //last closed season
+    }
+
+
     public CountdownResponse getCountDown() {
         Season season = seasonRepository.findByStatus(Status.ACTIVE)
                 .orElseThrow(() -> new NoActiveSeasonException("There is no active season", 404, "Not Found"));

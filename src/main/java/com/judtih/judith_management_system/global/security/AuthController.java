@@ -43,9 +43,9 @@ public class AuthController {
         boolean hasFullAccess = user.isAdmin();
 
         if (!hasFullAccess) {
-            Season activeSeason = seasonService.findCurrentSeason().orElse(null);
-            if (activeSeason != null) {
-                hasFullAccess = userSeasonService.hasFullAccessRole(user.getId(), activeSeason.getId());
+            Season effectiveSeason = seasonService.findEffectiveSeasonForAccess().orElse(null);
+            if (effectiveSeason != null) {
+                hasFullAccess = userSeasonService.hasFullAccessRole(user.getId(), effectiveSeason.getId());
             }
         }
 

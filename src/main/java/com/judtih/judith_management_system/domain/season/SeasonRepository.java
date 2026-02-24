@@ -12,4 +12,6 @@ public interface SeasonRepository extends JpaRepository<Season, Long> {
 
     boolean existsByStatusNot(Status status);
     boolean existsByStatus(Status status);
+    Optional<Season> findTopByStatusOrderByCreatedAtDesc(Status status);
+
 }
