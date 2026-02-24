@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Judith LMS - 일정</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/lms/lms.css">
+</head>
+<body>
+    <div class="app-layout">
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="/images/logo-symbol-dark.png" alt="Judith">
+                    <img src="/images/logo-text-dark.png" alt="Judith" class="sidebar-logo-text">
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">LMS</div>
+                    <a href="/lms/index.html" class="nav-link">
+                        <span class="icon">&#x1F3E0;</span>
+                        <span>홈</span>
+                    </a>
+                    <a href="/lms/scripts.html" class="nav-link">
+                        <span class="icon">&#x1F4DC;</span>
+                        <span>대본</span>
+                    </a>
+                    <a href="/lms/schedule.html" class="nav-link active">
+                        <span class="icon">&#x1F4C5;</span>
+                        <span>일정</span>
+                    </a>
+                    <a href="/lms/training.html" class="nav-link">
+                        <span class="icon">&#x1F3AD;</span>
+                        <span>연습</span>
+                    </a>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title">바로가기</div>
+                    <a href="/" class="nav-link">
+                        <span class="icon">&#x1F310;</span>
+                        <span>메인 페이지</span>
+                    </a>
+                </div>
+                <div class="nav-section admin-only">
+                    <div class="nav-section-title">관리자</div>
+                    <a href="/main.html" class="nav-link">
+                        <span class="icon">&#x2699;</span>
+                        <span>관리 대시보드</span>
+                    </a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-menu">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-info">
+                        <div class="user-name" id="userName">사용자</div>
+                        <div class="user-role" id="userRole">부원</div>
+                    </div>
+                </div>
+                <button class="btn btn-ghost btn-sm" onclick="showPasswordChangeModal()" style="width: 100%; margin-top: 8px;">비밀번호 변경</button>
+                <button class="btn btn-ghost btn-sm" onclick="logout()" style="width: 100%; margin-top: 4px;">로그아웃</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menuToggle">&#x2630;</button>
+                    <h1 class="page-title">일정</h1>
+                </div>
+            </header>
+            <div class="page-container">
+                <div class="coming-soon">
+                    <div class="coming-soon-icon">&#x1F4C5;</div>
+                    <h2>일정 관리</h2>
+                    <p>연습 일정과 공연 스케줄을 확인할 수 있는 기능이 준비 중입니다.</p>
+                    <a href="/lms/index.html" class="btn btn-secondary">LMS 홈으로</a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/lms/lms.js"></script>
+</body>
+</html>

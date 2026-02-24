@@ -3,84 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Judith - 로그인</title>
+    <title>Judith - 중앙대학교 연극동아리</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/landing.css">
 </head>
-<body class="login-page">
-    <div class="login-container">
-        <div class="login-header">
-            <div class="login-logo">
-                <img src="images/logo-symbol-dark.png" alt="Judith">
+<body>
+    <!-- Navigation -->
+    <nav class="landing-nav">
+        <a href="/" class="landing-nav-logo">
+            <img src="/images/logo-symbol-dark.png" alt="Judith">
+            <img src="/images/logo-text-dark.png" alt="Judith" style="height: 22px;">
+        </a>
+        <div class="landing-nav-links">
+            <a href="#about">소개</a>
+            <a href="#season">공연</a>
+            <a href="/public/book.html">예매</a>
+            <a href="/login.html" class="btn btn-primary btn-sm" id="navLoginBtn">로그인</a>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">Judith</h1>
+            <p class="hero-subtitle">중앙대학교 연극동아리<br>무대 위의 이야기를 함께 만들어갑니다</p>
+            <div class="hero-actions">
+                <a href="#season" class="btn btn-primary btn-lg">현재 공연 보기</a>
+                <a href="/public/book.html" class="btn btn-outline btn-lg">예매하기</a>
             </div>
-            <h1>환영합니다</h1>
-            <p>연극 동아리 관리 시스템</p>
         </div>
+    </section>
 
-        <div class="login-card">
-            <form id="loginForm">
-                <div class="form-group">
-                    <label class="form-label" for="studentNumber">학번</label>
-                    <input type="text" class="form-input" id="studentNumber" placeholder="학번을 입력하세요" required>
+    <!-- Current Season -->
+    <section class="section" id="season">
+        <div class="section-inner">
+            <h2 class="section-title">현재 시즌</h2>
+            <p class="section-subtitle">Judith의 다음 무대를 만나보세요</p>
+            <div id="seasonContent">
+                <div style="text-align: center; padding: 48px;">
+                    <div class="spinner"></div>
                 </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="password">비밀번호</label>
-                    <input type="password" class="form-input" id="password" placeholder="비밀번호를 입력하세요" required>
-                    <p class="form-hint">초기 비밀번호는 학번입니다</p>
-                </div>
-
-                <div id="errorMessage" class="error-message" style="display: none;"></div>
-
-                <button type="submit" class="btn btn-primary btn-block btn-lg" id="loginBtn">로그인</button>
-            </form>
+            </div>
         </div>
+    </section>
 
-        <p class="text-center mt-24 text-muted text-sm">
-            문제가 있으시면 관리자에게 문의하세요
-        </p>
-    </div>
+    <!-- About -->
+    <section class="section about-section" id="about">
+        <div class="section-inner">
+            <h2 class="section-title">Judith 소개</h2>
+            <p class="section-subtitle">무대 위에서 빛나는 순간을 만들어가는 동아리</p>
+            <div class="about-grid">
+                <div class="about-text">
+                    <h3>함께 만드는 연극</h3>
+                    <p>
+                        Judith는 중앙대학교에서 활동하는 연극 동아리입니다.
+                        매 학기 정기 공연을 통해 다양한 장르의 연극을 무대에 올리고 있습니다.
+                    </p>
+                    <p>
+                        연기, 연출, 무대디자인, 음향, 조명 등 공연의 모든 과정을
+                        부원들이 직접 기획하고 제작합니다.
+                    </p>
+                </div>
+                <div class="about-stats">
+                    <div class="about-stat">
+                        <div class="about-stat-value" id="statSeasons">-</div>
+                        <div class="about-stat-label">시즌</div>
+                    </div>
+                    <div class="about-stat">
+                        <div class="about-stat-value" id="statMembers">-</div>
+                        <div class="about-stat-label">부원</div>
+                    </div>
+                    <div class="about-stat">
+                        <div class="about-stat-value">매 학기</div>
+                        <div class="about-stat-label">정기 공연</div>
+                    </div>
+                    <div class="about-stat">
+                        <div class="about-stat-value">중앙대</div>
+                        <div class="about-stat-label">소속</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <script src="js/auth.js"></script>
+    <!-- Footer -->
+    <footer class="landing-footer">
+        <div class="footer-logo">
+            <img src="/images/logo-symbol-light.png" alt="Judith">
+        </div>
+        <div class="footer-links">
+            <a href="#about">동아리 소개</a>
+            <a href="#season">공연 정보</a>
+            <a href="/public/book.html">예매</a>
+            <a href="/login.html">부원 로그인</a>
+        </div>
+        <p class="footer-copyright">&copy; 2025 Judith. 중앙대학교 연극동아리.</p>
+    </footer>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/landing.js"></script>
     <script>
-        // Check if already logged in
+        // If already logged in, show dashboard link instead of login
         if (isLoggedIn()) {
-            window.location.href = 'main.html';
+            const loginBtn = document.getElementById('navLoginBtn');
+            loginBtn.textContent = isAdmin() ? '관리자' : '마이페이지';
+            loginBtn.href = getLoginRedirect();
         }
-
-        // Handle login form
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const studentNumber = document.getElementById('studentNumber').value.trim();
-            const password = document.getElementById('password').value;
-            const errorDiv = document.getElementById('errorMessage');
-            const loginBtn = document.getElementById('loginBtn');
-
-            if (!studentNumber || !password) {
-                errorDiv.textContent = '학번과 비밀번호를 입력해주세요';
-                errorDiv.style.display = 'block';
-                return;
-            }
-
-            // Disable button while logging in
-            loginBtn.disabled = true;
-            loginBtn.textContent = '로그인 중...';
-            errorDiv.style.display = 'none';
-
-            try {
-                await login(studentNumber, password);
-                window.location.href = 'main.html';
-            } catch (error) {
-                console.error('Login failed:', error);
-                errorDiv.textContent = '학번 또는 비밀번호가 올바르지 않습니다';
-                errorDiv.style.display = 'block';
-                loginBtn.disabled = false;
-                loginBtn.textContent = '로그인';
-            }
-        });
     </script>
 </body>
 </html>

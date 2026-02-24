@@ -1,0 +1,359 @@
+/* Judith Landing Page */
+
+/* ==================== Navigation ==================== */
+.landing-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 72px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-light);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 48px;
+}
+
+.landing-nav.scrolled {
+    box-shadow: var(--shadow-sm);
+}
+
+.landing-nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.landing-nav-logo img {
+    height: 32px;
+}
+
+.landing-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+}
+
+.landing-nav-links a {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: color var(--transition-fast);
+}
+
+.landing-nav-links a:hover {
+    color: var(--primary);
+}
+
+/* ==================== Hero Section ==================== */
+.hero {
+    padding: 160px 48px 100px;
+    text-align: center;
+    background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 50%, #e0e7ff 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: -200px;
+    right: -100px;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+.hero::after {
+    content: '';
+    position: absolute;
+    bottom: -150px;
+    left: -50px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.06) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+}
+
+.hero-subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    margin-bottom: 40px;
+    line-height: 1.6;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+}
+
+.hero-actions .btn {
+    padding: 14px 32px;
+    font-size: 1rem;
+}
+
+/* ==================== Sections ==================== */
+.section {
+    padding: 80px 48px;
+}
+
+.section-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.section-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.section-subtitle {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: 48px;
+    font-size: 1rem;
+}
+
+/* ==================== Season Card ==================== */
+.season-card {
+    background: var(--surface);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-light);
+    padding: 48px;
+    text-align: center;
+    box-shadow: var(--shadow-md);
+}
+
+.season-badge {
+    display: inline-block;
+    background: var(--primary-bg);
+    color: var(--primary);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 20px;
+}
+
+.season-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.season-date {
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+    font-size: 0.95rem;
+}
+
+.countdown {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+}
+
+.countdown-box {
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    min-width: 90px;
+}
+
+.countdown-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.countdown-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.season-empty {
+    color: var(--text-muted);
+    font-size: 1rem;
+    padding: 32px 0;
+}
+
+.season-actions {
+    margin-top: 32px;
+}
+
+/* ==================== About Section ==================== */
+.about-section {
+    background: var(--gray-50);
+}
+
+.about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: center;
+}
+
+.about-text h3 {
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+    color: var(--text);
+}
+
+.about-text p {
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-bottom: 16px;
+}
+
+.about-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+}
+
+.about-stat {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    text-align: center;
+    border: 1px solid var(--border-light);
+}
+
+.about-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 4px;
+}
+
+.about-stat-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* ==================== Footer ==================== */
+.landing-footer {
+    background: var(--gray-900);
+    color: var(--gray-400);
+    padding: 48px;
+    text-align: center;
+}
+
+.footer-logo {
+    margin-bottom: 16px;
+}
+
+.footer-logo img {
+    height: 32px;
+    opacity: 0.8;
+}
+
+.footer-links {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+.footer-links a {
+    color: var(--gray-400);
+    font-size: 0.875rem;
+    transition: color var(--transition-fast);
+}
+
+.footer-links a:hover {
+    color: white;
+}
+
+.footer-copyright {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+}
+
+/* ==================== Responsive ==================== */
+@media (max-width: 768px) {
+    .landing-nav {
+        padding: 0 24px;
+    }
+
+    .landing-nav-links {
+        gap: 16px;
+    }
+
+    .landing-nav-links a:not(.btn) {
+        display: none;
+    }
+
+    .hero {
+        padding: 120px 24px 80px;
+    }
+
+    .hero-title {
+        font-size: 2.25rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+
+    .hero-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .section {
+        padding: 60px 24px;
+    }
+
+    .about-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .countdown {
+        gap: 12px;
+    }
+
+    .countdown-box {
+        min-width: 70px;
+        padding: 16px;
+    }
+
+    .countdown-number {
+        font-size: 1.75rem;
+    }
+
+    .landing-footer {
+        padding: 32px 24px;
+    }
+
+    .footer-links {
+        flex-direction: column;
+        gap: 12px;
+    }
+}

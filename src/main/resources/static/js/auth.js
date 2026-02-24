@@ -30,7 +30,7 @@ function setAuth(authData) {
 function clearAuth() {
     localStorage.removeItem(AUTH_KEY);
     clearToken();
-    window.location.href = 'index.html';
+    window.location.href = '/login.html';
 }
 
 function isLoggedIn() {
@@ -40,6 +40,10 @@ function isLoggedIn() {
 function isAdmin() {
     const auth = getAuth();
     return auth ? auth.hasFullAccess === true : false;
+}
+
+function getLoginRedirect() {
+    return isAdmin() ? '/main.html' : '/lms/index.html';
 }
 
 // ==================== Admin Status Application ====================
@@ -54,7 +58,7 @@ function applyAdminStatus(hasFullAccess) {
 // ==================== Auth Check ====================
 function requireAuth() {
     if (!isLoggedIn()) {
-        window.location.href = 'index.html';
+        window.location.href = '/login.html';
         return false;
     }
     const auth = getAuth();
