@@ -1,4 +1,6 @@
 # build
+# basically making 'jar' file, and tools to make 'jar' file is not required to be in the final image
+# so it gets thrown away after the first stage. (like gradle, which is not neccesity to run the jar.)
 FROM gradle:jdk21 AS build
 WORKDIR /app
 COPY . .

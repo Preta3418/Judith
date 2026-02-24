@@ -55,8 +55,8 @@ public class UserService {
                 .toList();
     }
 
-    public List<UserResponse> getGraduatedUsers() {
-        return userRepository.findByStatusAndIsAdminFalse(UserStatus.GRADUATED).stream()
+    public List<UserResponse> getInactiveUsers() {
+        return userRepository.findByStatusAndIsAdminFalse(UserStatus.INACTIVE).stream()
                 .map(this::createUserResponse)
                 .toList();
     }
@@ -71,11 +71,11 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponse graduateUser(Long id) {
+    public UserResponse deactivateUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
 
-        user.graduate();
+        user.deactivate();
         return createUserResponse(user);
     }
 
@@ -84,8 +84,8 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
 
-        if (user.getStatus() != UserStatus.GRADUATED) {
-            throw new IllegalStateException("Only graduated users can be reactivated");
+        if (user.getStatus() != UserStatus.INACTIVE) {
+            throw new IllegalStateException("Only inactive users can be reactivated");
         }
 
         user.reactivate();
@@ -101,7 +101,7 @@ public class UserService {
                 .isAdmin(user.isAdmin())
                 .status(user.getStatus())
                 .createdAt(user.getCreatedAt())
-                .graduatedAt(user.getGraduatedAt())
+                .inactiveSince(user.getInactiveSince())
                 .build();
     }
 }

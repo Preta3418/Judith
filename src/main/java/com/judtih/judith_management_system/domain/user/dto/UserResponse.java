@@ -20,5 +20,5 @@ public class UserResponse {
     private boolean isAdmin;
     private UserStatus status;
     private LocalDateTime createdAt;
-    private LocalDateTime graduatedAt;
+    private LocalDateTime inactiveSince;
 }

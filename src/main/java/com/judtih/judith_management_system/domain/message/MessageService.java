@@ -34,7 +34,7 @@ public class MessageService {
         int successCount = 0;
         int failureCount = 0;
 
-        List<User> gradUser = userRepository.findByStatus(UserStatus.GRADUATED);
+        List<User> gradUser = userRepository.findByStatus(UserStatus.INACTIVE);
         List<MessageFailure> failureList = new ArrayList<>();
 
         Message message = Message.builder().messageContent(messageContent).build();

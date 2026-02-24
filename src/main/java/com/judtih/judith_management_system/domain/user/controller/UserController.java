@@ -35,9 +35,9 @@ public class UserController {
         return ResponseEntity.ok(userService.getActiveUsers());
     }
 
-    @GetMapping("/graduated")
-    public ResponseEntity<List<UserResponse>> getGraduatedUsers() {
-        return ResponseEntity.ok(userService.getGraduatedUsers());
+    @GetMapping("/inactive")
+    public ResponseEntity<List<UserResponse>> getInactiveUsers() {
+        return ResponseEntity.ok(userService.getInactiveUsers());
     }
 
     @GetMapping("/{userId}/seasons")
@@ -56,9 +56,9 @@ public class UserController {
         return ResponseEntity.ok(userService.updateUser(id, request));
     }
 
-    @PostMapping("/{id}/graduate")
-    public ResponseEntity<UserResponse> graduateUser(@PathVariable Long id) {
-        return ResponseEntity.ok(userService.graduateUser(id));
+    @PostMapping("/{id}/deactivate")
+    public ResponseEntity<UserResponse> deactivateUser(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.deactivateUser(id));
     }
 
     @PostMapping("/{id}/reactivate")

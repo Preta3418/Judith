@@ -52,8 +52,8 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserStatus status = UserStatus.ACTIVE;
 
-    @Column(name = "graduated_at")
-    private LocalDateTime graduatedAt;
+    @Column(name = "inactive_since")
+    private LocalDateTime inactiveSince;
 
 
     @PrePersist
@@ -66,14 +66,14 @@ public class User {
         if (phoneNumber != null) this.phoneNumber = phoneNumber.replaceAll("-", "");
     }
 
-    public void graduate() {
-        this.status = UserStatus.GRADUATED;
-        this.graduatedAt = LocalDateTime.now();
+    public void deactivate() {
+        this.status = UserStatus.INACTIVE;
+        this.inactiveSince = LocalDateTime.now();
     }
 
     public void reactivate() {
         this.status = UserStatus.ACTIVE;
-        this.graduatedAt = null;
+        this.inactiveSince = null;
     }
 
     public void updatePassword(String encodedPassword) {
