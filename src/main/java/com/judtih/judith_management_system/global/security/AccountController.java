@@ -5,11 +5,11 @@ import com.judtih.judith_management_system.domain.user.exception.NoUserFoundExce
 import com.judtih.judith_management_system.domain.user.repository.UserRepository;
 import com.judtih.judith_management_system.global.security.dto.PasswordChangeRequest;
 import com.judtih.judith_management_system.global.security.exception.WrongUsernamePasswordException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;

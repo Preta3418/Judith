@@ -16,9 +16,9 @@ import com.judtih.judith_management_system.domain.user.exception.NoUserSeasonFou
 import com.judtih.judith_management_system.domain.user.exception.UserSeasonAlreadyExistsException;
 import com.judtih.judith_management_system.domain.user.repository.UserRepository;
 import com.judtih.judith_management_system.domain.user.repository.UserSeasonRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
