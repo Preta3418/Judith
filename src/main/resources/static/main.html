@@ -324,7 +324,6 @@
         // Load stats
         async function loadStats() {
             try {
-                // Load member count
                 const users = await userApi.getActive();
                 document.getElementById('memberCount').textContent = users.length || 0;
             } catch (e) {
@@ -332,16 +331,24 @@
             }
 
             try {
-                // Load events count
                 const events = await eventApi.getAll();
                 document.getElementById('eventCount').textContent = events.length || 0;
             } catch (e) {
                 document.getElementById('eventCount').textContent = '--';
             }
 
-            // Admin-only stats placeholders
-            document.getElementById('messageCount').textContent = '--';
-            document.getElementById('reservationCount').textContent = '--';
+            // Admin-only stats
+            if (isAdmin()) {
+                try {
+                    const msgHistory = await messageApi.getHistory(0, 1);
+                    document.getElementById('messageCount').textContent = msgHistory.totalElements || 0;
+                } catch (e) {
+                    document.getElementById('messageCount').textContent = '--';
+                }
+
+                // No single endpoint for total reservation count
+                document.getElementById('reservationCount').textContent = '--';
+            }
         }
 
         // Initialize

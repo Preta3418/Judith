@@ -115,14 +115,13 @@
                                     <th>이름</th>
                                     <th>학번</th>
                                     <th>전화번호</th>
-                                    <th>역할</th>
                                     <th>상태</th>
                                     <th class="admin-only">관리</th>
                                 </tr>
                             </thead>
                             <tbody id="userTableBody">
                                 <tr>
-                                    <td colspan="6">
+                                    <td colspan="5">
                                         <div class="loading"><div class="spinner"></div></div>
                                     </td>
                                 </tr>
@@ -160,18 +159,7 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label required" for="createRole">역할</label>
-                        <select class="form-select" id="createRole" required>
-                            <option value="ACTOR">배우</option>
-                            <option value="STAFF">스태프</option>
-                            <option value="PLANNER">기획</option>
-                            <option value="PRODUCER">연출</option>
-                            <option value="LEADER">회장</option>
-                            <option value="ADMIN">관리자</option>
-                            <option value="EXTERNAL">외부인</option>
-                        </select>
-                    </div>
+                    <div class="form-hint">역할은 학기 관리에서 설정합니다.</div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -203,10 +191,6 @@
                         <div class="flex justify-between items-center mb-16" style="padding-bottom: 16px; border-bottom: 1px solid var(--border-light);">
                             <span class="text-secondary">전화번호</span>
                             <span id="detailPhone">-</span>
-                        </div>
-                        <div class="flex justify-between items-center mb-16" style="padding-bottom: 16px; border-bottom: 1px solid var(--border-light);">
-                            <span class="text-secondary">역할</span>
-                            <span id="detailRole">-</span>
                         </div>
                         <div class="flex justify-between items-center mb-16" style="padding-bottom: 16px; border-bottom: 1px solid var(--border-light);">
                             <span class="text-secondary">상태</span>
@@ -244,18 +228,7 @@
                             <input type="tel" class="form-input" id="editPhone">
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label" for="editRole">역할</label>
-                            <select class="form-select" id="editRole">
-                                <option value="ACTOR">배우</option>
-                                <option value="STAFF">스태프</option>
-                                <option value="PLANNER">기획</option>
-                                <option value="PRODUCER">연출</option>
-                                <option value="LEADER">회장</option>
-                                <option value="ADMIN">관리자</option>
-                                <option value="EXTERNAL">외부인</option>
-                            </select>
-                        </div>
+                        <div class="form-hint">역할은 학기 관리에서 설정합니다.</div>
                     </form>
                 </div>
             </div>
@@ -322,7 +295,7 @@
                 console.error('Error loading users:', error);
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="6">
+                        <td colspan="5">
                             <div class="empty-state">
                                 <p class="text-danger">부원 목록을 불러오는데 실패했습니다</p>
                                 <button class="btn btn-secondary" onclick="loadUsers()">다시 시도</button>
@@ -346,7 +319,7 @@
             if (users.length === 0) {
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="6">
+                        <td colspan="5">
                             <div class="empty-state">
                                 <div class="icon">&#x1F465;</div>
                                 <h3>부원을 찾을 수 없습니다</h3>
@@ -363,7 +336,6 @@
                     <td><strong>${escapeHtml(user.name)}</strong></td>
                     <td>${user.studentNumber || '-'}</td>
                     <td>${user.phoneNumber || '-'}</td>
-                    <td><span class="badge badge-primary">${roleNames[user.role] || user.role}</span></td>
                     <td>
                         <span class="status status-${user.status === 'ACTIVE' ? 'active' : 'closed'}">
                             ${statusNames[user.status] || user.status}
@@ -397,7 +369,6 @@
             document.getElementById('detailName').textContent = user.name;
             document.getElementById('detailStudentNumber').textContent = user.studentNumber || '-';
             document.getElementById('detailPhone').textContent = user.phoneNumber || '-';
-            document.getElementById('detailRole').textContent = roleNames[user.role] || user.role;
             document.getElementById('detailStatus').innerHTML = `<span class="status status-${user.status === 'ACTIVE' ? 'active' : 'closed'}">${statusNames[user.status] || user.status}</span>`;
             document.getElementById('detailCreatedAt').textContent = formatDate(user.createdAt);
 
@@ -428,7 +399,6 @@
 
             document.getElementById('editName').value = user.name;
             document.getElementById('editPhone').value = user.phoneNumber || '';
-            document.getElementById('editRole').value = user.role;
 
             document.getElementById('viewMode').style.display = 'none';
             document.getElementById('editMode').style.display = 'block';
@@ -447,8 +417,7 @@
             const data = {
                 name: document.getElementById('createName').value.trim(),
                 studentNumber: document.getElementById('createStudentNumber').value.trim() || null,
-                phoneNumber: document.getElementById('createPhone').value.trim() || null,
-                role: document.getElementById('createRole').value
+                phoneNumber: document.getElementById('createPhone').value.trim() || null
             };
 
             try {
@@ -514,8 +483,7 @@
 
             const data = {
                 name: document.getElementById('editName').value.trim(),
-                phoneNumber: document.getElementById('editPhone').value.trim() || null,
-                role: document.getElementById('editRole').value
+                phoneNumber: document.getElementById('editPhone').value.trim() || null
             };
 
             try {

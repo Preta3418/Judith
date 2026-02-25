@@ -629,6 +629,12 @@ h6 { font-size: 0.875rem; }
     padding-right: 40px;
 }
 
+select.form-input option,
+select.form-select option {
+    color: var(--text);
+    background: var(--surface);
+}
+
 .form-hint {
     font-size: 0.8rem;
     color: var(--text-muted);

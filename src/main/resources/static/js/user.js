@@ -45,21 +45,6 @@ function filterUsers(filter) {
     renderUsers();
 }
 
-// ==================== Role Name Mapping ====================
-const roleNames = {
-    'ADMIN': '관리자',
-    'LEADER': '회장',
-    'PRODUCER': '연출',
-    'PLANNER': '기획',
-    'ACTOR': '배우',
-    'STAFF': '스태프',
-    'EXTERNAL': '외부'
-};
-
-function getRoleName(role) {
-    return roleNames[role] || role;
-}
-
 // ==================== Render Users ====================
 function renderUsers() {
     const container = document.getElementById('userList');
@@ -82,7 +67,6 @@ function renderUsers() {
     }
 
     container.innerHTML = filtered.map(user => {
-        const roleName = getRoleName(user.role);
         const statusName = user.status === 'ACTIVE' ? '현역' : '비활동';
         return `
             <div class="list-item">
@@ -96,7 +80,6 @@ function renderUsers() {
                     <span class="badge ${user.status === 'ACTIVE' ? 'badge-success' : 'badge-secondary'}">
                         ${statusName}
                     </span>
-                    <span class="badge badge-primary">${roleName}</span>
                 </div>
             </div>
         `;
@@ -113,13 +96,11 @@ function renderUsers() {
 
 // ==================== Show User Detail ====================
 function showUserDetail(user) {
-    const roleName = getRoleName(user.role);
     const statusName = user.status === 'ACTIVE' ? '현역' : '비활동';
 
     document.getElementById('detailName').textContent = user.name;
     document.getElementById('detailStudentNumber').textContent = user.studentNumber || '-';
     document.getElementById('detailPhone').textContent = formatPhone(user.phoneNumber);
-    document.getElementById('detailRole').textContent = roleName;
     document.getElementById('detailStatus').textContent = statusName;
     document.getElementById('detailCreatedAt').textContent = formatDate(user.createdAt);
 
@@ -135,7 +116,6 @@ function showUserDetail(user) {
     // Pre-fill edit form
     document.getElementById('editName').value = user.name;
     document.getElementById('editPhone').value = user.phoneNumber || '';
-    document.getElementById('editRole').value = user.role;
 
     openModal('userDetailModal');
 }
@@ -221,8 +201,7 @@ async function updateUser(e) {
     const userId = document.getElementById('userDetailModal').dataset.userId;
     const updates = {
         name: document.getElementById('editName').value.trim(),
-        phoneNumber: document.getElementById('editPhone').value.trim().replace(/-/g, ''),
-        role: document.getElementById('editRole').value
+        phoneNumber: document.getElementById('editPhone').value.trim().replace(/-/g, '')
     };
 
     try {

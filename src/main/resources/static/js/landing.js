@@ -37,39 +37,24 @@ async function loadCurrentSeason() {
 }
 
 function renderSeason(container, season) {
-    const showDate = season.showStartDate;
-    const endDate = season.showEndDate;
+    const eventDate = season.eventDate;
 
-    const dateStr = showDate
-        ? formatDateRange(showDate, endDate)
+    const dateStr = eventDate
+        ? new Date(eventDate).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
         : '';
 
     container.innerHTML = `
         <div class="season-card">
             <span class="season-badge">현재 시즌</span>
-            <h3 class="season-name">${escapeHtml(season.title || season.name)}</h3>
-            ${dateStr ? `<p class="season-date">${dateStr}</p>` : ''}
-            ${showDate ? `<div class="countdown" id="countdown" data-target="${showDate}"></div>` : ''}
-            <div class="season-actions">
-                <a href="/public/book.html" class="btn btn-primary btn-lg">예매하기</a>
-            </div>
+            <h3 class="season-name">${escapeHtml(season.name)}</h3>
+            ${dateStr ? `<p class="season-date">공연일: ${dateStr}</p>` : ''}
+            ${eventDate ? `<div class="countdown" id="countdown" data-target="${eventDate}"></div>` : ''}
         </div>
     `;
 
-    if (showDate) {
-        startCountdown(showDate);
+    if (eventDate) {
+        startCountdown(eventDate);
     }
-}
-
-function formatDateRange(start, end) {
-    const startDate = new Date(start);
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    let str = startDate.toLocaleDateString('ko-KR', options);
-    if (end) {
-        const endDate = new Date(end);
-        str += ' ~ ' + endDate.toLocaleDateString('ko-KR', options);
-    }
-    return str;
 }
 
 function startCountdown(targetDateStr) {
@@ -78,7 +63,7 @@ function startCountdown(targetDateStr) {
 
     function update() {
         const now = new Date();
-        const target = new Date(targetDateStr);
+        const target = new Date(targetDateStr + 'T00:00:00');
         const diff = target - now;
 
         if (diff <= 0) {
@@ -127,7 +112,34 @@ function escapeHtml(str) {
     return div.innerHTML;
 }
 
+// ==================== Load Stats ====================
+async function loadStats() {
+    // These are public-facing stats — use public endpoints only
+    try {
+        const response = await fetch('/api/public/seasons/current');
+        if (response.ok) {
+            const season = await response.json();
+            // If a season exists, we know there's at least 1
+            const statSeasons = document.getElementById('statSeasons');
+            if (statSeasons) statSeasons.textContent = '1+';
+
+            // Try to load member count from season users
+            if (season.id) {
+                try {
+                    const usersResponse = await fetch(`/api/public/seasons/${season.id}/users`);
+                    if (usersResponse.ok) {
+                        const users = await usersResponse.json();
+                        const statMembers = document.getElementById('statMembers');
+                        if (statMembers) statMembers.textContent = users.length || '-';
+                    }
+                } catch (e) { /* ignore */ }
+            }
+        }
+    } catch (e) { /* ignore */ }
+}
+
 // ==================== Init ====================
 document.addEventListener('DOMContentLoaded', () => {
     loadCurrentSeason();
+    loadStats();
 });
