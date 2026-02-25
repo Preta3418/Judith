@@ -149,11 +149,74 @@ function startCountdown(eventDate) {
 }
 
 // Open create modal
-function openCreateModal() {
+async function openCreateModal() {
     document.getElementById('modalTitle').textContent = '새 학기';
     document.getElementById('seasonForm').reset();
     document.getElementById('seasonId').value = '';
+
+    // Show member selection and make modal wider
+    document.getElementById('createMemberSection').style.display = 'block';
+    document.getElementById('seasonModalInner').style.maxWidth = '800px';
+
+    // Load active users for member selection
+    await loadCreateMembers();
+
     openModal('seasonModal');
+}
+
+// Load active users for season creation member selection
+async function loadCreateMembers() {
+    const container = document.getElementById('createMemberList');
+    container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+    try {
+        const activeUsers = await userApi.getActive();
+
+        if (!activeUsers || activeUsers.length === 0) {
+            container.innerHTML = '<p class="text-secondary">활동 중인 부원이 없습니다.</p>';
+            return;
+        }
+
+        container.innerHTML = activeUsers.map(user => `
+            <div class="transition-user-item" data-user-id="${user.id}">
+                <div class="transition-user-select">
+                    <label class="checkbox-label">
+                        <input type="checkbox" class="create-member-checkbox"
+                               data-user-id="${user.id}" checked>
+                        <strong>${escapeHtml(user.name)}</strong>
+                        <span class="text-secondary" style="margin-left: 8px;">(${user.studentNumber || '-'})</span>
+                    </label>
+                </div>
+                <div class="transition-user-roles">
+                    <div class="roles-checkbox-group compact">
+                        ${ALL_ROLES.map(role => `
+                            <label class="role-checkbox ${isFullAccessRole(role) ? 'full-access' : ''}">
+                                <input type="checkbox"
+                                       class="create-role-checkbox"
+                                       data-user-id="${user.id}"
+                                       value="${role}">
+                                <span>${getRoleLabel(role)}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        // Toggle role visibility based on user selection
+        container.querySelectorAll('.create-member-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const item = e.target.closest('.transition-user-item');
+                const rolesSection = item.querySelector('.transition-user-roles');
+                rolesSection.style.opacity = e.target.checked ? '1' : '0.4';
+                rolesSection.style.pointerEvents = e.target.checked ? 'auto' : 'none';
+            });
+        });
+
+    } catch (error) {
+        console.error('Error loading active users:', error);
+        container.innerHTML = '<p class="text-danger">부원 목록을 불러오는데 실패했습니다.</p>';
+    }
 }
 
 // Edit season
@@ -165,6 +228,10 @@ async function editSeason(id) {
         document.getElementById('seasonId').value = season.id;
         document.getElementById('seasonName').value = season.name;
         document.getElementById('eventDate').value = season.eventDate || '';
+
+        // Hide member selection for edit mode
+        document.getElementById('createMemberSection').style.display = 'none';
+        document.getElementById('seasonModalInner').style.maxWidth = '';
 
         openModal('seasonModal');
     } catch (error) {
@@ -188,10 +255,38 @@ async function saveSeason() {
 
     try {
         if (id) {
-            data.id = parseInt(id);  // Backend expects id in body
+            // Update existing season
+            data.id = parseInt(id);
             await seasonApi.update(id, data);
             showToast('학기이 수정되었습니다', 'success');
         } else {
+            // Create new season — collect selected members
+            const members = [];
+            document.querySelectorAll('.create-member-checkbox:checked').forEach(checkbox => {
+                const userId = parseInt(checkbox.dataset.userId);
+                const item = checkbox.closest('.transition-user-item');
+                const roles = Array.from(item.querySelectorAll('.create-role-checkbox:checked'))
+                    .map(cb => cb.value);
+                if (roles.length > 0) {
+                    members.push({ userId, roles });
+                }
+            });
+
+            if (members.length === 0) {
+                showToast('최소 1명의 부원에게 역할을 배정해주세요', 'error');
+                return;
+            }
+
+            // Check for at least one full access role
+            const hasFullAccessMember = members.some(m =>
+                m.roles.some(r => FULL_ACCESS_ROLES.includes(r))
+            );
+            if (!hasFullAccessMember) {
+                showToast('최소 1명의 운영진(학회장, 연출, 조연출, 기획)이 필요합니다', 'error');
+                return;
+            }
+
+            data.members = members;
             await seasonApi.create(data);
             showToast('학기이 생성되었습니다', 'success');
         }
@@ -650,7 +745,7 @@ async function executeTransition() {
 
     // Collect selected users and their roles
     const selectedUsers = [];
-    const graduateUserIds = [];
+    const deactivateUserIds = [];
 
     document.querySelectorAll('.transition-user-item').forEach(item => {
         const userId = parseInt(item.dataset.userId);
@@ -664,20 +759,34 @@ async function executeTransition() {
                 selectedUsers.push({ userId, roles });
             } else {
                 // If selected but no roles, treat as not continuing
-                graduateUserIds.push(userId);
+                deactivateUserIds.push(userId);
             }
         } else {
-            graduateUserIds.push(userId);
+            deactivateUserIds.push(userId);
         }
     });
 
+    if (selectedUsers.length === 0) {
+        showToast('최소 1명의 부원에게 역할을 배정해주세요', 'error');
+        return;
+    }
+
+    // Check for at least one full access role
+    const hasFullAccessMember = selectedUsers.some(u =>
+        u.roles.some(r => FULL_ACCESS_ROLES.includes(r))
+    );
+    if (!hasFullAccessMember) {
+        showToast('최소 1명의 운영진(학회장, 연출, 조연출, 기획)이 필요합니다', 'error');
+        return;
+    }
+
     // Confirm the action
     const continueCount = selectedUsers.length;
-    const graduateCount = graduateUserIds.length;
+    const deactivateCount = deactivateUserIds.length;
 
     const confirmMsg = `새 학기: ${newSeasonName}\n\n` +
         `- 계속하는 부원: ${continueCount}명\n` +
-        `- 졸업 처리될 부원: ${graduateCount}명\n\n` +
+        `- 비활동 처리될 부원: ${deactivateCount}명\n\n` +
         `진행하시겠습니까?`;
 
     if (!confirm(confirmMsg)) {
@@ -688,35 +797,23 @@ async function executeTransition() {
         // Step 1: Close current season
         await seasonApi.close(currentSeasonData.id);
 
-        // Step 2: Create new season
+        // Step 2: Create new season with members (atomic)
         const newSeason = await seasonApi.create({
             name: newSeasonName,
-            eventDate: eventDate
+            eventDate: eventDate,
+            members: selectedUsers
         });
 
-        // Step 3: Add selected users to new season
-        for (const user of selectedUsers) {
+        // Step 3: Deactivate non-selected users
+        for (const userId of deactivateUserIds) {
             try {
-                await userSeasonApi.addUserToSeason({
-                    userId: user.userId,
-                    seasonId: newSeason.id,
-                    roles: user.roles
-                });
+                await userApi.deactivate(userId);
             } catch (error) {
-                console.error(`Error adding user ${user.userId} to new season:`, error);
+                console.error(`Error deactivating user ${userId}:`, error);
             }
         }
 
-        // Step 4: Graduate non-selected users
-        for (const userId of graduateUserIds) {
-            try {
-                await userApi.graduate(userId);
-            } catch (error) {
-                console.error(`Error graduating user ${userId}:`, error);
-            }
-        }
-
-        // Step 5: Activate new season
+        // Step 4: Activate new season
         await seasonApi.activate(newSeason.id);
 
         showToast('학기 전환이 완료되었습니다', 'success');

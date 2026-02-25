@@ -66,7 +66,7 @@ async function sendMessage(e) {
         return;
     }
 
-    const confirmSend = confirm('모든 졸업생에게 문자를 전송합니다. 계속하시겠습니까?');
+    const confirmSend = confirm('모든 비활동 부원에게 문자를 전송합니다. 계속하시겠습니까?');
     if (!confirmSend) {
         return;
     }
@@ -94,7 +94,7 @@ async function sendMessage(e) {
         showToast('전송 실패: ' + error.message, 'error');
     } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = '졸업생에게 전송';
+        submitBtn.textContent = '비활동 부원에게 전송';
     }
 }
 

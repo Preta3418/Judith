@@ -99,21 +99,21 @@
                     <!-- Send Message Section -->
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">졸업생에게 문자 발송</h3>
+                            <h3 class="card-title">비활동 부원에게 문자 발송</h3>
                         </div>
                         <div class="card-body">
                             <form id="sendMessageForm" onsubmit="sendMessage(event)">
                                 <div class="form-group">
                                     <label class="form-label required" for="messageContent">메시지 내용</label>
                                     <textarea class="form-textarea" id="messageContent"
-                                              placeholder="졸업생에게 보낼 메시지를 입력하세요..."
+                                              placeholder="비활동 부원에게 보낼 메시지를 입력하세요..."
                                               style="min-height: 200px;" required></textarea>
                                 </div>
                                 <div class="form-hint mb-24">
-                                    이 메시지는 모든 졸업생에게 SMS로 발송됩니다.
+                                    이 메시지는 모든 비활동 부원에게 SMS로 발송됩니다.
                                 </div>
                                 <button type="submit" class="btn btn-primary btn-block btn-lg" id="sendBtn">
-                                    전체 졸업생에게 발송
+                                    전체 비활동 부원에게 발송
                                 </button>
                             </form>
                         </div>
@@ -243,7 +243,7 @@
                 showToast(error.message || '메시지 발송에 실패했습니다', 'error');
             } finally {
                 sendBtn.disabled = false;
-                sendBtn.textContent = '전체 졸업생에게 발송';
+                sendBtn.textContent = '전체 비활동 부원에게 발송';
             }
         }
 

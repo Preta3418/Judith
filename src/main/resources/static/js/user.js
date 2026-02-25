@@ -67,8 +67,8 @@ function renderUsers() {
     let filtered = allUsers;
     if (currentFilter === 'active') {
         filtered = allUsers.filter(u => u.status === 'ACTIVE');
-    } else if (currentFilter === 'graduated') {
-        filtered = allUsers.filter(u => u.status === 'GRADUATED');
+    } else if (currentFilter === 'inactive') {
+        filtered = allUsers.filter(u => u.status === 'INACTIVE');
     }
 
     if (filtered.length === 0) {
@@ -83,7 +83,7 @@ function renderUsers() {
 
     container.innerHTML = filtered.map(user => {
         const roleName = getRoleName(user.role);
-        const statusName = user.status === 'ACTIVE' ? '현역' : '졸업';
+        const statusName = user.status === 'ACTIVE' ? '현역' : '비활동';
         return `
             <div class="list-item">
                 <div class="list-item-content">
@@ -114,7 +114,7 @@ function renderUsers() {
 // ==================== Show User Detail ====================
 function showUserDetail(user) {
     const roleName = getRoleName(user.role);
-    const statusName = user.status === 'ACTIVE' ? '현역' : '졸업';
+    const statusName = user.status === 'ACTIVE' ? '현역' : '비활동';
 
     document.getElementById('detailName').textContent = user.name;
     document.getElementById('detailStudentNumber').textContent = user.studentNumber || '-';
@@ -126,10 +126,10 @@ function showUserDetail(user) {
     // Store user ID for actions
     document.getElementById('userDetailModal').dataset.userId = user.id;
 
-    // Show/hide graduate button
-    const graduateBtn = document.getElementById('graduateBtn');
-    if (graduateBtn) {
-        graduateBtn.style.display = user.status === 'ACTIVE' ? 'block' : 'none';
+    // Show/hide deactivate button
+    const deactivateBtn = document.getElementById('deactivateBtn');
+    if (deactivateBtn) {
+        deactivateBtn.style.display = user.status === 'ACTIVE' ? 'block' : 'none';
     }
 
     // Pre-fill edit form
@@ -151,22 +151,22 @@ async function createUser(e) {
     };
 
     try {
-        // Check for existing graduated user with same identifiers
-        const matchingGraduate = await findMatchingGraduate(userData);
+        // Check for existing inactive user with same identifiers
+        const matchingInactive = await findMatchingInactive(userData);
 
-        if (matchingGraduate) {
+        if (matchingInactive) {
             // Show reactivation prompt
             const reactivate = confirm(
-                `동일한 정보의 졸업생이 존재합니다.\n\n` +
-                `이름: ${matchingGraduate.name}\n` +
-                `학번: ${matchingGraduate.studentNumber || '-'}\n` +
-                `전화번호: ${formatPhone(matchingGraduate.phoneNumber)}\n\n` +
-                `이 졸업생을 재활성화 하시겠습니까?`
+                `동일한 정보의 비활동 부원이 존재합니다.\n\n` +
+                `이름: ${matchingInactive.name}\n` +
+                `학번: ${matchingInactive.studentNumber || '-'}\n` +
+                `전화번호: ${formatPhone(matchingInactive.phoneNumber)}\n\n` +
+                `이 부원을 재활성화 하시겠습니까?`
             );
 
             if (reactivate) {
-                await userApi.reactivate(matchingGraduate.id);
-                showToast('졸업생이 재활성화되었습니다', 'success');
+                await userApi.reactivate(matchingInactive.id);
+                showToast('부원이 재활성화되었습니다', 'success');
                 closeModal('createUserModal');
                 document.getElementById('createUserForm').reset();
                 await loadUsers();
@@ -178,7 +178,7 @@ async function createUser(e) {
             }
         }
 
-        // No matching graduate, proceed with creation
+        // No matching inactive user, proceed with creation
         await userApi.create(userData);
         showToast('학회원이 추가되었습니다', 'success');
         closeModal('createUserModal');
@@ -189,27 +189,27 @@ async function createUser(e) {
     }
 }
 
-// Find matching graduated user by name, studentNumber, or phoneNumber
-async function findMatchingGraduate(userData) {
+// Find matching inactive user by name, studentNumber, or phoneNumber
+async function findMatchingInactive(userData) {
     try {
-        const graduates = await userApi.getGraduated();
-        return graduates.find(g => {
+        const inactiveUsers = await userApi.getInactive();
+        return inactiveUsers.find(u => {
             // Match by phone number (most unique)
-            if (userData.phoneNumber && g.phoneNumber === userData.phoneNumber) {
+            if (userData.phoneNumber && u.phoneNumber === userData.phoneNumber) {
                 return true;
             }
             // Match by student number (also unique)
-            if (userData.studentNumber && g.studentNumber === userData.studentNumber) {
+            if (userData.studentNumber && u.studentNumber === userData.studentNumber) {
                 return true;
             }
             // Match by name + partial phone
-            if (userData.name === g.name) {
+            if (userData.name === u.name) {
                 return true;
             }
             return false;
         });
     } catch (error) {
-        console.error('Error checking for graduated users:', error);
+        console.error('Error checking for inactive users:', error);
         return null;
     }
 }
@@ -235,21 +235,21 @@ async function updateUser(e) {
     }
 }
 
-// ==================== Graduate User ====================
-async function graduateUser() {
+// ==================== Deactivate User ====================
+async function deactivateUser() {
     const userId = document.getElementById('userDetailModal').dataset.userId;
 
-    if (!confirm('이 학회원을 졸업 처리하시겠습니까?')) {
+    if (!confirm('이 부원을 비활동 처리하시겠습니까?')) {
         return;
     }
 
     try {
-        await userApi.graduate(userId);
-        showToast('졸업 처리되었습니다', 'success');
+        await userApi.deactivate(userId);
+        showToast('비활동 처리되었습니다', 'success');
         closeModal('userDetailModal');
         await loadUsers();
     } catch (error) {
-        showToast('졸업 처리 실패: ' + error.message, 'error');
+        showToast('비활동 처리 실패: ' + error.message, 'error');
     }
 }
 

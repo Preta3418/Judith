@@ -61,10 +61,10 @@ const userApi = {
     getById: (id) => api(`/api/admin/users/${id}`),
     create: (user) => api('/api/admin/users', { method: 'POST', body: JSON.stringify(user) }),
     update: (id, user) => api(`/api/admin/users/${id}`, { method: 'PUT', body: JSON.stringify(user) }),
-    graduate: (id) => api(`/api/admin/users/${id}/graduate`, { method: 'POST' }),
+    deactivate: (id) => api(`/api/admin/users/${id}/deactivate`, { method: 'POST' }),
     reactivate: (id) => api(`/api/admin/users/${id}/reactivate`, { method: 'POST' }),
     getActive: () => api('/api/admin/users/active'),
-    getGraduated: () => api('/api/admin/users/graduated'),
+    getInactive: () => api('/api/admin/users/inactive'),
 };
 
 // ==================== Event API ====================
