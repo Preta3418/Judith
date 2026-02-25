@@ -1,36 +1,71 @@
 package com.judtih.judith_management_system.domain.season;
 
 import com.judtih.judith_management_system.domain.season.dto.CountdownResponse;
+import com.judtih.judith_management_system.domain.season.dto.SeasonMemberRequest;
 import com.judtih.judith_management_system.domain.season.dto.SeasonRequest;
 import com.judtih.judith_management_system.domain.season.dto.SeasonResponse;
 import com.judtih.judith_management_system.domain.season.exception.*;
+import com.judtih.judith_management_system.domain.user.dto.UserSeasonRequest;
+import com.judtih.judith_management_system.domain.user.entity.UserSeason;
+import com.judtih.judith_management_system.domain.user.enums.UserRole;
+import com.judtih.judith_management_system.domain.user.exception.NoUserFoundException;
+import com.judtih.judith_management_system.domain.user.repository.UserRepository;
+import com.judtih.judith_management_system.domain.user.repository.UserSeasonRepository;
+import com.judtih.judith_management_system.domain.user.service.UserSeasonService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class SeasonService {
 
     private final SeasonRepository seasonRepository;
+    private final UserRepository userRepository;
+    private final UserSeasonRepository userSeasonRepository;
+    private final UserSeasonService userSeasonService;
 
 
     @Transactional
     public SeasonResponse createSeason(SeasonRequest request) {
+
 
         if(seasonRepository.existsByStatusNot(Status.CLOSED)) {
             throw new AlreadyActiveSeasonException("Cannot create season when one is already active", 409, "Conflict" );
         }
 
 
+        if(request.getMembers() == null) {
+            throw new NoUserFoundException("there is no member", 404, "Not Found");
+        }
+
+        // At least one member has to have full access role
+        boolean hasFullAccess = false;
+
+        for (SeasonMemberRequest member : request.getMembers()) {
+            if (member.getRoles() != null && !Collections.disjoint(member.getRoles(), UserRole.FULL_ACCESS_ROLES)) {
+                hasFullAccess = true;
+                break;
+            }
+        }
+
+        if (!hasFullAccess) {
+            throw new NoFullAccessMemberFound("At least one member must have a full access role", 400, "Bad Request");
+        }
+
+
 
         Season season = new Season(request.getName());
         seasonRepository.save(season);
+
+        for (SeasonMemberRequest member : request.getMembers()) {
+            userSeasonService.addUserToSeason(new UserSeasonRequest(member.getUserId(), season.getId(), member.getRoles()));
+        }
+
 
         return createSeasonResponse(season);
 
@@ -43,6 +78,38 @@ public class SeasonService {
 
         if (season.getStatus() == Status.CLOSED) throw new SeasonClosedException("This season is a closed season", 409, "Conflict");
         else if (season.getStatus() == Status.ACTIVE) throw new AlreadyActiveSeasonException("This season is already active", 409, "Conflict");
+
+
+        // All User must have a role to activate
+        List<UserSeason> userSeasons = userSeasonRepository.findBySeasonId(id);
+        List<UserSeason> noRoleUser = new ArrayList<>();
+
+        for(UserSeason us : userSeasons) {
+            if (us.getUserRoles() == null || us.getUserRoles().isEmpty()) {
+                noRoleUser.add(us);
+            }
+        }
+
+        if (!noRoleUser.isEmpty()) {
+            List<String> names = noRoleUser.stream()
+                    .map(us -> us.getUser().getName())
+                    .toList();
+            throw new NoRoleAssignedException("No roles assigned for: " + names, 400, "Bad Request");
+        }
+
+        // At least one user have to be full access member
+        boolean hasFullAccess = false;
+
+        for (UserSeason us : userSeasons) {
+            if (!Collections.disjoint(us.getUserRoles(), UserRole.FULL_ACCESS_ROLES)) {
+                hasFullAccess = true;
+                break;
+            }
+        }
+        if (!hasFullAccess) {
+            throw new NoFullAccessMemberFound("At least one member must have a full access role", 400, "Bad Request");
+        }
+
 
         season.activateSeason();
 
@@ -57,7 +124,8 @@ public class SeasonService {
     }
 
     public Optional<Season> findCurrentSeason() {
-        return seasonRepository.findByStatus(Status.ACTIVE);
+        return seasonRepository.findByStatus(Status.ACTIVE)
+                .or(() -> seasonRepository.findByStatus(Status.PREPARING));
     }
 
 

@@ -2,6 +2,8 @@ package com.judtih.judith_management_system.domain.user.service;
 
 import com.judtih.judith_management_system.domain.season.Season;
 import com.judtih.judith_management_system.domain.season.SeasonRepository;
+import com.judtih.judith_management_system.domain.season.Status;
+import com.judtih.judith_management_system.domain.season.exception.NoRoleAssignedException;
 import com.judtih.judith_management_system.domain.season.exception.NoSeasonFoundException;
 import com.judtih.judith_management_system.domain.user.dto.UpdateUserRolesRequest;
 import com.judtih.judith_management_system.domain.user.dto.UserSeasonRequest;
@@ -20,7 +22,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 
 @Service
@@ -43,6 +44,16 @@ public class UserSeasonService {
         if (userSeasonRepository.existsByUserIdAndSeasonId(request.getUserId(), request.getSeasonId())) {
             throw new UserSeasonAlreadyExistsException("User already assigned to this season", 409, "Conflict");
         }
+
+        //Season Status safety check
+        if (season.getStatus() == Status.CLOSED) {
+            throw new NoSeasonFoundException("Cannot add user when season is closed", 400, "Bad Request");
+        }
+
+        if (season.getStatus() == Status.ACTIVE) {
+            if(request.getRoles() == null || request.getRoles().isEmpty()) throw new NoRoleAssignedException("no roles assigned for user:" + user.getName(), 400, "Bad Request");
+        }
+
 
 
         UserSeason userSeason = UserSeason.builder()
@@ -88,12 +99,8 @@ public class UserSeasonService {
     }
 
     public boolean hasFullAccessRole(Long userId, Long seasonId) {
-        Set<UserRole> fullAccessRoles = Set.of(
-                UserRole.LEADER, UserRole.PRODUCER, UserRole.SUB_PRODUCER, UserRole.PLANNER
-        );
-
         return userSeasonRepository.findByUserIdAndSeasonId(userId, seasonId)
-                .map(userSeason -> !Collections.disjoint(userSeason.getUserRoles(), fullAccessRoles))
+                .map(userSeason -> !Collections.disjoint(userSeason.getUserRoles(), UserRole.FULL_ACCESS_ROLES))
                 .orElse(false);
     }
 
