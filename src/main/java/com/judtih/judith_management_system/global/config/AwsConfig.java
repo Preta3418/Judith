@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.sns.SnsClient;
 
 @Configuration
@@ -19,7 +20,10 @@ public class AwsConfig {
     private String secretAccessKey;
 
     @Value("${aws.region}")
-    private String region;
+    private String SnsRegion;
+
+    @Value("${aws.defaultRegion}")
+    private String defaultRegion;
 
 
     /**
@@ -27,6 +31,7 @@ public class AwsConfig {
      * SnsClient 는 간단하게 말하면, 우리가 api 연결을 위해 쓰일 중간 다리. (RestClient 랑 동일한 방식)
      * AwsBasicCredential 은 엑세스/시크릿 엑세스 키를 들 수 있는 컨테이너
      * builder 로 SnsClient 에 엑세스키와 지역을 넣고 만들어주면 RestClient 랑 거의 동일하게 사용 가능
+     * 쉽게 말하면 매번 http url 이나 credential 관리해서 header 만들기 귀찮으니 미리 하나 만들어서 공용으로 쓰는것.
 
      * StaticCredentialsProvide 는 중간 레이어인데, 이 중간 레이어가 꽤 많음
      * Static , Default, EnvironmentalVariable, Profile, Instance ....
@@ -39,10 +44,22 @@ public class AwsConfig {
         AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKeyId, secretAccessKey);
 
         return SnsClient.builder()
-                .region(Region.of(region))
+                .region(Region.of(SnsRegion))
                 .credentialsProvider(StaticCredentialsProvider.create(credentials))
                 .build();
 
     }
+
+    @Bean
+    public S3Client s3Client() {
+        AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKeyId, secretAccessKey);
+
+        return S3Client.builder()
+                .region(Region.of(defaultRegion))
+                .credentialsProvider(StaticCredentialsProvider.create(credentials))
+                .build();
+    }
+
+
 
 }

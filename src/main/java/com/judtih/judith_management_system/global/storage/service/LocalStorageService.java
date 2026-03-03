@@ -9,6 +9,7 @@ import com.judtih.judith_management_system.global.storage.exception.FileStorageE
 import com.judtih.judith_management_system.global.storage.repository.StorageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Service
+@Profile("local")
 @RequiredArgsConstructor
 public class LocalStorageService implements StorageService {
 
