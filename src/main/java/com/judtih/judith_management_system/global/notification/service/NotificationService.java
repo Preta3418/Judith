@@ -58,7 +58,9 @@ public class NotificationService {
 
             for (UserSeason userSeason : seasonUsers) {
 
-                boolean hasTargetRole = !Collections.disjoint(userSeason.getUserRoles(), request.getTargetRoles());
+                boolean hasTargetRole = request.getTargetRoles() == null
+                        || request.getTargetRoles().isEmpty()
+                        || !Collections.disjoint(userSeason.getUserRoles(), request.getTargetRoles());
 
                 boolean isActive = userSeason.getUser().getStatus() == UserStatus.ACTIVE;
                 boolean notAlreadyAdded = !targetUsers.contains(userSeason.getUser());

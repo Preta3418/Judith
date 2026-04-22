@@ -45,3 +45,6 @@ application-local.properties
 # Claude Code context files (personal notes, not for repo)
 PROJECT_SUMMARY.md
 ARCHITECTURE.md
+DASHBOARD.md
+aws-s3-guide.md
+rest-client-guide.md

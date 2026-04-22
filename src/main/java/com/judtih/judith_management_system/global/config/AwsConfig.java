@@ -19,7 +19,7 @@ public class AwsConfig {
     @Value("${aws.secretAccessKey}")
     private String secretAccessKey;
 
-    @Value("${aws.region}")
+    @Value("${aws.SnsRegion}")
     private String SnsRegion;
 
     @Value("${aws.defaultRegion}")

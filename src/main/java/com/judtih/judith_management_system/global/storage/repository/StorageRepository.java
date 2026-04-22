@@ -14,6 +14,8 @@ public interface StorageRepository extends JpaRepository<StoredFile, Long> {
 
     List<StoredFile> findBySeasonId(Long seasonId);
 
+    List<StoredFile> findBySeasonIdAndFileType(Long seasonId, StorageFolder fileType);
+
 
 
 }

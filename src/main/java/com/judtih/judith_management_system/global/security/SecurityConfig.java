@@ -36,6 +36,8 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
+                        .requestMatchers("/api/dashboard/**").authenticated()
+
                         .requestMatchers("/", "/index.html", "/public/**", "/css/**", "/js/**", "/images/**", "/lms/**", "/*.html", "/favicon.ico").permitAll()
 
                         .anyRequest().authenticated()
