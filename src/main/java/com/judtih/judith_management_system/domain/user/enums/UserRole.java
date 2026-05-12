@@ -1,5 +1,6 @@
 package com.judtih.judith_management_system.domain.user.enums;
 
+import java.util.Collections;
 import java.util.Set;
 
 public enum UserRole {
@@ -19,7 +20,11 @@ public enum UserRole {
     IMAGE_DESIGN, //인쇄 디자인
     STAGE_DESIGN; //무대 디자인
 
-    public static final Set<UserRole> FULL_ACCESS_ROLES = Set.of(
+    private static final Set<UserRole> FULL_ACCESS_ROLES = Set.of(
             UserRole.LEADER, UserRole.PRODUCER, UserRole.SUB_PRODUCER, UserRole.PLANNER
     );
+
+    public static boolean hasFullAccess(Set<UserRole> roles) {
+        return roles != null && !Collections.disjoint(roles, FULL_ACCESS_ROLES);
+    }
 }

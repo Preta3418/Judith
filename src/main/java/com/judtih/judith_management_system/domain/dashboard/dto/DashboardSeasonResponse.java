@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.Set;
 
 @Getter
@@ -35,6 +34,6 @@ public class DashboardSeasonResponse {
         this.endDate = endDate;
         this.eventDate = eventDate;
         this.myRoles = myRoles;
-        this.myFullAccess = myRoles != null && !Collections.disjoint(myRoles, UserRole.FULL_ACCESS_ROLES);
+        this.myFullAccess = UserRole.hasFullAccess(myRoles);
     }
 }

@@ -20,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.util.List;
 
 
@@ -100,7 +99,7 @@ public class UserSeasonService {
 
     public boolean hasFullAccessRole(Long userId, Long seasonId) {
         return userSeasonRepository.findByUserIdAndSeasonId(userId, seasonId)
-                .map(userSeason -> !Collections.disjoint(userSeason.getUserRoles(), UserRole.FULL_ACCESS_ROLES))
+                .map(userSeason -> UserRole.hasFullAccess(userSeason.getUserRoles()))
                 .orElse(false);
     }
 

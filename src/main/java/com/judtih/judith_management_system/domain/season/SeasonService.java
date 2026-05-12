@@ -47,7 +47,7 @@ public class SeasonService {
         boolean hasFullAccess = false;
 
         for (SeasonMemberRequest member : request.getMembers()) {
-            if (member.getRoles() != null && !Collections.disjoint(member.getRoles(), UserRole.FULL_ACCESS_ROLES)) {
+            if (UserRole.hasFullAccess(member.getRoles())) {
                 hasFullAccess = true;
                 break;
             }
@@ -101,7 +101,7 @@ public class SeasonService {
         boolean hasFullAccess = false;
 
         for (UserSeason us : userSeasons) {
-            if (!Collections.disjoint(us.getUserRoles(), UserRole.FULL_ACCESS_ROLES)) {
+            if (UserRole.hasFullAccess(us.getUserRoles())) {
                 hasFullAccess = true;
                 break;
             }
