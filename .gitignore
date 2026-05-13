@@ -46,5 +46,6 @@ application-local.properties
 PROJECT_SUMMARY.md
 ARCHITECTURE.md
 DASHBOARD.md
+RESUME.md
 aws-s3-guide.md
 rest-client-guide.md
