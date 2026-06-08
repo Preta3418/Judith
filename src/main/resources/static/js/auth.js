@@ -43,7 +43,7 @@ function isAdmin() {
 }
 
 function getLoginRedirect() {
-    return isAdmin() ? '/main.html' : '/lms/index.html';
+    return isAdmin() ? '/main.html' : '/dashboard/index.html';
 }
 
 // ==================== Admin Status Application ====================
