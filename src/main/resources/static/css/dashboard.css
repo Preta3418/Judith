@@ -1,0 +1,428 @@
+/* Judith Dashboard */
+
+/* ==================== Shell ==================== */
+.dash-shell {
+    min-height: 100vh;
+    background: var(--gray-50);
+}
+
+/* ==================== Top Nav ==================== */
+.dash-nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: #0f0a1e;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.dash-nav-inner {
+    max-width: 1000px;
+    margin: 0 auto;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    gap: 24px;
+}
+
+.dash-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.dash-logo img {
+    height: 22px;
+    opacity: 0.8;
+}
+
+.dash-logo-text {
+    font-size: 1rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.85);
+    letter-spacing: 0.05em;
+}
+
+.dash-nav-tabs {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.dash-tab {
+    padding: 7px 16px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.5);
+    text-decoration: none;
+    transition: color 0.15s ease, background 0.15s ease;
+    white-space: nowrap;
+}
+
+.dash-tab:hover {
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.dash-tab.active {
+    color: white;
+    background: rgba(124, 58, 237, 0.45);
+}
+
+.dash-nav-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+.dash-season-select {
+    padding: 5px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    max-width: 160px;
+}
+
+.dash-season-select option {
+    background: #1a1030;
+    color: white;
+}
+
+.dash-avatar {
+    width: 30px;
+    height: 30px;
+    background: rgba(124, 58, 237, 0.6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+}
+
+.dash-user-name {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.55);
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dash-btn-logout {
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.78rem;
+    background: transparent;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.dash-btn-logout:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.75);
+}
+
+/* ==================== Main Content ==================== */
+.dash-main {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 36px 28px 72px;
+}
+
+/* ==================== Page Header ==================== */
+.dash-page-header {
+    margin-bottom: 28px;
+}
+
+.dash-greeting {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.dash-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* ==================== Cards ==================== */
+.dash-card {
+    background: white;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+}
+
+.dash-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.dash-card-title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+/* ==================== Season Info ==================== */
+.dash-season-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.dash-season-name {
+    font-size: 1.35rem;
+    font-weight: 700;
+}
+
+.dash-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.dash-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dash-info-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.dash-info-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* ==================== Roles ==================== */
+.dash-roles {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* ==================== Stats ==================== */
+.dash-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.dash-stat {
+    background: white;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 22px 20px;
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+    display: block;
+}
+
+a.dash-stat:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.dash-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1.1;
+    margin-bottom: 5px;
+}
+
+.dash-stat-label {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+/* ==================== Members ==================== */
+.dash-member-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+    gap: 10px;
+}
+
+.dash-member {
+    background: var(--gray-50);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+}
+
+.dash-member-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+
+.dash-member-role {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+/* ==================== Scripts ==================== */
+.dash-scripts {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dash-script {
+    background: white;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.15s ease;
+}
+
+.dash-script:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.dash-script-name {
+    font-weight: 600;
+    font-size: 0.925rem;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 500px;
+}
+
+.dash-script-meta {
+    font-size: 0.775rem;
+    color: var(--text-muted);
+}
+
+/* ==================== Notifications ==================== */
+.dash-notifs {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dash-notif {
+    background: white;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: box-shadow 0.15s ease;
+}
+
+.dash-notif:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.dash-notif.unread {
+    border-left: 3px solid var(--primary);
+}
+
+.dash-notif-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    gap: 16px;
+    user-select: none;
+}
+
+.dash-notif-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.dash-unread-dot {
+    width: 7px;
+    height: 7px;
+    background: var(--primary);
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.dash-notif-title {
+    font-weight: 600;
+    font-size: 0.925rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dash-notif-date {
+    font-size: 0.775rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.dash-notif-body {
+    display: none;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.75;
+    white-space: pre-wrap;
+}
+
+.dash-notif.expanded .dash-notif-body {
+    display: block;
+}
+
+/* ==================== Empty State ==================== */
+.dash-empty {
+    text-align: center;
+    padding: 56px 24px;
+    color: var(--text-muted);
+}
+
+.dash-empty-icon {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    opacity: 0.4;
+}
+
+.dash-empty-text {
+    font-size: 0.9rem;
+    line-height: 1.7;
+}

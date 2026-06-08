@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>대본 — Judith</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<div class="dash-shell">
+
+    <nav class="dash-nav">
+        <div class="dash-nav-inner">
+            <a href="/" class="dash-logo">
+                <img src="/images/logo-symbol-light.png" alt="Judith">
+                <span class="dash-logo-text">Judith</span>
+            </a>
+            <div class="dash-nav-tabs">
+                <a href="/dashboard/index.html" class="dash-tab">홈</a>
+                <a href="/dashboard/notifications.html" class="dash-tab">공지사항</a>
+                <a href="/dashboard/scripts.html" class="dash-tab active">대본</a>
+            </div>
+            <div class="dash-nav-right">
+                <select class="dash-season-select" id="seasonSelector"></select>
+                <div class="dash-avatar" id="userAvatar">U</div>
+                <span class="dash-user-name" id="userName"></span>
+                <button class="dash-btn-logout" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dash-main" id="pageContainer">
+        <div class="loading"><div class="spinner"></div></div>
+    </main>
+
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/dashboard.js"></script>
+<script>
+async function loadPageContent() {
+    const container = document.getElementById('pageContainer');
+    container.innerHTML = `
+        <div class="dash-page-header">
+            <div class="dash-greeting">대본</div>
+            <div class="dash-subtitle">${escHtml(currentSeason.seasonName)} · 파일을 클릭해 다운로드하세요</div>
+        </div>
+        <div class="dash-scripts" id="scriptsList">
+            <div class="loading"><div class="spinner"></div></div>
+        </div>
+    `;
+
+    await loadScripts();
+}
+
+async function loadScripts() {
+    const list = document.getElementById('scriptsList');
+    try {
+        const scripts = await api(`/api/dashboard/seasons/${currentSeasonId}/scripts`) || [];
+
+        if (scripts.length === 0) {
+            list.innerHTML = `<div class="dash-empty">
+                <div class="dash-empty-icon">&#x1F4DC;</div>
+                <p class="dash-empty-text">업로드된 대본이 없습니다<br>관리자에게 문의하세요</p>
+            </div>`;
+            return;
+        }
+
+        list.innerHTML = scripts.map(s => `
+            <div class="dash-script">
+                <div>
+                    <div class="dash-script-name" title="${escHtml(s.fileName)}">${escHtml(s.fileName)}</div>
+                    <div class="dash-script-meta">${fmtBytes(s.fileSize)}${s.fileSize ? ' · ' : ''}${fmtDateTime(s.uploadedAt)}</div>
+                </div>
+                <a href="${escHtml(s.url)}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">다운로드</a>
+            </div>
+        `).join('');
+    } catch(e) {
+        list.innerHTML = '<div class="alert alert-danger">대본 목록을 불러올 수 없습니다.</div>';
+    }
+}
+</script>
+</body>
+</html>
