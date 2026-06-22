@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.util.Date;
 
+/** Generates and validates JWTs; encodes userId, studentNumber, and hasFullAccess as claims. */
 @Component
 public class JwtUtil {
 
@@ -72,6 +73,7 @@ public class JwtUtil {
     }
 
 
+    // Shared helper; callers are responsible for only calling this on already-validated tokens
     private Claims getClaims(String token) {
         return Jwts.parser()
                 .verifyWith(secretKey)

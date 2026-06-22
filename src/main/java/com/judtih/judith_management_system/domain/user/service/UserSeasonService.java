@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 
+/** Manages season membership: enrollment, role updates, removal, and full-access checks used at login. */
 @Service
 @RequiredArgsConstructor
 public class UserSeasonService {
@@ -44,7 +45,7 @@ public class UserSeasonService {
             throw new UserSeasonAlreadyExistsException("User already assigned to this season", 409, "Conflict");
         }
 
-        //Season Status safety check
+        // CLOSED seasons are fully read-only; PREPARING allows role-less enrollment (roles assigned later at activation)
         if (season.getStatus() == Status.CLOSED) {
             throw new NoSeasonFoundException("Cannot add user when season is closed", 400, "Bad Request");
         }
@@ -97,6 +98,7 @@ public class UserSeasonService {
                 .toList();
     }
 
+    /** Called at login to embed the full-access flag in the JWT; returns false if the user is not a season member. */
     public boolean hasFullAccessRole(Long userId, Long seasonId) {
         return userSeasonRepository.findByUserIdAndSeasonId(userId, seasonId)
                 .map(userSeason -> UserRole.hasFullAccess(userSeason.getUserRoles()))

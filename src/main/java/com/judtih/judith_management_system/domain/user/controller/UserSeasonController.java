@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/** Manages season membership: public cast listing, and admin add/update-role/remove endpoints. */
 @RestController
 @RequiredArgsConstructor
 public class UserSeasonController {

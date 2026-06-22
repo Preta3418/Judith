@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/** Member-facing dashboard endpoints and the admin endpoint for sending season notifications. */
 @RestController
 @RequiredArgsConstructor
 public class DashboardController {

@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+/** File metadata returned after upload and by dashboard script-listing endpoints. */
 public class StoredFileResponse {
 
     Long id;

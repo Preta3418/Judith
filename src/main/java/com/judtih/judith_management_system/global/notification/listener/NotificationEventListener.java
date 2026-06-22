@@ -12,6 +12,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+/**
+ * Handles side effects of domain events. AuthController publishes UserLoggedInEvent and stops —
+ * this listener decides what happens next. Adding new login side effects means adding a listener, not touching auth.
+ */
 @Component
 @RequiredArgsConstructor
 public class NotificationEventListener {

@@ -7,6 +7,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 
+/** Core user entity; table name is "users" to avoid collision with the reserved SQL keyword USER. */
 @Entity
 @Getter
 @Table(name = "users")
@@ -39,7 +40,7 @@ public class User {
     private String phoneNumber;
 
     @Column(nullable = false)
-    private boolean passwordChanged = false;
+    private boolean passwordChanged = false; // false until user explicitly changes from the default (studentNumber)
 
     @Column(nullable = false)
     private boolean isAdmin ;
@@ -53,7 +54,7 @@ public class User {
     private UserStatus status = UserStatus.ACTIVE;
 
     @Column(name = "inactive_since")
-    private LocalDateTime inactiveSince;
+    private LocalDateTime inactiveSince; // null for active users; set on deactivate(), cleared on reactivate()
 
 
     @PrePersist
@@ -61,6 +62,7 @@ public class User {
         createdAt = LocalDateTime.now();
     }
 
+    /** Strips hyphens from phoneNumber so the DB always stores digits only (e.g., 010-1234-5678 → 01012345678). */
     public void updateInfo(String name, String phoneNumber) {
         if (name != null) this.name = name;
         if (phoneNumber != null) this.phoneNumber = phoneNumber.replaceAll("-", "");

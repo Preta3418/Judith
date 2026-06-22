@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/** Schedule detail including real-time remaining seat count (capacity minus booked tickets). */
 public class EventScheduleResponse {
 
     private Long eventScheduleId;

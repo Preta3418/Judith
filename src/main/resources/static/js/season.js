@@ -257,7 +257,7 @@ async function saveSeason() {
         if (id) {
             // Update existing season
             data.id = parseInt(id);
-            await seasonApi.update(id, data);
+            await seasonApi.update(data);
             showToast('학기이 수정되었습니다', 'success');
         } else {
             // Create new season — collect selected members

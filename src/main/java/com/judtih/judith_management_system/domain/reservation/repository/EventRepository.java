@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/** Repository for Event entities; supports filtering by a set of statuses for public listing. */
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long> {
 

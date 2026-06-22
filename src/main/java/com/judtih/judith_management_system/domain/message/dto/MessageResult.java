@@ -9,11 +9,11 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+/** Response returned after a bulk SMS send, summarising success/failure counts and the failed records. */
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-//back end to front end
 public class MessageResult {
     private int totalAttempted;
     private int successCount;

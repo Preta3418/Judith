@@ -3,6 +3,7 @@ package com.judtih.judith_management_system.domain.message.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+/** Stores a single failed SNS delivery attempt associated with a Message broadcast. */
 @Entity
 @NoArgsConstructor
 @Getter
@@ -31,7 +32,7 @@ public class MessageFailure {
     private String phoneNumber;
 
     @Column
-    private String errorMessage;
+    private String errorMessage; // SNS awsErrorDetails message, or RuntimeException message for non-SNS failures
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="message_id", nullable = false)

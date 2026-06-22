@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+/** Admin endpoints for broadcasting SMS messages to alumni via AWS SNS and viewing send history. */
 @RestController
 @RequestMapping("/api/admin/messages")
 @RequiredArgsConstructor

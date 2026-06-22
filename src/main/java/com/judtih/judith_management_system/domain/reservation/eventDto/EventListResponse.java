@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/** Lightweight event summary returned by GET /api/events (member list view); omits description and schedules. */
 public class EventListResponse {
 
     private Long id;

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+/** Response returned on successful login; the client uses hasFullAccess and passwordChanged to control UI state. */
 @Getter
 @Builder
 @AllArgsConstructor

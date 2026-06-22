@@ -3,27 +3,26 @@ package com.judtih.judith_management_system.domain.user.enums;
 import java.util.Collections;
 import java.util.Set;
 
+/**
+ * Roles a member can hold within a season; the first four are full-access roles with elevated privileges.
+ * Full-access roles can create shared calendar events, send notifications, and see all scripts.
+ */
 public enum UserRole {
-    //full access members
-    LEADER, // 학회장
-    PRODUCER, // 연출
-    SUB_PRODUCER, //조연출
-    PLANNER, // 기획
+    // Full-access roles (학회장, 연출, 조연출, 기획)
+    LEADER, PRODUCER, SUB_PRODUCER, PLANNER,
 
-    //normal members
-    ACTOR, //배우
-    STAFF, //스태프
-    SOUND_OPERATOR, //음향 오퍼레이터
-    LIGHT_OPERATOR, //조명 오퍼레이터
-    SOUND_DESIGN, //음향 디자인
-    LIGHT_DESIGN, //조명 디자인
-    IMAGE_DESIGN, //인쇄 디자인
-    STAGE_DESIGN; //무대 디자인
+    // General production roles
+    ACTOR, STAFF,
+    SOUND_OPERATOR, LIGHT_OPERATOR,
+    SOUND_DESIGN, LIGHT_DESIGN,
+    IMAGE_DESIGN, STAGE_DESIGN;
 
+    // Defined once and reused by hasFullAccess() to avoid repeated Set construction
     private static final Set<UserRole> FULL_ACCESS_ROLES = Set.of(
             UserRole.LEADER, UserRole.PRODUCER, UserRole.SUB_PRODUCER, UserRole.PLANNER
     );
 
+    /** Returns true if the given role set contains at least one full-access role; null-safe. */
     public static boolean hasFullAccess(Set<UserRole> roles) {
         return roles != null && !Collections.disjoint(roles, FULL_ACCESS_ROLES);
     }

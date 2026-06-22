@@ -10,6 +10,10 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.sns.SnsClient;
 
+/**
+ * Configures AWS SDK clients (SNS for SMS, S3 for file storage) using static credentials from application properties.
+ * SNS uses Tokyo (ap-northeast-1) while S3 uses Seoul (ap-northeast-2) — note the separate region properties.
+ */
 @Configuration
 public class AwsConfig {
 
@@ -20,25 +24,13 @@ public class AwsConfig {
     private String secretAccessKey;
 
     @Value("${aws.SnsRegion}")
-    private String SnsRegion;
+    private String SnsRegion; // capital S and R — must match the property key exactly in all profiles
 
     @Value("${aws.defaultRegion}")
     private String defaultRegion;
 
 
-    /**
-     * 이해한걸 간한하게 정리해보자
-     * SnsClient 는 간단하게 말하면, 우리가 api 연결을 위해 쓰일 중간 다리. (RestClient 랑 동일한 방식)
-     * AwsBasicCredential 은 엑세스/시크릿 엑세스 키를 들 수 있는 컨테이너
-     * builder 로 SnsClient 에 엑세스키와 지역을 넣고 만들어주면 RestClient 랑 거의 동일하게 사용 가능
-     * 쉽게 말하면 매번 http url 이나 credential 관리해서 header 만들기 귀찮으니 미리 하나 만들어서 공용으로 쓰는것.
-
-     * StaticCredentialsProvide 는 중간 레이어인데, 이 중간 레이어가 꽤 많음
-     * Static , Default, EnvironmentalVariable, Profile, Instance ....
-     * 여기서 알아야 할건 Static 은 properties 를 사용하기 때문에 (사실상 하드코드 되었기 때문에) 쓰는거고
-     * 나중에 환경변수로 쓰거나 EC2 인스턴스 사용, 또는 ~/.aws/credentials 폴더를 활용하면 Default 사용하면 된다.
-     * 이 경우 AwsBasicCredentials 를 만들 필요도 없음, 자동으로 찾아서 만들어줌.
-     */
+    /** SNS client for direct-to-phone SMS delivery; uses StaticCredentialsProvider (properties-based credentials). */
     @Bean
     public SnsClient snsClient() {
         AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKeyId, secretAccessKey);
@@ -50,6 +42,7 @@ public class AwsConfig {
 
     }
 
+    /** S3 client for file uploads; uses Seoul (ap-northeast-2) — different region from the SNS client. */
     @Bean
     public S3Client s3Client() {
         AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKeyId, secretAccessKey);

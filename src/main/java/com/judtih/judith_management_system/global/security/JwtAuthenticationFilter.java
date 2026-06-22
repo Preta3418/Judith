@@ -42,11 +42,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String studentNumber = jwtUtil.getStudentNumberFromToken(token);
         boolean hasFullAccess = jwtUtil.getHasFullAccess(token);
 
+        // hasFullAccess flag from the JWT becomes ROLE_ADMIN here — role mapping happens at the filter, not inside the token
         UsernamePasswordAuthenticationToken authentication
                 = new UsernamePasswordAuthenticationToken(
                         studentNumber, null,
                 List.of(new SimpleGrantedAuthority(hasFullAccess ? "ROLE_ADMIN" : "ROLE_USER")));
 
+        // userId stored in details so @PreAuthorize can compare ownership without a DB call
         authentication.setDetails(userId);
 
         SecurityContextHolder.getContext().setAuthentication(authentication);

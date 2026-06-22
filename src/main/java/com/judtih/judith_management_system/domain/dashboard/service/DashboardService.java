@@ -123,6 +123,7 @@ public class DashboardService {
         return notificationService.createNotification(notificationRequest);
     }
 
+    // Single guard called at the top of every dashboard endpoint — membership check can't be accidentally skipped
     private void assertMembership(Long userId, Long seasonId) {
         if (!userSeasonRepository.existsByUserIdAndSeasonId(userId, seasonId)) {
             throw new NotASeasonMemberException("Not a member of this season");

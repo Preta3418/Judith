@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+/** A single showing (date/time slot) of an Event; capacity is shared with the parent Event. */
 @Entity
 @Getter
 @NoArgsConstructor

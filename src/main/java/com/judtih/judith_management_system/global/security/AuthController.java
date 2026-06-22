@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+/** Handles login: validates credentials, derives full-access flag from season membership, and issues a JWT. */
 @RestController
 @RequestMapping("/api/public/auth")
 @RequiredArgsConstructor
@@ -42,6 +43,7 @@ public class AuthController {
 
         boolean hasFullAccess = user.isAdmin();
 
+        // Admin flag short-circuits season lookup; for regular users, check their role in the effective season
         if (!hasFullAccess) {
             Season effectiveSeason = seasonService.findEffectiveSeasonForAccess().orElse(null);
             if (effectiveSeason != null) {

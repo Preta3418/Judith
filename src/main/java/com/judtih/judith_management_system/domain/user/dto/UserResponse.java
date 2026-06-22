@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+/** User profile data returned by admin user endpoints; inactiveSince is null for active users. */
 public class UserResponse {
     private Long id;
     private String name;

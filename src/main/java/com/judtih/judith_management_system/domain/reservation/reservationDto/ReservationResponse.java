@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/** Full reservation detail returned after creation or lookup, including denormalized event/schedule info. */
 public class ReservationResponse {
 
     private Long id;

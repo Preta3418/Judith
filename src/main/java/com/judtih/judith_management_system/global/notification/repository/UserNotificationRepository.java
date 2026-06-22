@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/** Repository for per-user notification records; supports read-state filtering and season-scoped notification queries. */
 @Repository
 public interface UserNotificationRepository extends JpaRepository<UserNotification, Long> {
 
@@ -20,6 +21,7 @@ public interface UserNotificationRepository extends JpaRepository<UserNotificati
 
     Integer countByUserIdAndIsReadFalse(Long userId);
 
+    // Used by NotificationEventListener to avoid sending duplicate PASSWORD_NOT_CHANGED notifications
     boolean existsByUserIdAndIsReadFalseAndNotification_NotificationType(Long userId, NotificationType notificationType);
 
     @Query("SELECT un FROM UserNotification un " +

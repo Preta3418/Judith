@@ -12,6 +12,7 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/** Request body for PUT /api/admin/seasons/users to replace a member's role set in a season. */
 public class UpdateUserRolesRequest {
 
     private Long userId;

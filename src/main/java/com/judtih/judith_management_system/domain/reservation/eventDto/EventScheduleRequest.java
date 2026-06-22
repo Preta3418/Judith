@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/** Request body for creating or updating an EventSchedule (a single showing of an event). */
 public class EventScheduleRequest {
 
     private Long eventId;

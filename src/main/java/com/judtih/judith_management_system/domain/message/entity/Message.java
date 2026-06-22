@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Audit record of a bulk SMS broadcast, including per-recipient failure details. */
 @Entity
 @NoArgsConstructor
 @Getter
@@ -43,6 +44,7 @@ public class Message {
         createdAt = LocalDateTime.now();
     }
 
+    /** Populates delivery stats after the SNS send loop; null arguments are ignored (no-op for that field). */
     public void updateMessage (String messageContent, Integer totalSent, Integer failedAttempt, List<MessageFailure> failures) {
         if (messageContent != null) this.messageContent = messageContent ;
         if (totalSent != null) this.totalSent = totalSent;

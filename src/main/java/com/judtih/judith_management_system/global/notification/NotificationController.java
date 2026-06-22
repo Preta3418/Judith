@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/** Admin endpoint for creating notifications and member endpoints for reading/marking notifications. */
 @RestController
 @RequiredArgsConstructor
 public class NotificationController {
@@ -28,6 +29,7 @@ public class NotificationController {
 
     // ==================== Member Endpoints ====================
 
+    // @PreAuthorize checks that the JWT's userId claim matches the path variable — users can only read their own notifications
     @PreAuthorize("authentication.details == #userId")
     @GetMapping("/api/notifications/{userId}")
     public ResponseEntity<List<UserNotificationResponse>> getNotificationsForUser(@PathVariable Long userId) {

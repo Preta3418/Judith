@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+/** Request body for creating a public reservation; no account required — phone number is the identity key. */
 public class ReservationRequest {
 
     private long eventScheduleId;

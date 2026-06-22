@@ -2,6 +2,7 @@ package com.judtih.judith_management_system.domain.season.exception;
 
 import com.judtih.judith_management_system.global.exception.BusinessException;
 
+/** Thrown when an operation requires an ACTIVE season but the current season is still PREPARING. */
 public class SeasonPreparingException extends BusinessException {
     public SeasonPreparingException(String message, int status, String error) {
         super(message, status, error);

@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Manages CRUD for Events and EventSchedules, and computes live remaining-seat counts from reservations. */
 @Service
 @RequiredArgsConstructor
 public class EventService {

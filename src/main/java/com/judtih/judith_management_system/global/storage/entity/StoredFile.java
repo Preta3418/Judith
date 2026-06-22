@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
+/** Metadata record for an uploaded file; url is a local relative path (local profile) or full S3 URL (prod). */
 @Entity
 @Getter
 @NoArgsConstructor

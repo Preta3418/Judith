@@ -24,6 +24,7 @@ public class Season {
     @Column
     private String name;
 
+    // One-directional state machine: PREPARING → ACTIVE → CLOSED. There is no reversal path.
     @Column
     @Enumerated(EnumType.STRING)
     private Status status =  Status.PREPARING;
@@ -51,11 +52,13 @@ public class Season {
         if(eventDate != null) this.eventDate = eventDate;
     }
 
+    // startDate is set to now() at activation — the moment of activation IS the start date, so user input would be wrong
     public void activateSeason () {
         this.status = Status.ACTIVE;
         this.startDate = LocalDate.now();
     }
 
+    // endDate is set to now() at close — same reasoning as startDate in activateSeason()
     public void closeSeason () {
         this.status = Status.CLOSED;
         this.endDate = LocalDate.now();

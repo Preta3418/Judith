@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+/** Shared notification record; a single Notification can fan out to many users via UserNotification rows. */
 @Entity
 @Getter
 @NoArgsConstructor
@@ -37,7 +38,7 @@ public class Notification {
     @Enumerated(EnumType.STRING)
     private SourceType sourceType;
 
-    private Long sourceId;
+    private Long sourceId; // ID of the source record (e.g., seasonId when sourceType=LMS)
 
     private LocalDateTime createdAt;
 

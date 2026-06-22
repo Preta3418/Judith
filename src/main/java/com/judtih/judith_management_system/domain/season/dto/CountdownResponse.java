@@ -11,6 +11,7 @@ import java.time.LocalDate;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/** Response for GET /api/public/seasons/countdown; days until the active season's performance date. */
 public class CountdownResponse {
 
     int countdown;

@@ -12,6 +12,7 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/** Request body for POST /api/admin/seasons/users to enroll a user in a season with initial roles. */
 public class UserSeasonRequest {
 
     private Long userId;

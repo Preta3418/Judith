@@ -9,6 +9,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
+// one phone number per schedule — prevents duplicate bookings without requiring an account
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"event_schedule_id", "phone_number"}))
 @Getter
 @NoArgsConstructor
