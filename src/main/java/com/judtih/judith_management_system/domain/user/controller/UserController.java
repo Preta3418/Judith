@@ -13,6 +13,7 @@ import java.util.List;
 
 /** Admin endpoints for user management: create, update, activate/deactivate, and season membership queries. */
 @RestController
+@RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
 public class UserController {
 
@@ -20,48 +21,48 @@ public class UserController {
     private final UserSeasonService userSeasonService;
 
 
-    @GetMapping("/api/admin/users")
+    @GetMapping
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    @GetMapping("/api/admin/users/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
-    @GetMapping("/api/admin/users/active")
+    @GetMapping("/active")
     public ResponseEntity<List<UserResponse>> getActiveUsers() {
         return ResponseEntity.ok(userService.getActiveUsers());
     }
 
-    @GetMapping("/api/admin/users/inactive")
+    @GetMapping("/inactive")
     public ResponseEntity<List<UserResponse>> getInactiveUsers() {
         return ResponseEntity.ok(userService.getInactiveUsers());
     }
 
-    @GetMapping("/api/admin/users/{userId}/seasons")
+    @GetMapping("/{userId}/seasons")
     public ResponseEntity<List<UserSeasonResponse>> getSeasonsByUser(@PathVariable Long userId) {
         return ResponseEntity.ok(userSeasonService.getSeasonsByUser(userId));
     }
 
 
-    @PostMapping("/api/admin/users")
+    @PostMapping
     public ResponseEntity<UserResponse> createUser(@RequestBody UserRequest request) {
         return ResponseEntity.ok(userService.createUser(request));
     }
 
-    @PutMapping("/api/admin/users/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @RequestBody UserRequest request) {
         return ResponseEntity.ok(userService.updateUser(id, request));
     }
 
-    @PostMapping("/api/admin/users/{id}/deactivate")
+    @PostMapping("/{id}/deactivate")
     public ResponseEntity<UserResponse> deactivateUser(@PathVariable Long id) {
         return ResponseEntity.ok(userService.deactivateUser(id));
     }
 
-    @PostMapping("/api/admin/users/{id}/reactivate")
+    @PostMapping("/{id}/reactivate")
     public ResponseEntity<UserResponse> reactivateUser(@PathVariable Long id) {
         return ResponseEntity.ok(userService.reactivateUser(id));
     }
