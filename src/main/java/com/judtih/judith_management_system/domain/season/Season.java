@@ -64,6 +64,11 @@ public class Season {
         this.endDate = LocalDate.now();
     }
 
+    public void reopenSeason() {
+        this.status = Status.ACTIVE;
+        this.endDate = null;
+    }
+
 
 
 }

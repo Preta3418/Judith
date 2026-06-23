@@ -49,6 +49,7 @@ function renderSeason(container, season) {
             <h3 class="season-name">${escapeHtml(season.name)}</h3>
             ${dateStr ? `<p class="season-date">공연일: ${dateStr}</p>` : ''}
             ${eventDate ? `<div class="countdown" id="countdown" data-target="${eventDate}"></div>` : ''}
+            <a href="/public/book.html" class="btn-hero-primary" style="display:inline-block; margin-top:1.5rem;">예매하기</a>
         </div>
     `;
 

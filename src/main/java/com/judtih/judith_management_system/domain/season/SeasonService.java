@@ -169,6 +169,18 @@ public class SeasonService {
     }
 
     @Transactional
+    public SeasonResponse reopenSeason(long id) {
+        Season season = seasonRepository.findById(id)
+                .orElseThrow(() -> new NoSeasonFoundException("reopenSeason: No season found with id: " + id, 404, "Not Found"));
+
+        if (season.getStatus() != Status.CLOSED)
+            throw new SeasonClosedException("Only CLOSED seasons can be reopened", 409, "Conflict");
+
+        season.reopenSeason();
+        return createSeasonResponse(season);
+    }
+
+    @Transactional
     public void deleteSeason(Long id) {
         //will not have codes yet
         //needs proper connection to verify
