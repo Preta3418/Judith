@@ -182,6 +182,8 @@ public class SeasonService {
     Major user for this method at the moment is Full Access Member logic. When there is no active season, it will use the last CLOSED season to
     search for the current full access member.
      */
+    // Fallback prevents admin lockout during the gap between season transitions —
+    // without this, closing season 1 before creating season 2 would lock out all admins.
     public Optional<Season> findEffectiveSeasonForAccess() {
         return seasonRepository.findByStatus(Status.ACTIVE) //currently active season
                 .or(() -> seasonRepository.findByStatus(Status.PREPARING)) //currently preparing season

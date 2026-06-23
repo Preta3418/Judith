@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/** Handles bulk SMS delivery to INACTIVE (alumni) users via AWS SNS and persists the audit record. */
 @Service
 @RequiredArgsConstructor
 public class MessageService {
@@ -28,7 +29,8 @@ public class MessageService {
     private final SnsClient snsClient;
 
 
-    //https://docs.aws.amazon.com/ko_kr/sns/latest/dg/sms_sending-overview.html#sms_publish-to-phone
+    // Sends to INACTIVE users only — those are alumni targeted for recruitment or announcements.
+    // See: https://docs.aws.amazon.com/ko_kr/sns/latest/dg/sms_sending-overview.html#sms_publish-to-phone
     public MessageResult sendMessage(String messageContent) {
 
         int successCount = 0;
@@ -93,6 +95,7 @@ public class MessageService {
 
 
 
+    /** Converts a Korean domestic number (010-xxxx-xxxx or 010xxxxxxxx) to E.164 format (+82). */
     private String phoneNumberConverter (User user) {
         String phoneNum = user.getPhoneNumber();
 
@@ -102,7 +105,7 @@ public class MessageService {
             return phoneNum;
         }
         phoneNum = phoneNum.replace("-", "");
-        phoneNum = phoneNum.substring(1);
+        phoneNum = phoneNum.substring(1); // drop leading 0
         phoneNum = "+82" + phoneNum;
 
         return phoneNum;

@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/** Response for admin notification creation endpoints, including recipient count for confirmation. */
 public class NotificationResponse {
 
     private Long id;

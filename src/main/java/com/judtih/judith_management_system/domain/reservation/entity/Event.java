@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+/** A ticketed public performance event with one or more schedules (showings). */
 @Entity
 @Getter
 @NoArgsConstructor
@@ -39,7 +40,7 @@ public class Event {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private EventStatus status = EventStatus.CLOSED;
+    private EventStatus status = EventStatus.CLOSED; // defaults CLOSED so events must be explicitly opened
 
     private String posterImageUrl;
 

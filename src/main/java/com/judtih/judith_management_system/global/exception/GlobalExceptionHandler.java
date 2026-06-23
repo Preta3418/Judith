@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 
+/** Translates BusinessException (and its subclasses) into structured JSON error responses with the correct HTTP status. */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 

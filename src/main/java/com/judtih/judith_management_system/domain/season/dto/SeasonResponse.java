@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+/** Season summary returned by all Season endpoints; startDate/endDate are set on activation/close. */
 public class SeasonResponse {
 
     private Long id;

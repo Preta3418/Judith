@@ -5,6 +5,7 @@ import lombok.Getter;
 
 import java.util.Set;
 
+/** Inline member entry within SeasonRequest used when creating a season with its initial cast. */
 @Getter
 public class SeasonMemberRequest {
     private Long userId;

@@ -10,6 +10,7 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/** Season membership detail including the user's assigned roles; used by both admin and public cast endpoints. */
 public class UserSeasonResponse {
 
     private Long id;

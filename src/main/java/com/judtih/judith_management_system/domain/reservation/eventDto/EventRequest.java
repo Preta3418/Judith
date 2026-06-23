@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/** Request body for creating or updating an Event; all fields are optional for partial updates. */
 public class EventRequest {
 
     private String title;

@@ -10,6 +10,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/** Full event detail including all schedules and remaining seats per showing. */
 public class EventResponse {
 
     private Long id;

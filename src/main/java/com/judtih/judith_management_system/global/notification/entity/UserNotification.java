@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+/** Join entity linking a Notification to a specific User, tracking individual read state. */
 @Entity
 @Getter
 @NoArgsConstructor
@@ -31,7 +32,7 @@ public class UserNotification {
 
     private boolean isRead = false;
 
-    private LocalDateTime readAt;
+    private LocalDateTime readAt; // null until markAsRead() is called
 
 
     public void markAsRead() {

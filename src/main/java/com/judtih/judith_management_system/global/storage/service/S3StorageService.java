@@ -19,6 +19,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
 
+/** StorageService implementation for the prod profile; uploads files to S3 and stores the public URL. */
 @Service
 @Profile("prod")
 @RequiredArgsConstructor
@@ -42,7 +43,7 @@ public class S3StorageService implements StorageService {
             throw new FileStorageException("could not find file name after upload", 500, "IO Error");
         }
 
-        // S3 key: Event_Poster/3/poster.jpg
+        // S3 key format: Event_Poster/3/poster.jpg — season ID partitioning keeps files organised per production
         String key = folder.getFolderName() + "/" + seasonId + "/" + filename;
 
         try {

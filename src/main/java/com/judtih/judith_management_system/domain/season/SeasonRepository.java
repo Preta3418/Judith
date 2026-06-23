@@ -5,6 +5,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+/** Repository for Season; includes status-based finders used by access-control and effective-season logic. */
 @Repository
 public interface SeasonRepository extends JpaRepository<Season, Long> {
 

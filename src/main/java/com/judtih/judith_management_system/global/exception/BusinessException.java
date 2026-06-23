@@ -2,6 +2,7 @@ package com.judtih.judith_management_system.global.exception;
 
 import lombok.Getter;
 
+/** Base exception for all domain-level errors; carries HTTP status and error string for structured error responses. */
 @Getter
 public class BusinessException extends RuntimeException {
 

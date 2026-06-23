@@ -49,6 +49,8 @@ public class CalendarEvent {
     @Enumerated(EnumType.STRING)
     private EventScope eventScope;
 
+    // For SHARED events, color carries team-wide meaning and should follow a fixed convention.
+    // For PERSONAL events, it's purely user preference with no semantic constraint.
     @Column (nullable = false)
     @Enumerated(EnumType.STRING)
     private EventColor eventColor;

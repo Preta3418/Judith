@@ -1,5 +1,6 @@
 package com.judtih.judith_management_system.global.storage;
 
+/** Categorises uploaded files and maps each category to the folder name used in both local paths and S3 keys. */
 public enum StorageFolder {
     EVENT_POSTER("Event_Poster"),
     PHOTOS("Photos"),

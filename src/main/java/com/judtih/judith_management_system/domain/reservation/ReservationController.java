@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/** Handles public ticketing (lookup/create/cancel), member event listing, and admin event/schedule management. */
 @RestController
 @RequiredArgsConstructor
 public class ReservationController {

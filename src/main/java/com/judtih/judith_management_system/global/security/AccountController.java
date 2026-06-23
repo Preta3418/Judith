@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/** Handles password changes for authenticated users; resolves the caller's identity from the security context. */
 @RestController
 @RequestMapping("/api/password")
 @RequiredArgsConstructor

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/** Admin endpoints for user management: create, update, activate/deactivate, and season membership queries. */
 @RestController
 @RequestMapping("/api/admin/users")
 @RequiredArgsConstructor

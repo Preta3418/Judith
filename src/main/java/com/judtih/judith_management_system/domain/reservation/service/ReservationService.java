@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Handles public reservation creation with capacity enforcement and duplicate prevention, and cancellation. */
 @Service
 @RequiredArgsConstructor
 public class ReservationService {
@@ -41,6 +42,7 @@ public class ReservationService {
 
     @Transactional
     public ReservationResponse createReservation(ReservationRequest request) {
+        // Pessimistic write lock prevents double-booking under concurrent requests
         EventSchedule eventSchedule = eventScheduleRepository.findByIdWithLock(request.getEventScheduleId())
                 .orElseThrow(() -> new RuntimeException("event schedule not found"));
 

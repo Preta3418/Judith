@@ -13,6 +13,7 @@ import java.util.List;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
+/** Request body for creating or updating a Season; members list is used on creation to atomically add the initial cast. */
 public class SeasonRequest {
 
     private Long id;

@@ -5,9 +5,9 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
+/** Request body for POST /api/admin/messages/send-message; content capped at 500 characters per SNS SMS limits. */
 @Getter
 @Setter
-//front end to back end
 public class SendMessageRequest {
     @NotBlank
     @Size(max = 500)

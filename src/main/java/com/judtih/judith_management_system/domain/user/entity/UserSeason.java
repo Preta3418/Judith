@@ -36,6 +36,7 @@ public class UserSeason {
     @JoinColumn(name = "season_id", nullable = false)
     private Season season;
 
+    // @ElementCollection lets one member hold multiple roles per season without a separate join entity — JPA auto-manages the user_season_roles table
     @ElementCollection
     @CollectionTable(name = "user_season_roles", joinColumns = @JoinColumn(name = "user_season_id"))
     @Enumerated(EnumType.STRING)

@@ -14,6 +14,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/** Request body for POST /api/admin/notifications; empty targetRoles means send to all active season members. */
 public class UserNotificationRequest {
 
     private String title;

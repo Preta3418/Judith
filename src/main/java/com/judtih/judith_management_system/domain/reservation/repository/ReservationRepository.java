@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/** Repository for Reservation entities; includes seat-count aggregation and duplicate-check queries. */
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
@@ -24,6 +25,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     List<Reservation> findByEventScheduleId(Long eventScheduleId);
 
+    // COALESCE ensures 0 is returned (not null) when no reservations exist yet
     @Query("SELECT COALESCE(SUM(r.ticketCount), 0) FROM Reservation r WHERE r.eventSchedule.id = :eventScheduleId")
     Integer sumTicketsByEventScheduleId(@Param("eventScheduleId") Long eventScheduleId);
 

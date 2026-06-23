@@ -5,6 +5,7 @@ import lombok.Getter;
 
 import java.time.LocalDateTime;
 
+/** Structured JSON error body returned by GlobalExceptionHandler for all BusinessException subclasses. */
 @Getter
 @Builder
 public class ErrorResponse {

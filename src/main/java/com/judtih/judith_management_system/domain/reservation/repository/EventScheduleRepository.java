@@ -16,6 +16,8 @@ public interface EventScheduleRepository extends JpaRepository<EventSchedule, Lo
 
     List<EventSchedule> findByEventId(Long eventId);
 
+    // Pessimistic over optimistic — theater reservations have high contention on small capacity.
+    // A failed reservation is worse UX than a brief wait.
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT es FROM EventSchedule es WHERE es.id = :id")
     Optional<EventSchedule> findByIdWithLock(@Param("id") Long id);

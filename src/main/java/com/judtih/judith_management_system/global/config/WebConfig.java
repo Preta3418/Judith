@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/** Serves locally-uploaded event poster images as static resources (local profile only; S3 is used in prod). */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 

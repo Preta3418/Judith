@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/** Repository for UserSeason join records; supports season-member lookups and duplicate membership checks. */
 @Repository
 public interface UserSeasonRepository extends JpaRepository<UserSeason, Long> {
 

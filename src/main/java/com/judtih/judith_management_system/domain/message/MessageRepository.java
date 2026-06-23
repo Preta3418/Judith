@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+/** Repository for Message broadcast records; includes a join-fetch query to avoid N+1 when loading failures. */
 @Repository
 public interface MessageRepository extends JpaRepository<Message, Long> {
 

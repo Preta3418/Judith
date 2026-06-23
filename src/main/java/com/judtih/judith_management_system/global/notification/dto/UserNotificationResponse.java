@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+/** Per-user notification entry returned by member-facing notification endpoints, including read state. */
 public class UserNotificationResponse {
 
     private Long userNotificationId;

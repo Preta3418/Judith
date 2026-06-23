@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.util.Set;
 
+/** Season data returned to a member via GET /api/dashboard/seasons, enriched with the caller's own roles and derived full-access flag. */
 @Getter
 @NoArgsConstructor
 public class DashboardSeasonResponse {
@@ -21,7 +22,7 @@ public class DashboardSeasonResponse {
     LocalDate endDate;
     LocalDate eventDate;
     Set<UserRole> myRoles;
-    boolean myFullAccess;
+    boolean myFullAccess; // derived from myRoles via UserRole.hasFullAccess(); not stored in DB
 
     @Builder
     public DashboardSeasonResponse(Long seasonId, String seasonName, Status status,

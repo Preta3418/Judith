@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/** Public and admin REST endpoints for Season lifecycle management and the public countdown widget. */
 @RestController
 @RequiredArgsConstructor
 public class SeasonController {

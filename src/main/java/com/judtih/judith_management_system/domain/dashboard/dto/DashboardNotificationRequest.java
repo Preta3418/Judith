@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/** Request body for POST /api/admin/seasons/{seasonId}/notifications; sourceType and notificationType are injected by the controller. */
 public class DashboardNotificationRequest {
 
     String title;

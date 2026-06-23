@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+/** Admin endpoint for uploading files to a season-scoped folder; delegates to the active StorageService. */
 @RestController
 @RequestMapping("/api/admin/upload")
 @RequiredArgsConstructor

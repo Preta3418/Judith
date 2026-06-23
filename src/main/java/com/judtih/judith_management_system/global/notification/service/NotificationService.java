@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+/** Creates and delivers notifications to season members, and manages per-user read state. */
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
@@ -58,6 +59,7 @@ public class NotificationService {
 
             for (UserSeason userSeason : seasonUsers) {
 
+                // null or empty targetRoles means broadcast to the entire active season cast
                 boolean hasTargetRole = request.getTargetRoles() == null
                         || request.getTargetRoles().isEmpty()
                         || !Collections.disjoint(userSeason.getUserRoles(), request.getTargetRoles());
@@ -87,6 +89,7 @@ public class NotificationService {
 
     }
 
+    /** Used by NotificationEventListener to deliver a single-target notification (e.g., password reminder on login). */
     @Transactional
     public void createNotificationForOneUser(User user, Notification notification) {
         notificationRepository.save(notification);

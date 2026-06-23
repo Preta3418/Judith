@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/** Placeholder entity for a public showcase of a past production; not yet fully implemented. */
 @Entity
 @Getter
 @NoArgsConstructor

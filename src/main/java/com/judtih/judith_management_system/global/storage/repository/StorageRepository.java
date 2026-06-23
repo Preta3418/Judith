@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/** Repository for StoredFile metadata; supports lookups by folder type and by season for dashboard script retrieval. */
 @Repository
 public interface StorageRepository extends JpaRepository<StoredFile, Long> {
 

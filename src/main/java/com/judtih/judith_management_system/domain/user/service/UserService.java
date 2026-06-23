@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/** CRUD service for user accounts; default password is the student number (BCrypt-encoded). */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -23,6 +24,7 @@ public class UserService {
 
     @Transactional
     public UserResponse createUser(UserRequest request) {
+        // Initial password is the student number; user is prompted to change it after first login
         String defaultPassword = passwordEncoder.encode(request.getStudentNumber());
 
         User user = User.builder()
