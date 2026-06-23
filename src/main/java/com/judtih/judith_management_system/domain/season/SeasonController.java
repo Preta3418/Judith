@@ -72,6 +72,12 @@ public class SeasonController {
         return ResponseEntity.status(200).body(service.closeSeason(id));
     }
 
+    @PostMapping("/api/admin/seasons/{id}/reopen")
+    public ResponseEntity<SeasonResponse> reopenSeason(@PathVariable Long id) {
+
+        return ResponseEntity.status(200).body(service.reopenSeason(id));
+    }
+
     @DeleteMapping("/api/admin/seasons/{id}")
     public void deleteSeason(@PathVariable Long id) {
         service.deleteSeason(id);
