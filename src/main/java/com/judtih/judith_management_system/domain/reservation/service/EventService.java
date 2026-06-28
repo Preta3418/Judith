@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /** Manages CRUD for Events and EventSchedules, and computes live remaining-seat counts from reservations. */
 @Service
@@ -97,6 +98,22 @@ public class EventService {
     }
 
     //User method /////////////////////////////////////////////////////////
+
+    @Transactional(readOnly = true)
+    public EventResponse getLatestEvent() {
+        Optional<Event> event = eventRepository.findTopByStatusOrderByCreatedAtDesc(com.judtih.judith_management_system.domain.reservation.entity.EventStatus.OPEN);
+        if (event.isEmpty()) {
+            event = eventRepository.findTopByOrderByCreatedAtDesc();
+        }
+        return event.map(e -> {
+            List<EventSchedule> schedules = scheduleRepository.findByEventId(e.getId());
+            List<EventScheduleResponse> scheduleResponses = new ArrayList<>();
+            for (EventSchedule s : schedules) {
+                scheduleResponses.add(createEventScheduleResponse(s, e.getCapacityLimit()));
+            }
+            return createEventResponse(e, scheduleResponses);
+        }).orElseThrow(() -> new RuntimeException("No events found"));
+    }
 
     @Transactional(readOnly = true)
     public EventResponse getEventById(Long id) {

@@ -62,6 +62,11 @@ graph TB
     REPO -->|MySQL| RDS
     SVC -->|Upload| S3
     SVC -->|SMS| SNS
+
+    style AWS fill:#faf5ff,stroke:#7c3aed,stroke-width:2px,color:#1a1a2e
+    style EC2 fill:#f3e8ff,stroke:#7c3aed,stroke-width:1.5px,color:#1a1a2e
+    style Docker fill:#ede9fe,stroke:#7c3aed,stroke-width:1px,color:#1a1a2e
+    style Spring fill:#ddd6fe,stroke:#7c3aed,stroke-width:1px,color:#1a1a2e
 ```
 
 ---

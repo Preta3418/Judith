@@ -24,6 +24,15 @@ public class ReservationController {
 
     // ==================== Public Endpoints ====================
 
+    @GetMapping("/api/public/events/latest")
+    public ResponseEntity<EventResponse> getLatestEvent() {
+        try {
+            return ResponseEntity.ok(eventService.getLatestEvent());
+        } catch (RuntimeException e) {
+            return ResponseEntity.noContent().build();
+        }
+    }
+
     @GetMapping("/api/public/events/{eventId}")
     public ResponseEntity<EventResponse> getEvent (@PathVariable Long eventId) {
         EventResponse response = eventService.getEventById(eventId);
