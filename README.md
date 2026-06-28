@@ -63,10 +63,10 @@ graph TB
     SVC -->|Upload| S3
     SVC -->|SMS| SNS
 
-    style AWS fill:#faf5ff,stroke:#7c3aed,stroke-width:2px,color:#1a1a2e
-    style EC2 fill:#f3e8ff,stroke:#7c3aed,stroke-width:1.5px,color:#1a1a2e
-    style Docker fill:#ede9fe,stroke:#7c3aed,stroke-width:1px,color:#1a1a2e
-    style Spring fill:#ddd6fe,stroke:#7c3aed,stroke-width:1px,color:#1a1a2e
+    style AWS fill:#161b22,stroke:#6e40c9,stroke-width:2px,color:#c9d1d9
+    style EC2 fill:#1c2128,stroke:#6e40c9,stroke-width:1.5px,color:#c9d1d9
+    style Docker fill:#21262d,stroke:#6e40c9,stroke-width:1px,color:#c9d1d9
+    style Spring fill:#2d333b,stroke:#7c3aed,stroke-width:1px,color:#c9d1d9
 ```
 
 ---
