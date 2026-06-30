@@ -150,6 +150,16 @@ public class EventService {
         return responseList;
     }
 
+    @Transactional(readOnly = true)
+    public String getPamphletUrl(Long eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        if (event.getPamphletUrl() == null) {
+            throw new RuntimeException("No pamphlet found");
+        }
+        return event.getPamphletUrl();
+    }
+
     @Transactional
     public EventResponse uploadPamphlet(Long eventId, MultipartFile file, Long seasonId) {
         Event event = eventRepository.findById(eventId)

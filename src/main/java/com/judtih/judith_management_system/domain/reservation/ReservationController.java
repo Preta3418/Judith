@@ -8,9 +8,13 @@ import com.judtih.judith_management_system.domain.reservation.reservationDto.Res
 import com.judtih.judith_management_system.domain.reservation.service.EventService;
 import com.judtih.judith_management_system.domain.reservation.service.ReservationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.net.URL;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -33,6 +37,16 @@ public class ReservationController {
         } catch (RuntimeException e) {
             return ResponseEntity.noContent().build();
         }
+    }
+
+    @GetMapping("/api/public/events/{eventId}/pamphlet/download")
+    public ResponseEntity<byte[]> downloadPamphlet(@PathVariable Long eventId) throws IOException {
+        String pamphletUrl = eventService.getPamphletUrl(eventId);
+        byte[] bytes = new URL(pamphletUrl).openStream().readAllBytes();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"pamphlet.pdf\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(bytes);
     }
 
     @GetMapping("/api/public/events/{eventId}")
