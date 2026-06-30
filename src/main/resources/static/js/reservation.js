@@ -550,6 +550,7 @@ async function uploadPamphlet() {
     try {
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('seasonId', currentSeason.id);
 
         const resp = await fetch(`/api/admin/events/${eventId}/pamphlet`, {
             method: 'POST',
