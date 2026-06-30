@@ -285,6 +285,17 @@ async function editEvent(eventId) {
         const publicUrl = `${window.location.origin}/public/book.html?id=${currentEvent.id}`;
         document.getElementById('publicEventUrl').value = publicUrl;
 
+        // Show pamphlet if exists
+        const pamphletWrap = document.getElementById('pamphletCurrentWrap');
+        if (currentEvent.pamphletUrl) {
+            document.getElementById('pamphletCurrentLink').href = currentEvent.pamphletUrl;
+            document.getElementById('pamphletViewLink').href = `/public/pamphlet.html?id=${currentEvent.id}`;
+            pamphletWrap.style.display = 'block';
+        } else {
+            pamphletWrap.style.display = 'none';
+        }
+        document.getElementById('pamphletUploadStatus').textContent = '';
+
         openModal('editEventModal');
     } catch (error) {
         showToast('연극 정보를 불러오지 못했습니다', 'error');
@@ -522,6 +533,47 @@ function openAddScheduleModal() {
     document.getElementById('scheduleEventId').value = currentEvent.id;
     closeModal('editEventModal');
     openModal('createScheduleModal');
+}
+
+// ==================== Pamphlet Upload ====================
+async function uploadPamphlet() {
+    const file = document.getElementById('pamphletFile').files[0];
+    if (!file) return;
+
+    const eventId = document.getElementById('editEventId').value;
+    const status = document.getElementById('pamphletUploadStatus');
+    const btn = document.getElementById('pamphletUploadBtn');
+
+    status.textContent = '업로드 중...';
+    btn.disabled = true;
+
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const resp = await fetch(`/api/admin/events/${eventId}/pamphlet`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${getToken()}` },
+            body: formData
+        });
+
+        if (!resp.ok) throw new Error('업로드 실패');
+
+        const event = await resp.json();
+        currentEvent = event;
+
+        document.getElementById('pamphletCurrentLink').href = event.pamphletUrl;
+        document.getElementById('pamphletViewLink').href = `/public/pamphlet.html?id=${event.id}`;
+        document.getElementById('pamphletCurrentWrap').style.display = 'block';
+        status.textContent = '업로드 완료';
+        showToast('팸플릿이 업로드되었습니다', 'success');
+    } catch (e) {
+        status.textContent = '업로드 실패';
+        showToast('팸플릿 업로드에 실패했습니다', 'error');
+    } finally {
+        btn.disabled = false;
+        document.getElementById('pamphletFile').value = '';
+    }
 }
 
 // ==================== Helper ====================

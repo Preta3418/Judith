@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공연 팸플릿 - Judith</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #111118;
+            --border: rgba(255,255,255,0.08);
+            --text: #e8e8f0;
+            --text-dim: rgba(255,255,255,0.4);
+            --accent: #a78bfa;
+        }
+
+        html, body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', system-ui, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Curtain Intro ── */
+        #curtainStage {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: flex;
+            pointer-events: none;
+        }
+
+        .curtain {
+            flex: 1;
+            background: #1a0030;
+            background-image:
+                repeating-linear-gradient(
+                    180deg,
+                    transparent,
+                    transparent 40px,
+                    rgba(0,0,0,0.15) 40px,
+                    rgba(0,0,0,0.15) 41px
+                ),
+                linear-gradient(90deg, #200040, #3a006a, #200040);
+            transition: transform 1.2s cubic-bezier(0.76, 0, 0.24, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .curtain::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(0,0,0,0.4), transparent, rgba(0,0,0,0.4));
+        }
+        .curtain-left  { transform-origin: left center; }
+        .curtain-right { transform-origin: right center; }
+
+        #curtainStage.open .curtain-left  { transform: scaleX(0); }
+        #curtainStage.open .curtain-right { transform: scaleX(0); }
+
+        /* Gold bar at top */
+        #curtainStage::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 18px;
+            background: linear-gradient(90deg, #7c5c00, #d4a017, #f5c842, #d4a017, #7c5c00);
+            z-index: 2;
+        }
+
+        /* Title shown on curtain */
+        #curtainTitle {
+            position: fixed;
+            inset: 0;
+            z-index: 101;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            pointer-events: none;
+            opacity: 1;
+            transition: opacity 0.5s ease 0.4s;
+        }
+        #curtainTitle.fade {
+            opacity: 0;
+        }
+        #curtainTitle .label {
+            font-size: 0.7rem;
+            letter-spacing: 0.28em;
+            color: rgba(212, 160, 23, 0.8);
+            text-transform: uppercase;
+        }
+        #curtainTitle .title-text {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.6rem, 5vw, 3rem);
+            color: #fff;
+            text-align: center;
+            padding: 0 24px;
+        }
+
+        /* ── Nav ── */
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 24px;
+            background: rgba(10,10,15,0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .top-bar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text);
+        }
+        .top-bar-logo img { height: 24px; opacity: 0.9; }
+        .top-bar-logo span { font-weight: 600; font-size: 0.95rem; }
+
+        .top-bar-right { display: flex; align-items: center; gap: 10px; }
+
+        .btn-download {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 18px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .btn-download:hover { background: #9061f9; transform: translateY(-1px); }
+        .btn-download svg { flex-shrink: 0; }
+
+        .btn-ghost-sm {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 0.82rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .btn-ghost-sm:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
+
+        /* ── Hero ── */
+        .hero {
+            text-align: center;
+            padding: 64px 24px 40px;
+        }
+        .hero-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            color: var(--accent);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+        .hero-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2rem, 6vw, 3.5rem);
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        .hero-sub {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+
+        /* ── Loading / Error ── */
+        .state-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 24px;
+            gap: 16px;
+            color: var(--text-dim);
+        }
+        .spinner {
+            width: 36px; height: 36px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── PDF Viewer ── */
+        #pdfViewer {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 0 16px 80px;
+            display: none;
+        }
+
+        .pdf-page-wrap {
+            margin-bottom: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+            opacity: 0;
+            transform: translateY(32px);
+            transition: opacity 0.55s ease, transform 0.55s ease;
+        }
+        .pdf-page-wrap.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .pdf-page-wrap canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        .page-label {
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 8px 16px;
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            text-align: center;
+            letter-spacing: 0.06em;
+        }
+
+        /* ── Progress bar ── */
+        #progress {
+            position: fixed;
+            top: 0; left: 0;
+            height: 2px;
+            background: var(--accent);
+            width: 0%;
+            z-index: 200;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="progress"></div>
+
+    <!-- Curtain -->
+    <div id="curtainStage">
+        <div class="curtain curtain-left"></div>
+        <div class="curtain curtain-right"></div>
+    </div>
+    <div id="curtainTitle">
+        <div class="label">Judith</div>
+        <div class="title-text" id="curtainEventTitle">팸플릿</div>
+    </div>
+
+    <!-- Nav -->
+    <nav class="top-bar">
+        <a href="/" class="top-bar-logo">
+            <img src="/images/logo-symbol-light.png" alt="Judith">
+            <span>Judith</span>
+        </a>
+        <div class="top-bar-right">
+            <a href="/public/book.html" class="btn-ghost-sm">예매하기</a>
+            <a href="#" class="btn-download" id="downloadBtn" style="display:none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                다운로드
+            </a>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <div class="hero">
+        <div class="hero-label">Program</div>
+        <h1 class="hero-title" id="heroTitle">팸플릿</h1>
+        <p class="hero-sub" id="heroSub"></p>
+    </div>
+
+    <!-- Loading -->
+    <div class="state-center" id="loadingState">
+        <div class="spinner"></div>
+        <span>팸플릿을 불러오는 중...</span>
+    </div>
+
+    <!-- Error -->
+    <div class="state-center" id="errorState" style="display:none;">
+        <span style="font-size:2rem;">!</span>
+        <p id="errorMsg">팸플릿을 불러올 수 없습니다.</p>
+    </div>
+
+    <!-- PDF Viewer -->
+    <div id="pdfViewer"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // ── State ──
+        let pamphletUrl = null;
+
+        // ── Init ──
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadEvent();
+        });
+
+        async function loadEvent() {
+            const params = new URLSearchParams(window.location.search);
+            const eventId = params.get('id');
+
+            try {
+                const url = eventId
+                    ? `/api/public/events/${eventId}`
+                    : `/api/public/events/latest`;
+
+                const resp = await fetch(url);
+                if (!resp.ok) { showError('공연 정보를 찾을 수 없습니다.'); return; }
+
+                const event = await resp.json();
+
+                document.getElementById('curtainEventTitle').textContent = event.title || '팸플릿';
+                document.getElementById('heroTitle').textContent = event.title || '팸플릿';
+                document.getElementById('heroSub').textContent = event.location || '';
+                document.title = `${event.title} 팸플릿 - Judith`;
+
+                if (!event.pamphletUrl) {
+                    showError('등록된 팸플릿이 없습니다.');
+                    openCurtain();
+                    return;
+                }
+
+                pamphletUrl = event.pamphletUrl;
+                document.getElementById('downloadBtn').href = pamphletUrl;
+                document.getElementById('downloadBtn').download = `${event.title}_팸플릿.pdf`;
+                document.getElementById('downloadBtn').style.display = 'inline-flex';
+
+                openCurtain(() => loadPdf(pamphletUrl));
+
+            } catch (e) {
+                console.error(e);
+                showError('팸플릿을 불러올 수 없습니다.');
+                openCurtain();
+            }
+        }
+
+        // ── Curtain open ──
+        function openCurtain(callback) {
+            const stage = document.getElementById('curtainStage');
+            const title = document.getElementById('curtainTitle');
+
+            setTimeout(() => {
+                title.classList.add('fade');
+                stage.classList.add('open');
+            }, 900);
+
+            setTimeout(() => {
+                stage.style.display = 'none';
+                title.style.display = 'none';
+                if (callback) callback();
+            }, 2200);
+        }
+
+        // ── PDF render ──
+        async function loadPdf(url) {
+            const viewer = document.getElementById('pdfViewer');
+            const loading = document.getElementById('loadingState');
+
+            try {
+                const pdf = await pdfjsLib.getDocument(url).promise;
+                loading.style.display = 'none';
+                viewer.style.display = 'block';
+
+                const progress = document.getElementById('progress');
+
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const scale = Math.min(window.innerWidth - 32, 780) / page.getViewport({ scale: 1 }).width;
+                    const viewport = page.getViewport({ scale });
+
+                    const wrap = document.createElement('div');
+                    wrap.className = 'pdf-page-wrap';
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+
+                    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+                    const label = document.createElement('div');
+                    label.className = 'page-label';
+                    label.textContent = `${i} / ${pdf.numPages}`;
+
+                    wrap.appendChild(canvas);
+                    wrap.appendChild(label);
+                    viewer.appendChild(wrap);
+
+                    // Animate in with IntersectionObserver
+                    observer.observe(wrap);
+
+                    // Update progress
+                    progress.style.width = `${(i / pdf.numPages) * 100}%`;
+                }
+
+                setTimeout(() => { progress.style.width = '0%'; }, 600);
+
+            } catch (e) {
+                console.error(e);
+                loading.style.display = 'none';
+                showError('PDF를 렌더링할 수 없습니다. 다운로드 버튼을 이용해 주세요.');
+            }
+        }
+
+        // Scroll-reveal observer
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    e.target.classList.add('visible');
+                    observer.unobserve(e.target);
+                }
+            });
+        }, { threshold: 0.05 });
+
+        function showError(msg) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'flex';
+            document.getElementById('errorMsg').textContent = msg;
+        }
+    </script>
+</body>
+</html>
