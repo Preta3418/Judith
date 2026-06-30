@@ -19,13 +19,18 @@ function getEventIdFromUrl() {
 async function loadEvent() {
     const eventId = getEventIdFromUrl();
 
-    if (!eventId) {
-        showError('공연 ID가 지정되지 않았습니다.');
-        return;
-    }
-
     try {
-        const event = await eventApi.getById(eventId);
+        let event;
+        if (eventId) {
+            event = await eventApi.getById(eventId);
+        } else {
+            const resp = await fetch('/api/public/events/latest');
+            if (!resp.ok) {
+                showError('공연 정보를 불러올 수 없습니다.');
+                return;
+            }
+            event = await resp.json();
+        }
         currentEvent = event;
         displayEvent(event);
     } catch (error) {

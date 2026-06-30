@@ -17,54 +17,90 @@ document.querySelectorAll('a[href^="#"]').forEach(link => {
     });
 });
 
-// ==================== Season Countdown ====================
-async function loadCurrentSeason() {
+// ==================== Current Play ====================
+async function loadCurrentPlay() {
     const container = document.getElementById('seasonContent');
     if (!container) return;
 
     try {
-        const response = await fetch('/api/public/seasons/current');
-        if (!response.ok) {
-            container.innerHTML = '<p class="season-empty">현재 진행 중인 시즌이 없습니다</p>';
+        const response = await fetch('/api/public/events/latest');
+
+        if (!response.ok || response.status === 204) {
+            container.innerHTML = '<p class="season-empty">공연 준비 중입니다</p>';
             return;
         }
 
-        const season = await response.json();
-        renderSeason(container, season);
+        const event = await response.json();
+        renderPlay(container, event);
     } catch (error) {
-        container.innerHTML = '<p class="season-empty">시즌 정보를 불러올 수 없습니다</p>';
+        container.innerHTML = '<p class="season-empty">공연 정보를 불러올 수 없습니다</p>';
     }
 }
 
-function renderSeason(container, season) {
-    const eventDate = season.eventDate;
+function renderPlay(container, event) {
+    const isOpen = event.status === 'OPEN';
+    const posterUrl = event.posterImageUrl || '/images/default-poster.png';
+    const bookUrl = `/public/book.html?id=${event.id}`;
 
-    const dateStr = eventDate
-        ? new Date(eventDate).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
-        : '';
+    const statusBadge = isOpen
+        ? ''
+        : `<span class="season-badge" style="background: rgba(255,255,255,0.15); margin-bottom: 0.5rem;">${getStatusLabel(event.status)}</span>`;
+
+    const targetSchedule = getTargetSchedule(event.schedules || []);
 
     container.innerHTML = `
-        <div class="season-card">
-            <span class="season-badge">현재 시즌</span>
-            <h3 class="season-name">${escapeHtml(season.name)}</h3>
-            ${dateStr ? `<p class="season-date">공연일: ${dateStr}</p>` : ''}
-            ${eventDate ? `<div class="countdown" id="countdown" data-target="${eventDate}"></div>` : ''}
-            <a href="/public/book.html" class="btn-hero-primary" style="display:inline-block; margin-top:1.5rem;">예매하기</a>
+        <div class="play-card">
+            <div class="play-poster-wrap">
+                <img class="play-poster" src="${escapeAttr(posterUrl)}" alt="${escapeAttr(event.title)}"
+                     onerror="this.src='/images/default-poster.png'">
+            </div>
+            <div class="play-info">
+                ${statusBadge}
+                <h3 class="season-name">${escapeHtml(event.title)}</h3>
+                ${event.location ? `<p class="season-date">장소: ${escapeHtml(event.location)}</p>` : ''}
+                ${targetSchedule ? `<p class="season-date">공연일: ${formatDate(targetSchedule.eventDate)}</p>` : ''}
+                ${targetSchedule ? `<div class="countdown" id="playCountdown"></div>` : ''}
+                <a href="${bookUrl}" class="btn-hero-primary" style="display:inline-block; margin-top:1.5rem;">
+                    ${isOpen ? '예매하기' : '공연 정보 보기'}
+                </a>
+            </div>
         </div>
     `;
 
-    if (eventDate) {
-        startCountdown(eventDate);
+    if (targetSchedule) {
+        startCountdown(targetSchedule.eventDate, 'playCountdown');
     }
 }
 
-function startCountdown(targetDateStr) {
-    const countdownEl = document.getElementById('countdown');
+function getTargetSchedule(schedules) {
+    if (!schedules || schedules.length === 0) return null;
+    const now = new Date();
+    const upcoming = schedules
+        .filter(s => new Date(s.eventDate) > now)
+        .sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
+    if (upcoming.length > 0) return upcoming[0];
+    return schedules.sort((a, b) => new Date(b.eventDate) - new Date(a.eventDate))[0];
+}
+
+function getStatusLabel(status) {
+    const labels = { OPEN: '예매중', CLOSED: '예매종료', COMPLETED: '공연종료' };
+    return labels[status] || status;
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('ko-KR', {
+        year: 'numeric', month: 'long', day: 'numeric', weekday: 'short'
+    });
+}
+
+function startCountdown(targetDateStr, elementId) {
+    const countdownEl = document.getElementById(elementId);
     if (!countdownEl) return;
 
     function update() {
         const now = new Date();
-        const target = new Date(targetDateStr + 'T00:00:00');
+        const target = new Date(targetDateStr);
         const diff = target - now;
 
         if (diff <= 0) {
@@ -108,23 +144,26 @@ function startCountdown(targetDateStr) {
 
 // ==================== Utility ====================
 function escapeHtml(str) {
+    if (!str) return '';
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
 }
 
+function escapeAttr(str) {
+    if (!str) return '';
+    return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 // ==================== Load Stats ====================
 async function loadStats() {
-    // These are public-facing stats — use public endpoints only
     try {
         const response = await fetch('/api/public/seasons/current');
         if (response.ok) {
             const season = await response.json();
-            // If a season exists, we know there's at least 1
             const statSeasons = document.getElementById('statSeasons');
             if (statSeasons) statSeasons.textContent = '1+';
 
-            // Try to load member count from season users
             if (season.id) {
                 try {
                     const usersResponse = await fetch(`/api/public/seasons/${season.id}/users`);
@@ -141,6 +180,6 @@ async function loadStats() {
 
 // ==================== Init ====================
 document.addEventListener('DOMContentLoaded', () => {
-    loadCurrentSeason();
+    loadCurrentPlay();
     loadStats();
 });
