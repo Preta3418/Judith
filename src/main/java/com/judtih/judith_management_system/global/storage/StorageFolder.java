@@ -6,7 +6,8 @@ public enum StorageFolder {
     PHOTOS("Photos"),
     VIDEOS("Video"),
     SCRIPT("Script"),
-    ART("Art");
+    ART("Art"),
+    PAMPHLET("Pamphlet");
 
 
 

@@ -44,6 +44,8 @@ public class Event {
 
     private String posterImageUrl;
 
+    private String pamphletUrl;
+
     private LocalDateTime createdAt;
 
 
@@ -61,5 +63,9 @@ public class Event {
         if (capacityLimit != null) this.capacityLimit = capacityLimit;
         if (status != null) this.status = status;
         if (posterImageUrl != null) this.posterImageUrl = posterImageUrl;
+    }
+
+    public void updatePamphletUrl(String pamphletUrl) {
+        this.pamphletUrl = pamphletUrl;
     }
 }

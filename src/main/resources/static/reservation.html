@@ -303,6 +303,26 @@
                         <div class="form-hint">이 링크를 공유하면 누구나 예매할 수 있습니다</div>
                     </div>
 
+                    <!-- Pamphlet Section -->
+                    <div class="mt-24">
+                        <h4 class="mb-12">팸플릿 PDF</h4>
+                        <div id="pamphletCurrentWrap" style="display:none; margin-bottom:12px;">
+                            <div class="flex gap-8 items-center" style="background:var(--gray-50); border:1px solid var(--border-light); border-radius:var(--radius); padding:10px 14px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;color:var(--primary)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                <a id="pamphletCurrentLink" href="#" target="_blank" class="text-primary" style="font-size:0.85rem; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">팸플릿 보기</a>
+                                <a id="pamphletViewLink" href="#" target="_blank" class="btn btn-sm btn-ghost">미리보기</a>
+                            </div>
+                        </div>
+                        <div class="flex gap-8">
+                            <input type="file" id="pamphletFile" accept="application/pdf" style="display:none" onchange="uploadPamphlet()">
+                            <button type="button" class="btn btn-outline" onclick="document.getElementById('pamphletFile').click()" id="pamphletUploadBtn">
+                                PDF 업로드
+                            </button>
+                            <span id="pamphletUploadStatus" style="font-size:0.82rem; color:var(--text-secondary); align-self:center;"></span>
+                        </div>
+                        <div class="form-hint">업로드 후 팸플릿 페이지에서 확인할 수 있습니다</div>
+                    </div>
+
                     <!-- Casting Section -->
                     <div class="mt-24" id="editCastingSection" style="display: none;">
                         <div class="flex justify-between items-center mb-12">

@@ -21,5 +21,6 @@ public class EventRequest {
     private Integer capacityLimit;
     private EventStatus status;
     private String posterImageUrl;
+    private String pamphletUrl;
 
 }

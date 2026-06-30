@@ -68,6 +68,14 @@ function displayEvent(event) {
     // Update page title
     document.title = `${event.title} - 예매 | Judith`;
 
+    // Show pamphlet link if available
+    if (event.pamphletUrl) {
+        const section = document.getElementById('pamphletSection');
+        const link = document.getElementById('pamphletLink');
+        link.href = `/public/pamphlet.html?id=${event.id}`;
+        section.style.display = 'block';
+    }
+
     // Load casting from current season
     loadCasting();
 }

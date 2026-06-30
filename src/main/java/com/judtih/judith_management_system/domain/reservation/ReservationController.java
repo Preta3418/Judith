@@ -8,8 +8,10 @@ import com.judtih.judith_management_system.domain.reservation.reservationDto.Res
 import com.judtih.judith_management_system.domain.reservation.service.EventService;
 import com.judtih.judith_management_system.domain.reservation.service.ReservationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -74,6 +76,13 @@ public class ReservationController {
 
 
     // ==================== Admin Endpoints ====================
+
+    @PostMapping(value = "/api/admin/events/{eventId}/pamphlet", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<EventResponse> uploadPamphlet(
+            @PathVariable Long eventId,
+            @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(eventService.uploadPamphlet(eventId, file));
+    }
 
     @PostMapping("/api/admin/events")
     public ResponseEntity<EventResponse> createEvent (@RequestBody EventRequest eventRequest) {

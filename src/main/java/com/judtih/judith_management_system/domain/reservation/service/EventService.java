@@ -6,9 +6,12 @@ import com.judtih.judith_management_system.domain.reservation.eventDto.*;
 import com.judtih.judith_management_system.domain.reservation.repository.EventRepository;
 import com.judtih.judith_management_system.domain.reservation.repository.EventScheduleRepository;
 import com.judtih.judith_management_system.domain.reservation.repository.ReservationRepository;
+import com.judtih.judith_management_system.global.storage.StorageFolder;
+import com.judtih.judith_management_system.global.storage.service.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +25,7 @@ public class EventService {
     private final EventRepository eventRepository;
     private final EventScheduleRepository scheduleRepository;
     private final ReservationRepository reservationRepository;
+    private final StorageService storageService;
 
 
     //Admin methods ///////////////////////////////////////////////////////
@@ -146,6 +150,15 @@ public class EventService {
         return responseList;
     }
 
+    @Transactional
+    public EventResponse uploadPamphlet(Long eventId, MultipartFile file) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        String url = storageService.uploadFile(file, StorageFolder.PAMPHLET, null).getUrl();
+        event.updatePamphletUrl(url);
+        return createEventResponse(event);
+    }
+
     //Helper method ///////////////////////////////////////////////////////
 
     //create method without List<scheduleResponse>
@@ -159,6 +172,7 @@ public class EventService {
                 .capacityLimit(event.getCapacityLimit())
                 .status(event.getStatus())
                 .posterImageUrl((event.getPosterImageUrl()))
+                .pamphletUrl(event.getPamphletUrl())
                 .createdAt(event.getCreatedAt())
                 .build();
     }
@@ -173,6 +187,7 @@ public class EventService {
                 .capacityLimit(event.getCapacityLimit())
                 .status(event.getStatus())
                 .posterImageUrl((event.getPosterImageUrl()))
+                .pamphletUrl(event.getPamphletUrl())
                 .createdAt(event.getCreatedAt())
                 .schedules(scheduleResponses)
                 .build();
