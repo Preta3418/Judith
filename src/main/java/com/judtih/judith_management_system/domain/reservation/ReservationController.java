@@ -44,7 +44,7 @@ public class ReservationController {
         String pamphletUrl = eventService.getPamphletUrl(eventId);
         byte[] bytes = new URL(pamphletUrl).openStream().readAllBytes();
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"pamphlet.pdf\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + java.net.URLEncoder.encode("26_1 <물리학자들: Die Physiker> 공연 팸플릿.pdf", java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20"))
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(bytes);
     }
