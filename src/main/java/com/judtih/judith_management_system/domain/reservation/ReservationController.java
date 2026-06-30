@@ -80,8 +80,9 @@ public class ReservationController {
     @PostMapping(value = "/api/admin/events/{eventId}/pamphlet", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<EventResponse> uploadPamphlet(
             @PathVariable Long eventId,
-            @RequestParam("file") MultipartFile file) {
-        return ResponseEntity.ok(eventService.uploadPamphlet(eventId, file));
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("seasonId") Long seasonId) {
+        return ResponseEntity.ok(eventService.uploadPamphlet(eventId, file, seasonId));
     }
 
     @PostMapping("/api/admin/events")

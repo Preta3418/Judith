@@ -151,10 +151,10 @@ public class EventService {
     }
 
     @Transactional
-    public EventResponse uploadPamphlet(Long eventId, MultipartFile file) {
+    public EventResponse uploadPamphlet(Long eventId, MultipartFile file, Long seasonId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
-        String url = storageService.uploadFile(file, StorageFolder.PAMPHLET, null).getUrl();
+        String url = storageService.uploadFile(file, StorageFolder.PAMPHLET, seasonId).getUrl();
         event.updatePamphletUrl(url);
         return createEventResponse(event);
     }
