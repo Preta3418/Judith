@@ -342,9 +342,9 @@
                 }
 
                 pamphletUrl = event.pamphletUrl;
-                document.getElementById('downloadBtn').href = pamphletUrl;
-                document.getElementById('downloadBtn').download = `${event.title}_팸플릿.pdf`;
-                document.getElementById('downloadBtn').style.display = 'inline-flex';
+                const btn = document.getElementById('downloadBtn');
+                btn.href = `/api/public/events/${event.id}/pamphlet/download`;
+                btn.style.display = 'inline-flex';
 
                 openCurtain(() => loadPdf(pamphletUrl));
 
@@ -384,10 +384,12 @@
 
                 const progress = document.getElementById('progress');
 
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
                 for (let i = 1; i <= pdf.numPages; i++) {
                     const page = await pdf.getPage(i);
-                    const scale = Math.min(window.innerWidth - 32, 780) / page.getViewport({ scale: 1 }).width;
-                    const viewport = page.getViewport({ scale });
+                    const cssScale = Math.min(window.innerWidth - 32, 780) / page.getViewport({ scale: 1 }).width;
+                    const viewport = page.getViewport({ scale: cssScale * dpr });
 
                     const wrap = document.createElement('div');
                     wrap.className = 'pdf-page-wrap';

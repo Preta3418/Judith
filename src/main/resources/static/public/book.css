@@ -238,6 +238,29 @@
     font-size: 1.25rem;
 }
 
+/* Pamphlet button — sits on the purple hero background */
+.btn-pamphlet {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(4px);
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.btn-pamphlet:hover {
+    background: rgba(255, 255, 255, 0.28);
+    border-color: #fff;
+}
+
 /* Content Section */
 .content-section {
     max-width: 1200px;
