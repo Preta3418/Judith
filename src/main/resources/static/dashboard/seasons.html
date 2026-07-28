@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>대본 — Judith</title>
+    <title>시즌 선택 — Judith</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -22,11 +22,10 @@
             <div class="dash-nav-tabs" id="navTabs">
                 <a href="/dashboard/index.html" class="dash-tab">홈</a>
                 <a href="/dashboard/notifications.html" class="dash-tab">공지사항</a>
-                <a href="/dashboard/scripts.html" class="dash-tab active">대본</a>
+                <a href="/dashboard/scripts.html" class="dash-tab">대본</a>
                 <a href="/dashboard/schedule.html" class="dash-tab">일정</a>
             </div>
             <div class="dash-nav-right">
-                <button class="dash-season-btn" id="seasonSelector"></button>
                 <div class="dash-avatar" id="userAvatar">U</div>
                 <span class="dash-user-name" id="userName"></span>
                 <button class="dash-btn-logout" onclick="logout()">로그아웃</button>
@@ -44,46 +43,38 @@
 <script src="/js/api.js"></script>
 <script src="/js/dashboard.js"></script>
 <script>
-async function loadPageContent() {
+const ROLE_LABELS = {
+    LEADER: '회장', PRODUCER: '연출', SUB_PRODUCER: '부연출', PLANNER: '기획',
+    ACTOR: '배우', STAFF: '스태프', SOUND_OPERATOR: '음향',
+    LIGHT_OPERATOR: '조명', SOUND_DESIGN: '음향 디자인',
+    LIGHT_DESIGN: '조명 디자인', IMAGE_DESIGN: '홍보 디자인', STAGE_DESIGN: '무대 디자인'
+};
+
+function loadPageContent() {
     const container = document.getElementById('pageContainer');
     container.innerHTML = `
         <div class="dash-page-header">
-            <div class="dash-greeting">대본</div>
-            <div class="dash-subtitle">${escHtml(currentSeason.seasonName)} · 파일을 클릭해 다운로드하세요</div>
+            <div class="dash-greeting">시즌 선택</div>
+            <div class="dash-subtitle">참여한 시즌을 선택하세요</div>
         </div>
-        <div class="dash-scripts" id="scriptsList">
-            <div class="loading"><div class="spinner"></div></div>
+        <div class="season-grid">
+            ${mySeasons.map(s => `
+                <a href="/dashboard/index.html?seasonId=${s.seasonId}" class="season-card">
+                    <div class="season-card-header">
+                        <span class="season-card-name">${escHtml(s.seasonName)}</span>
+                        ${statusBadge(s.status)}
+                    </div>
+                    <div class="season-card-dates">
+                        ${s.startDate ? fmtDate(s.startDate) : '시작일 미정'}
+                        ${s.endDate ? ' — ' + fmtDate(s.endDate) : ''}
+                    </div>
+                    <div class="season-card-roles">
+                        ${s.myRoles ? [...s.myRoles].map(r => `<span class="role-tag">${ROLE_LABELS[r] || r}</span>`).join('') : ''}
+                    </div>
+                </a>
+            `).join('')}
         </div>
     `;
-
-    await loadScripts();
-}
-
-async function loadScripts() {
-    const list = document.getElementById('scriptsList');
-    try {
-        const scripts = await api(`/api/dashboard/seasons/${currentSeasonId}/scripts`) || [];
-
-        if (scripts.length === 0) {
-            list.innerHTML = `<div class="dash-empty">
-                <div class="dash-empty-icon">&#x1F4DC;</div>
-                <p class="dash-empty-text">업로드된 대본이 없습니다<br>관리자에게 문의하세요</p>
-            </div>`;
-            return;
-        }
-
-        list.innerHTML = scripts.map(s => `
-            <div class="dash-script">
-                <div>
-                    <div class="dash-script-name" title="${escHtml(s.fileName)}">${escHtml(s.fileName)}</div>
-                    <div class="dash-script-meta">${fmtBytes(s.fileSize)}${s.fileSize ? ' · ' : ''}${fmtDateTime(s.uploadedAt)}</div>
-                </div>
-                <a href="${escHtml(s.url)}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">다운로드</a>
-            </div>
-        `).join('');
-    } catch(e) {
-        list.innerHTML = '<div class="alert alert-danger">대본 목록을 불러올 수 없습니다.</div>';
-    }
 }
 </script>
 </body>
