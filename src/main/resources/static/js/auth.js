@@ -43,7 +43,7 @@ function isAdmin() {
 }
 
 function getLoginRedirect() {
-    return isAdmin() ? '/main.html' : '/dashboard/index.html';
+    return '/dashboard/index.html';
 }
 
 // ==================== Admin Status Application ====================
@@ -248,6 +248,7 @@ async function submitPasswordChange() {
 
 // Check and prompt password change after page load
 function checkPasswordChangeNeeded() {
+    if (isAdmin()) return;
     if (isLoggedIn() && !isPasswordChanged()) {
         showPasswordChangeModal();
     }

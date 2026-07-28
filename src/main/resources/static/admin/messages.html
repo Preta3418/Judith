@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>문자 발송 — Judith</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<div class="dash-shell">
+
+    <nav class="dash-nav">
+        <div class="dash-nav-inner">
+            <a href="/" class="dash-logo">
+                <img src="/images/logo-symbol-light.png" alt="Judith">
+                <span class="dash-logo-text">Judith</span>
+            </a>
+            <div class="dash-nav-tabs" id="navTabs">
+                <a href="/dashboard/index.html" class="dash-tab">홈</a>
+                <a href="/dashboard/notifications.html" class="dash-tab">공지사항</a>
+                <a href="/dashboard/scripts.html" class="dash-tab">대본</a>
+                <a href="/dashboard/schedule.html" class="dash-tab">일정</a>
+                <span class="dash-tab-divider">|</span>
+                <a href="/admin/users.html" class="dash-tab">부원</a>
+                <a href="/admin/seasons.html" class="dash-tab">시즌</a>
+                <a href="/admin/events.html" class="dash-tab">공연</a>
+                <a href="/admin/messages.html" class="dash-tab active">문자</a>
+            </div>
+            <div class="dash-nav-right">
+                <div class="dash-avatar" id="userAvatar">U</div>
+                <span class="dash-user-name" id="userName"></span>
+                <button class="dash-btn-logout" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dash-main">
+        <div class="dash-page-header">
+            <div class="dash-greeting">문자 발송</div>
+            <div class="dash-subtitle">비활동 부원에게 SMS 발송</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+            <!-- Send Message Section -->
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <span class="dash-card-title">비활동 부원에게 문자 발송</span>
+                </div>
+                <form id="sendMessageForm" onsubmit="sendMessage(event)">
+                    <div class="form-group">
+                        <label class="form-label required" for="messageContent">메시지 내용</label>
+                        <textarea class="form-textarea" id="messageContent"
+                                  placeholder="비활동 부원에게 보낼 메시지를 입력하세요..."
+                                  style="min-height:200px;" required></textarea>
+                    </div>
+                    <div class="form-hint" style="margin-bottom:20px;">
+                        이 메시지는 모든 비활동 부원에게 SMS로 발송됩니다.
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%;" id="sendBtn">
+                        전체 비활동 부원에게 발송
+                    </button>
+                </form>
+            </div>
+
+            <!-- Message History Section -->
+            <div class="dash-card">
+                <div class="dash-card-header">
+                    <span class="dash-card-title">발송 내역</span>
+                    <button class="btn btn-sm btn-outline" onclick="loadMessageHistory()">새로고침</button>
+                </div>
+                <div id="messageHistory">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Message Detail Modal -->
+<div class="modal-overlay" id="messageDetailModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">메시지 상세</h3>
+            <button class="modal-close" onclick="closeModal('messageDetailModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="mb-24">
+                <label class="text-sm text-muted">메시지 내용</label>
+                <div class="dash-card" style="margin-top:8px;background:var(--gray-50);">
+                    <p id="detailContent" style="white-space:pre-wrap;margin:0;"></p>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+                <div class="stat-card">
+                    <div class="stat-icon success">&#x2714;</div>
+                    <div class="stat-value" id="detailSuccess">0</div>
+                    <div class="stat-label">성공</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:var(--danger-bg);color:var(--danger);">&#x2716;</div>
+                    <div class="stat-value" id="detailFailed">0</div>
+                    <div class="stat-label">실패</div>
+                </div>
+            </div>
+            <div class="flex justify-between items-center mb-8" style="padding-bottom:12px;border-bottom:1px solid var(--border-light);">
+                <span class="text-secondary">발송 시간</span>
+                <span id="detailSentAt">-</span>
+            </div>
+            <div class="flex justify-between items-center" style="padding-bottom:12px;">
+                <span class="text-secondary">총 수신자</span>
+                <span id="detailTotal">-</span>
+            </div>
+            <div id="detailFailures" class="mt-16"></div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script>
+if (!requireAuth()) { /* redirects */ }
+if (!isAdmin()) { window.location.href = '/dashboard/index.html'; }
+
+const _uname = getCurrentUserName();
+document.getElementById('userName').textContent = _uname;
+document.getElementById('userAvatar').textContent = _uname.charAt(0).toUpperCase();
+
+// ==================== Send Message ====================
+async function sendMessage(e) {
+    e.preventDefault();
+    const content = document.getElementById('messageContent').value.trim();
+    if (!content) {
+        showToast('메시지 내용을 입력해주세요', 'error');
+        return;
+    }
+
+    const sendBtn = document.getElementById('sendBtn');
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<span class="spinner spinner-sm"></span> 발송 중...';
+
+    try {
+        const result = await messageApi.send(content);
+        let resultMessage = `발송 완료: ${result.successCount}/${result.totalAttempted}`;
+        if (result.failureCount > 0) resultMessage += ` (${result.failureCount}건 실패)`;
+        showToast(resultMessage, result.failureCount > 0 ? 'warning' : 'success');
+        document.getElementById('sendMessageForm').reset();
+        loadMessageHistory();
+    } catch (error) {
+        showToast(error.message || '메시지 발송에 실패했습니다', 'error');
+    } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = '전체 비활동 부원에게 발송';
+    }
+}
+
+// ==================== Load Message History ====================
+async function loadMessageHistory() {
+    const container = document.getElementById('messageHistory');
+    try {
+        const response = await messageApi.getHistory();
+        const messages = response.content || response;
+
+        if (!messages || messages.length === 0) {
+            container.innerHTML = `
+                <div class="dash-empty">
+                    <div class="dash-empty-icon">&#x1F4AC;</div>
+                    <p class="dash-empty-text">발송된 메시지가 없습니다.</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="list">
+                ${messages.map(msg => `
+                    <div class="list-item" onclick="showMessageDetail(${msg.id})" style="cursor:pointer;">
+                        <div class="list-item-icon" style="background:var(--primary-bg);color:var(--primary);">
+                            &#x1F4E9;
+                        </div>
+                        <div class="list-item-content">
+                            <div class="list-item-title truncate" style="max-width:200px;">
+                                ${escapeHtml((msg.content || msg.messageContent || '').substring(0, 50))}${(msg.content || msg.messageContent || '').length > 50 ? '...' : ''}
+                            </div>
+                            <div class="list-item-subtitle">
+                                ${fmtDateSimple(msg.sentAt || msg.createdAt)} &bull; ${msg.successCount !== undefined ? msg.successCount : (msg.totalSent - msg.failedAttempt)}/${msg.successCount !== undefined ? (msg.successCount + msg.failureCount) : msg.totalSent} 발송 성공
+                            </div>
+                        </div>
+                        <span style="color:var(--text-muted);">&#x2192;</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } catch (error) {
+        container.innerHTML = `
+            <div class="dash-empty">
+                <p style="color:var(--danger);">발송 내역을 불러오는데 실패했습니다</p>
+                <button class="btn btn-secondary btn-sm" onclick="loadMessageHistory()" style="margin-top:8px;">다시 시도</button>
+            </div>
+        `;
+    }
+}
+
+// ==================== Show Message Detail ====================
+async function showMessageDetail(id) {
+    try {
+        const msg = await messageApi.getById(id);
+
+        const content = msg.content || msg.messageContent || '';
+        document.getElementById('detailContent').textContent = content;
+        document.getElementById('detailSentAt').textContent = fmtDateSimple(msg.sentAt || msg.createdAt);
+
+        const total = msg.successCount !== undefined
+            ? (msg.successCount + msg.failureCount)
+            : msg.totalSent;
+        const success = msg.successCount !== undefined
+            ? msg.successCount
+            : (msg.totalSent - msg.failedAttempt);
+        const failed = msg.failureCount !== undefined
+            ? msg.failureCount
+            : msg.failedAttempt;
+
+        document.getElementById('detailTotal').textContent = total;
+        document.getElementById('detailSuccess').textContent = success;
+        document.getElementById('detailFailed').textContent = failed;
+
+        const failuresDiv = document.getElementById('detailFailures');
+        if (msg.failures && msg.failures.length > 0) {
+            failuresDiv.innerHTML = `
+                <div class="dash-card" style="background:var(--danger-bg);border-color:var(--danger);">
+                    <div class="dash-card-header">
+                        <span class="dash-card-title" style="color:var(--danger);">발송 실패 목록</span>
+                    </div>
+                    <ul style="padding-left:20px;margin:0;">
+                        ${msg.failures.map(f => `<li>${escapeHtml(typeof f === 'string' ? f : (f.userName || f.phoneNumber || JSON.stringify(f)))}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        } else {
+            failuresDiv.innerHTML = '';
+        }
+
+        openModal('messageDetailModal');
+    } catch (error) {
+        showToast('메시지 상세 정보를 불러오는데 실패했습니다', 'error');
+    }
+}
+
+// ==================== Helpers ====================
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function fmtDateSimple(dateString) {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('ko-KR', {
+        year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+    });
+}
+
+// Initialize
+checkPasswordChangeNeeded();
+loadMessageHistory();
+</script>
+</body>
+</html>

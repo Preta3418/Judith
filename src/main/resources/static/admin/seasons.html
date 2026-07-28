@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시즌 관리 — Judith</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<div class="dash-shell">
+
+    <nav class="dash-nav">
+        <div class="dash-nav-inner">
+            <a href="/" class="dash-logo">
+                <img src="/images/logo-symbol-light.png" alt="Judith">
+                <span class="dash-logo-text">Judith</span>
+            </a>
+            <div class="dash-nav-tabs" id="navTabs">
+                <a href="/dashboard/index.html" class="dash-tab">홈</a>
+                <a href="/dashboard/notifications.html" class="dash-tab">공지사항</a>
+                <a href="/dashboard/scripts.html" class="dash-tab">대본</a>
+                <a href="/dashboard/schedule.html" class="dash-tab">일정</a>
+                <span class="dash-tab-divider">|</span>
+                <a href="/admin/users.html" class="dash-tab">부원</a>
+                <a href="/admin/seasons.html" class="dash-tab active">시즌</a>
+                <a href="/admin/events.html" class="dash-tab">공연</a>
+                <a href="/admin/messages.html" class="dash-tab">문자</a>
+            </div>
+            <div class="dash-nav-right">
+                <div class="dash-avatar" id="userAvatar">U</div>
+                <span class="dash-user-name" id="userName"></span>
+                <button class="dash-btn-logout" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dash-main">
+        <div class="dash-page-header">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div class="dash-greeting">시즌 관리</div>
+                    <div class="dash-subtitle">시즌 생성, 활성화, 부원 배정</div>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-outline" onclick="openTransitionModal()" id="transitionBtn" style="display:none;">시즌 전환</button>
+                    <button class="btn btn-primary" onclick="openCreateModal()">+ 새 시즌</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Season Banner -->
+        <div class="dash-dday-panel" id="currentSeasonBanner" style="display:none;margin-bottom:20px;">
+            <span class="dash-dday-label">현재 활성 시즌</span>
+            <span class="dash-dday-value" id="currentSeasonName" style="font-size:1.4rem;">--</span>
+            <div id="countdownTimer" style="display:flex;gap:16px;margin-left:auto;">
+                <div style="text-align:center;">
+                    <div style="font-size:1.6rem;font-weight:800;" id="countdownDays">--</div>
+                    <div style="font-size:0.7rem;opacity:0.7;">일</div>
+                </div>
+                <div style="text-align:center;">
+                    <div style="font-size:1.6rem;font-weight:800;" id="countdownHours">--</div>
+                    <div style="font-size:0.7rem;opacity:0.7;">시간</div>
+                </div>
+                <div style="text-align:center;">
+                    <div style="font-size:1.6rem;font-weight:800;" id="countdownMinutes">--</div>
+                    <div style="font-size:0.7rem;opacity:0.7;">분</div>
+                </div>
+                <div style="text-align:center;">
+                    <div style="font-size:1.6rem;font-weight:800;" id="countdownSeconds">--</div>
+                    <div style="font-size:0.7rem;opacity:0.7;">초</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dash-card">
+            <div class="dash-card-header">
+                <span class="dash-card-title">전체 시즌</span>
+            </div>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>시즌명</th>
+                            <th>상태</th>
+                            <th>시작일</th>
+                            <th>종료일</th>
+                            <th>공연일</th>
+                            <th>관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="seasonsTableBody">
+                        <tr>
+                            <td colspan="6">
+                                <div class="loading"><div class="spinner"></div></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Create/Edit Season Modal -->
+<div class="modal-overlay" id="seasonModal">
+    <div class="modal" id="seasonModalInner" style="max-height:90vh;display:flex;flex-direction:column;">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalTitle">새 시즌</h3>
+            <button class="modal-close" onclick="closeModal('seasonModal')">&times;</button>
+        </div>
+        <div class="modal-body" style="overflow-y:auto;flex:1;">
+            <form id="seasonForm">
+                <input type="hidden" id="seasonId">
+                <div class="form-group">
+                    <label class="form-label required" for="seasonName">시즌명</label>
+                    <input type="text" class="form-input" id="seasonName" placeholder="예: 2026 봄" required>
+                    <div class="form-hint">형식: 연도 + 학기 (예: 2026 봄, 2026 가을)</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="eventDate">공연날짜 (D-Day)</label>
+                    <input type="date" class="form-input" id="eventDate">
+                    <div class="form-hint">선택사항 — 카운트다운에 사용될 공연일</div>
+                </div>
+                <!-- Member selection (only shown when creating) -->
+                <div id="createMemberSection" style="display:none;">
+                    <div class="form-section">
+                        <h4 class="form-section-title">부원 선택</h4>
+                        <div class="form-hint mb-16">최소 1명의 운영진(학회장, 연출, 조연출, 기획)이 필요합니다.</div>
+                        <div id="createMemberList">
+                            <div class="loading"><div class="spinner"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('seasonModal')">취소</button>
+            <button class="btn btn-primary" onclick="saveSeason()">저장</button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal" style="max-width:400px;">
+        <div class="modal-header">
+            <h3 class="modal-title" id="confirmTitle">확인</h3>
+            <button class="modal-close" onclick="closeModal('confirmModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="confirmMessage">계속하시겠습니까?</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('confirmModal')">취소</button>
+            <button class="btn btn-primary" id="confirmBtn" onclick="confirmAction()">확인</button>
+        </div>
+    </div>
+</div>
+
+<!-- User Management Modal -->
+<div class="modal-overlay" id="userManageModal">
+    <div class="modal" style="max-width:700px;">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <span id="userManageSeasonName">--</span> 부원 관리
+            </h3>
+            <button class="modal-close" onclick="closeModal('userManageModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <!-- Add User Section -->
+            <div class="form-section mb-24">
+                <h4 class="form-section-title">부원 추가</h4>
+                <div class="form-row">
+                    <div class="form-group" style="flex:2;">
+                        <select class="form-input" id="addUserSelect">
+                            <option value="">부원 선택...</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:3;">
+                        <div id="addUserRolesContainer" class="roles-checkbox-group"></div>
+                    </div>
+                    <div class="form-group" style="flex:0;">
+                        <button class="btn btn-primary" onclick="addUserToCurrentSeason()">추가</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Current Users List -->
+            <div class="form-section">
+                <h4 class="form-section-title">현재 부원 목록</h4>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>이름</th>
+                                <th>역할</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="seasonUsersTableBody">
+                            <tr>
+                                <td colspan="3">
+                                    <div class="loading"><div class="spinner"></div></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('userManageModal')">닫기</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Roles Modal -->
+<div class="modal-overlay" id="editRolesModal">
+    <div class="modal" style="max-width:500px;">
+        <div class="modal-header">
+            <h3 class="modal-title">역할 수정</h3>
+            <button class="modal-close" onclick="closeModal('editRolesModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="editRolesUserId">
+            <p class="mb-16"><strong id="editRolesUserName">--</strong>님의 역할을 선택하세요:</p>
+            <div id="editRolesContainer" class="roles-checkbox-group"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('editRolesModal')">취소</button>
+            <button class="btn btn-primary" onclick="saveUserRoles()">저장</button>
+        </div>
+    </div>
+</div>
+
+<!-- Season Transition Modal -->
+<div class="modal-overlay" id="transitionModal">
+    <div class="modal" style="max-width:800px;max-height:90vh;display:flex;flex-direction:column;">
+        <div class="modal-header">
+            <h3 class="modal-title">새 시즌 전환</h3>
+            <button class="modal-close" onclick="closeModal('transitionModal')">&times;</button>
+        </div>
+        <div class="modal-body" style="overflow-y:auto;flex:1;">
+            <div class="alert alert-info mb-24">
+                <strong>시즌 전환 안내:</strong> 현재 시즌을 종료하고 새 시즌을 시작합니다.
+                계속할 부원을 선택하고 역할을 지정하세요. 선택되지 않은 부원은 비활동 처리됩니다.
+            </div>
+            <div class="form-section mb-24">
+                <h4 class="form-section-title">새 시즌 정보</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label required" for="transitionSeasonName">시즌명</label>
+                        <input type="text" class="form-input" id="transitionSeasonName" placeholder="예: 2026 봄" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="transitionEventDate">공연날짜 (D-Day)</label>
+                        <input type="date" class="form-input" id="transitionEventDate">
+                    </div>
+                </div>
+            </div>
+            <div class="form-section">
+                <div class="flex justify-between items-center mb-16">
+                    <h4 class="form-section-title" style="margin-bottom:0;">부원 선택</h4>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-ghost" onclick="selectAllTransition(true)">전체 선택</button>
+                        <button type="button" class="btn btn-sm btn-ghost" onclick="selectAllTransition(false)">전체 해제</button>
+                    </div>
+                </div>
+                <div id="transitionUserList">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('transitionModal')">취소</button>
+            <button class="btn btn-primary" onclick="executeTransition()">시즌 전환 실행</button>
+        </div>
+    </div>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/season.js"></script>
+<script>
+if (!requireAuth()) { /* redirects */ }
+if (!isAdmin()) { window.location.href = '/dashboard/index.html'; }
+
+const _uname = getCurrentUserName();
+document.getElementById('userName').textContent = _uname;
+document.getElementById('userAvatar').textContent = _uname.charAt(0).toUpperCase();
+
+checkPasswordChangeNeeded();
+</script>
+</body>
+</html>

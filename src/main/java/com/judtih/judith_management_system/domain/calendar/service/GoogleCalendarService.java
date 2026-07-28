@@ -95,21 +95,23 @@ public class GoogleCalendarService {
         return new DateTime(ldt.toInstant(ZoneOffset.UTC).toEpochMilli());
     }
 
-    //turn google's DateTime to LocalDateTime
-    private LocalDateTime toLocalDateTime(DateTime dt) {
-        return LocalDateTime.ofInstant(Instant.ofEpochMilli(dt.getValue()), ZoneOffset.UTC);
-    }
-
-
     private GoogleCalendarResponse toResponse(Event event) {
         return GoogleCalendarResponse.builder()
                 .googleEventId(event.getId())
                 .title(event.getSummary())
                 .description(event.getDescription())
-                .start(toLocalDateTime(event.getStart().getDateTime()))
-                .end(toLocalDateTime(event.getEnd().getDateTime()))
+                .start(toLocalDateTime(event.getStart()))
+                .end(toLocalDateTime(event.getEnd()))
                 .color(event.getColorId())
                 .htmlLink(event.getHtmlLink())
                 .build();
+    }
+
+    private LocalDateTime toLocalDateTime(EventDateTime edt) {
+        if (edt.getDateTime() != null) {
+            return LocalDateTime.ofInstant(Instant.ofEpochMilli(edt.getDateTime().getValue()), ZoneOffset.UTC);
+        }
+        // all-day event — getDate() returns a date-only DateTime
+        return LocalDateTime.ofInstant(Instant.ofEpochMilli(edt.getDate().getValue()), ZoneOffset.UTC);
     }
 }
