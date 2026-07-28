@@ -35,10 +35,14 @@ jobs:
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1
+        env:
+          GOOGLE_CALENDAR_ID: ${{ secrets.GOOGLE_CALENDAR_ID }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: GOOGLE_CALENDAR_ID,GOOGLE_SERVICE_ACCOUNT_JSON
           script: |
             docker stop judith || true
             docker rm judith || true
@@ -54,6 +58,6 @@ jobs:
               -e AWS_SNS_REGION=${{ secrets.AWS_SNS_REGION }} \
               -e AWS_DEFAULT_REGION=${{ secrets.AWS_DEFAULT_REGION }} \
               -e S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }} \
-              -e GOOGLE_CALENDAR_ID=${{ secrets.GOOGLE_CALENDAR_ID }} \
-              -e GOOGLE_SERVICE_ACCOUNT_JSON=${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }} \
+              -e GOOGLE_CALENDAR_ID="$GOOGLE_CALENDAR_ID" \
+              -e GOOGLE_SERVICE_ACCOUNT_JSON="$GOOGLE_SERVICE_ACCOUNT_JSON" \
               ghcr.io/preta3418/judith-app:latest
