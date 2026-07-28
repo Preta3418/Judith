@@ -48,6 +48,9 @@ dependencies {
 
 	runtimeOnly 'com.mysql:mysql-connector-j'
 
+	implementation 'com.google.apis:google-api-services-calendar:v3-rev20260225-2.0.0'
+	implementation 'com.google.auth:google-auth-library-oauth2-http:1.40.0'
+
 
 
 
