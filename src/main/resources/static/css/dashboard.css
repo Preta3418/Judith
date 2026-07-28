@@ -73,6 +73,14 @@
     background: rgba(124, 58, 237, 0.45);
 }
 
+.dash-tab-divider {
+    color: rgba(255, 255, 255, 0.18);
+    font-size: 0.85rem;
+    padding: 0 4px;
+    user-select: none;
+    align-self: center;
+}
+
 .dash-nav-right {
     display: flex;
     align-items: center;

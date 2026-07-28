@@ -10,6 +10,7 @@ async function loadDashboard() {
     if (!requireAuth()) return;
 
     setupNav();
+    setupAdminNav();
 
     try {
         mySeasons = await api('/api/dashboard/seasons');
@@ -44,6 +45,37 @@ function setupNav() {
     if (el('userAvatar')) el('userAvatar').textContent = userName.charAt(0).toUpperCase();
 
     checkPasswordChangeNeeded();
+}
+
+function setupAdminNav() {
+    if (!isAdmin()) return;
+
+    const tabs = document.querySelector('.dash-nav-tabs');
+    if (!tabs) return;
+
+    // Don't inject twice
+    if (tabs.querySelector('.dash-tab-divider')) return;
+
+    const divider = document.createElement('span');
+    divider.className = 'dash-tab-divider';
+    divider.textContent = '|';
+
+    const adminLinks = [
+        { href: '/admin/users.html',    label: '부원' },
+        { href: '/admin/seasons.html',  label: '시즌' },
+        { href: '/admin/events.html',   label: '공연' },
+        { href: '/admin/messages.html', label: '문자' },
+    ];
+
+    tabs.appendChild(divider);
+
+    adminLinks.forEach(({ href, label }) => {
+        const a = document.createElement('a');
+        a.href = href;
+        a.className = 'dash-tab';
+        a.textContent = label;
+        tabs.appendChild(a);
+    });
 }
 
 function populateSeasonSelector() {

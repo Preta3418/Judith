@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>부원 관리 — Judith</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<div class="dash-shell">
+
+    <nav class="dash-nav">
+        <div class="dash-nav-inner">
+            <a href="/" class="dash-logo">
+                <img src="/images/logo-symbol-light.png" alt="Judith">
+                <span class="dash-logo-text">Judith</span>
+            </a>
+            <div class="dash-nav-tabs" id="navTabs">
+                <a href="/dashboard/index.html" class="dash-tab">홈</a>
+                <a href="/dashboard/notifications.html" class="dash-tab">공지사항</a>
+                <a href="/dashboard/scripts.html" class="dash-tab">대본</a>
+                <a href="/dashboard/schedule.html" class="dash-tab">일정</a>
+                <span class="dash-tab-divider">|</span>
+                <a href="/admin/users.html" class="dash-tab active">부원</a>
+                <a href="/admin/seasons.html" class="dash-tab">시즌</a>
+                <a href="/admin/events.html" class="dash-tab">공연</a>
+                <a href="/admin/messages.html" class="dash-tab">문자</a>
+            </div>
+            <div class="dash-nav-right">
+                <div class="dash-avatar" id="userAvatar">U</div>
+                <span class="dash-user-name" id="userName"></span>
+                <button class="dash-btn-logout" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dash-main">
+        <div class="dash-page-header">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div class="dash-greeting">부원 관리</div>
+                    <div class="dash-subtitle">전체 부원 조회 및 관리</div>
+                </div>
+                <button class="btn btn-primary" onclick="openModal('createUserModal')">+ 부원 추가</button>
+            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div style="display:inline-flex;gap:4px;margin-bottom:16px;background:white;border:1px solid var(--border-light);border-radius:var(--radius);padding:4px;">
+            <button class="btn btn-sm tab active" data-filter="all" onclick="filterUsers('all')" style="border-radius:calc(var(--radius) - 2px);">전체</button>
+            <button class="btn btn-sm tab" data-filter="active" onclick="filterUsers('active')" style="border-radius:calc(var(--radius) - 2px);">활동중</button>
+            <button class="btn btn-sm tab" data-filter="inactive" onclick="filterUsers('inactive')" style="border-radius:calc(var(--radius) - 2px);">비활동</button>
+        </div>
+
+        <div class="dash-card">
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>이름</th>
+                            <th>학번</th>
+                            <th>전화번호</th>
+                            <th>상태</th>
+                            <th>관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                        <tr>
+                            <td colspan="5">
+                                <div class="loading"><div class="spinner"></div></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Create User Modal -->
+<div class="modal-overlay" id="createUserModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">부원 추가</h3>
+            <button class="modal-close" onclick="closeModal('createUserModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="createUserForm" onsubmit="createUser(event)">
+                <div class="form-group">
+                    <label class="form-label required" for="createName">이름</label>
+                    <input type="text" class="form-input" id="createName" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="createStudentNumber">학번</label>
+                        <input type="text" class="form-input" id="createStudentNumber" placeholder="예: 20231234">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="createPhone">전화번호</label>
+                        <input type="tel" class="form-input" id="createPhone" placeholder="010-1234-5678">
+                    </div>
+                </div>
+                <div class="form-hint">역할은 시즌 관리에서 설정합니다.</div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('createUserModal')">취소</button>
+            <button class="btn btn-primary" onclick="document.getElementById('createUserForm').requestSubmit()">부원 추가</button>
+        </div>
+    </div>
+</div>
+
+<!-- User Detail Modal -->
+<div class="modal-overlay" id="userDetailModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">부원 정보</h3>
+            <button class="modal-close" onclick="closeModal('userDetailModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <!-- View Mode -->
+            <div id="viewMode">
+                <div class="mb-24">
+                    <div class="flex justify-between items-center mb-16" style="padding-bottom:16px;border-bottom:1px solid var(--border-light);">
+                        <span class="text-secondary">이름</span>
+                        <span class="font-medium" id="detailName">-</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-16" style="padding-bottom:16px;border-bottom:1px solid var(--border-light);">
+                        <span class="text-secondary">학번</span>
+                        <span id="detailStudentNumber">-</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-16" style="padding-bottom:16px;border-bottom:1px solid var(--border-light);">
+                        <span class="text-secondary">전화번호</span>
+                        <span id="detailPhone">-</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-16" style="padding-bottom:16px;border-bottom:1px solid var(--border-light);">
+                        <span class="text-secondary">상태</span>
+                        <span id="detailStatus">-</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-secondary">가입일</span>
+                        <span id="detailCreatedAt">-</span>
+                    </div>
+                </div>
+                <div class="flex gap-8">
+                    <button class="btn btn-outline" style="flex:1" onclick="showEditMode()">수정</button>
+                    <button class="btn btn-warning" style="flex:1;background:var(--warning);color:white;" id="deactivateBtn" onclick="deactivateUser()">비활동 처리</button>
+                    <button class="btn btn-success" style="flex:1;" id="reactivateBtn" onclick="reactivateUser()">재활성화</button>
+                </div>
+            </div>
+            <!-- Edit Mode -->
+            <div id="editMode" style="display:none;">
+                <form id="editUserForm" onsubmit="updateUser(event)">
+                    <div class="form-group">
+                        <label class="form-label" for="editName">이름</label>
+                        <input type="text" class="form-input" id="editName" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editPhone">전화번호</label>
+                        <input type="tel" class="form-input" id="editPhone">
+                    </div>
+                    <div class="form-hint">역할은 시즌 관리에서 설정합니다.</div>
+                </form>
+            </div>
+        </div>
+        <div class="modal-footer" id="editModeFooter" style="display:none;">
+            <button class="btn btn-secondary" onclick="showViewMode()">취소</button>
+            <button class="btn btn-primary" onclick="document.getElementById('editUserForm').requestSubmit()">저장</button>
+        </div>
+    </div>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script>
+if (!requireAuth()) { /* redirects */ }
+if (!isAdmin()) { window.location.href = '/dashboard/index.html'; }
+
+// Setup nav
+const _uname = getCurrentUserName();
+document.getElementById('userName').textContent = _uname;
+document.getElementById('userAvatar').textContent = _uname.charAt(0).toUpperCase();
+
+// ==================== State ====================
+let allUsers = [];
+let currentFilter = 'all';
+let selectedUserId = null;
+
+const statusNames = { 'ACTIVE': '활동중', 'INACTIVE': '비활동' };
+
+// ==================== Load Users ====================
+async function loadUsers() {
+    const tableBody = document.getElementById('userTableBody');
+    try {
+        allUsers = await userApi.getAll();
+        renderUsers();
+    } catch (error) {
+        tableBody.innerHTML = `
+            <tr><td colspan="5">
+                <div class="empty-state">
+                    <p class="text-danger">부원 목록을 불러오는데 실패했습니다</p>
+                    <button class="btn btn-secondary btn-sm" onclick="loadUsers()">다시 시도</button>
+                </div>
+            </td></tr>
+        `;
+    }
+}
+
+// ==================== Render Users ====================
+function renderUsers() {
+    const tableBody = document.getElementById('userTableBody');
+    let users = allUsers;
+    if (currentFilter === 'active') users = allUsers.filter(u => u.status === 'ACTIVE');
+    else if (currentFilter === 'inactive') users = allUsers.filter(u => u.status === 'INACTIVE');
+
+    if (users.length === 0) {
+        tableBody.innerHTML = `
+            <tr><td colspan="5">
+                <div class="empty-state">
+                    <div class="icon">&#x1F465;</div>
+                    <p>현재 필터에 해당하는 부원이 없습니다.</p>
+                </div>
+            </td></tr>
+        `;
+        return;
+    }
+
+    tableBody.innerHTML = users.map(user => `
+        <tr onclick="showUserDetail(${user.id})" style="cursor:pointer;">
+            <td><strong>${escapeHtml(user.name)}</strong></td>
+            <td>${user.studentNumber || '-'}</td>
+            <td>${formatPhone(user.phoneNumber)}</td>
+            <td>
+                <span class="status status-${user.status === 'ACTIVE' ? 'active' : 'closed'}">
+                    ${statusNames[user.status] || user.status}
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); showUserDetail(${user.id})">수정</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// ==================== Filter ====================
+function filterUsers(filter) {
+    currentFilter = filter;
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.filter === filter);
+    });
+    renderUsers();
+}
+
+// ==================== Show User Detail ====================
+function showUserDetail(id) {
+    selectedUserId = id;
+    const user = allUsers.find(u => u.id === id);
+    if (!user) return;
+
+    document.getElementById('detailName').textContent = user.name;
+    document.getElementById('detailStudentNumber').textContent = user.studentNumber || '-';
+    document.getElementById('detailPhone').textContent = formatPhone(user.phoneNumber);
+    document.getElementById('detailStatus').innerHTML = `<span class="status status-${user.status === 'ACTIVE' ? 'active' : 'closed'}">${statusNames[user.status] || user.status}</span>`;
+    document.getElementById('detailCreatedAt').textContent = fmtDateSimple(user.createdAt);
+
+    const deactivateBtn = document.getElementById('deactivateBtn');
+    const reactivateBtn = document.getElementById('reactivateBtn');
+    if (user.status === 'INACTIVE') {
+        deactivateBtn.style.display = 'none';
+        reactivateBtn.style.display = '';
+    } else {
+        deactivateBtn.style.display = '';
+        reactivateBtn.style.display = 'none';
+    }
+
+    showViewMode();
+    openModal('userDetailModal');
+}
+
+function showViewMode() {
+    document.getElementById('viewMode').style.display = 'block';
+    document.getElementById('editMode').style.display = 'none';
+    document.getElementById('editModeFooter').style.display = 'none';
+}
+
+function showEditMode() {
+    const user = allUsers.find(u => u.id === selectedUserId);
+    if (!user) return;
+    document.getElementById('editName').value = user.name;
+    document.getElementById('editPhone').value = user.phoneNumber || '';
+    document.getElementById('viewMode').style.display = 'none';
+    document.getElementById('editMode').style.display = 'block';
+    document.getElementById('editModeFooter').style.display = 'flex';
+}
+
+// ==================== Create User ====================
+async function createUser(e) {
+    e.preventDefault();
+    const data = {
+        name: document.getElementById('createName').value.trim(),
+        studentNumber: document.getElementById('createStudentNumber').value.trim() || null,
+        phoneNumber: document.getElementById('createPhone').value.trim() || null
+    };
+
+    try {
+        const matchingInactive = await findMatchingInactive(data);
+        if (matchingInactive) {
+            const reactivate = confirm(
+                `동일한 정보의 비활동 부원이 존재합니다.\n\n` +
+                `이름: ${matchingInactive.name}\n` +
+                `학번: ${matchingInactive.studentNumber || '-'}\n` +
+                `전화번호: ${formatPhone(matchingInactive.phoneNumber)}\n\n` +
+                `이 부원을 재활성화 하시겠습니까?`
+            );
+            if (reactivate) {
+                await userApi.reactivate(matchingInactive.id);
+                showToast('부원이 재활성화되었습니다', 'success');
+                closeModal('createUserModal');
+                document.getElementById('createUserForm').reset();
+                loadUsers();
+                return;
+            } else {
+                showToast('부원 추가가 취소되었습니다', 'info');
+                return;
+            }
+        }
+
+        await userApi.create(data);
+        showToast('부원이 추가되었습니다', 'success');
+        closeModal('createUserModal');
+        document.getElementById('createUserForm').reset();
+        loadUsers();
+    } catch (error) {
+        showToast(error.message || '부원 추가에 실패했습니다', 'error');
+    }
+}
+
+async function findMatchingInactive(userData) {
+    try {
+        const inactiveUsers = await userApi.getInactive();
+        return inactiveUsers.find(u => {
+            if (userData.phoneNumber && u.phoneNumber &&
+                userData.phoneNumber.replace(/-/g, '') === u.phoneNumber.replace(/-/g, '')) return true;
+            if (userData.studentNumber && u.studentNumber === userData.studentNumber) return true;
+            return false;
+        });
+    } catch (error) {
+        return null;
+    }
+}
+
+// ==================== Update User ====================
+async function updateUser(e) {
+    e.preventDefault();
+    const data = {
+        name: document.getElementById('editName').value.trim(),
+        phoneNumber: document.getElementById('editPhone').value.trim() || null
+    };
+    try {
+        await userApi.update(selectedUserId, data);
+        showToast('부원 정보가 수정되었습니다', 'success');
+        closeModal('userDetailModal');
+        loadUsers();
+    } catch (error) {
+        showToast(error.message || '부원 정보 수정에 실패했습니다', 'error');
+    }
+}
+
+// ==================== Deactivate / Reactivate ====================
+async function deactivateUser() {
+    if (!confirm('이 부원을 비활동 처리하시겠습니까?')) return;
+    try {
+        await userApi.deactivate(selectedUserId);
+        showToast('비활동 처리가 완료되었습니다', 'success');
+        closeModal('userDetailModal');
+        loadUsers();
+    } catch (error) {
+        showToast(error.message || '비활동 처리에 실패했습니다', 'error');
+    }
+}
+
+async function reactivateUser() {
+    if (!confirm('이 비활동 부원을 재활성화 하시겠습니까?\n재활성화된 부원은 시즌 부원 관리에서 시즌에 추가해야 합니다.')) return;
+    try {
+        await userApi.reactivate(selectedUserId);
+        showToast('재활성화가 완료되었습니다', 'success');
+        closeModal('userDetailModal');
+        loadUsers();
+    } catch (error) {
+        showToast(error.message || '재활성화에 실패했습니다', 'error');
+    }
+}
+
+// ==================== Helpers ====================
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function fmtDateSimple(dateString) {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+// Initialize
+checkPasswordChangeNeeded();
+loadUsers();
+if (new URLSearchParams(window.location.search).get('action') === 'create') {
+    openModal('createUserModal');
+}
+</script>
+</body>
+</html>
