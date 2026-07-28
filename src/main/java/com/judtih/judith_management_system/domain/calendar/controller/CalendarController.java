@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+/** Calendar endpoints — public embed URL, member event viewing, and admin create/edit/delete. All changes sync directly to Google Calendar. */
 @RestController
 @RequiredArgsConstructor
 public class CalendarController {

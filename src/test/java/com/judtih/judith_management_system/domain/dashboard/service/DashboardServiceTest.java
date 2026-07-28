@@ -14,6 +14,7 @@ import com.judtih.judith_management_system.domain.user.repository.UserSeasonRepo
 import com.judtih.judith_management_system.global.notification.dto.NotificationResponse;
 import com.judtih.judith_management_system.global.notification.repository.UserNotificationRepository;
 import com.judtih.judith_management_system.global.notification.service.NotificationService;
+import com.judtih.judith_management_system.domain.user.repository.UserRepository;
 import com.judtih.judith_management_system.global.storage.repository.StorageRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +29,8 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,6 +41,7 @@ public class DashboardServiceTest {
     @Mock private StorageRepository storageRepository;
     @Mock private UserNotificationRepository userNotificationRepository;
     @Mock private NotificationService notificationService;
+    @Mock private UserRepository userRepository;
 
     @InjectMocks
     private DashboardService dashboardService;
@@ -53,7 +57,7 @@ public class DashboardServiceTest {
 
         when(userSeasonRepository.findByUserId(1L)).thenReturn(List.of(userSeason));
 
-        List<DashboardSeasonResponse> result = dashboardService.getMySeasonsWithDetail(1L);
+        List<DashboardSeasonResponse> result = dashboardService.getMySeasonsWithDetail(1L, false);
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getSeasonName()).isEqualTo("2025 봄 시즌");
@@ -69,7 +73,7 @@ public class DashboardServiceTest {
 
         when(userSeasonRepository.findByUserId(1L)).thenReturn(List.of(userSeason));
 
-        List<DashboardSeasonResponse> result = dashboardService.getMySeasonsWithDetail(1L);
+        List<DashboardSeasonResponse> result = dashboardService.getMySeasonsWithDetail(1L, false);
 
         assertThat(result.get(0).isMyFullAccess()).isTrue();
     }
@@ -80,7 +84,7 @@ public class DashboardServiceTest {
     void getSeasonForMember_shouldThrow_whenNotMember() {
         when(userSeasonRepository.existsByUserIdAndSeasonId(1L, 10L)).thenReturn(false);
 
-        assertThatThrownBy(() -> dashboardService.getSeasonForMember(1L, 10L))
+        assertThatThrownBy(() -> dashboardService.getSeasonForMember(1L, 10L, false))
                 .isInstanceOf(NotASeasonMemberException.class);
     }
 
@@ -94,7 +98,7 @@ public class DashboardServiceTest {
         when(seasonRepository.findById(10L)).thenReturn(Optional.of(season));
         when(userSeasonRepository.findByUserIdAndSeasonId(1L, 10L)).thenReturn(Optional.of(userSeason));
 
-        DashboardSeasonResponse result = dashboardService.getSeasonForMember(1L, 10L);
+        DashboardSeasonResponse result = dashboardService.getSeasonForMember(1L, 10L, false);
 
         assertThat(result.getSeasonName()).isEqualTo("2025 봄 시즌");
     }
@@ -106,7 +110,7 @@ public class DashboardServiceTest {
         when(userSeasonRepository.existsByUserIdAndSeasonId(1L, 10L)).thenReturn(false);
 
         assertThatThrownBy(() -> dashboardService.createSeasonNotification(
-                1L, 10L, new DashboardNotificationRequest("제목", "내용")))
+                1L, 10L, new DashboardNotificationRequest("제목", "내용"), false))
                 .isInstanceOf(NotASeasonMemberException.class);
     }
 
@@ -119,7 +123,7 @@ public class DashboardServiceTest {
         when(seasonRepository.findById(10L)).thenReturn(Optional.of(season));
 
         assertThatThrownBy(() -> dashboardService.createSeasonNotification(
-                1L, 10L, new DashboardNotificationRequest("제목", "내용")))
+                1L, 10L, new DashboardNotificationRequest("제목", "내용"), false))
                 .isInstanceOf(SeasonClosedException.class);
     }
 
@@ -134,9 +138,36 @@ public class DashboardServiceTest {
         when(notificationService.createNotification(any())).thenReturn(mockResponse);
 
         NotificationResponse result = dashboardService.createSeasonNotification(
-                1L, 10L, new DashboardNotificationRequest("제목", "내용"));
+                1L, 10L, new DashboardNotificationRequest("제목", "내용"), false);
 
         assertThat(result).isNotNull();
         assertThat(result.getTitle()).isEqualTo("제목");
+    }
+
+    // hasFullAccess = true (admin)
+
+    @Test
+    void getMySeasonsWithDetail_shouldReturnAllSeasons_whenFullAccess() {
+        Season s1 = new Season("2025 봄 시즌");
+        Season s2 = new Season("2025 가을 시즌");
+        when(seasonRepository.findAll()).thenReturn(List.of(s1, s2));
+
+        List<DashboardSeasonResponse> result = dashboardService.getMySeasonsWithDetail(1L, true);
+
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).isMyFullAccess()).isTrue();
+        assertThat(result.get(0).getMyRoles()).contains(UserRole.LEADER);
+    }
+
+    @Test
+    void getSeasonForMember_shouldBypassMembershipCheck_whenFullAccess() {
+        Season season = new Season("2025 봄 시즌");
+        when(seasonRepository.findById(10L)).thenReturn(Optional.of(season));
+
+        DashboardSeasonResponse result = dashboardService.getSeasonForMember(1L, 10L, true);
+
+        assertThat(result.getSeasonName()).isEqualTo("2025 봄 시즌");
+        assertThat(result.isMyFullAccess()).isTrue();
+        verify(userSeasonRepository, never()).existsByUserIdAndSeasonId(any(), any());
     }
 }
