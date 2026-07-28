@@ -4,6 +4,7 @@ import com.judtih.judith_management_system.domain.calendar.dto.GoogleCalendarReq
 import com.judtih.judith_management_system.domain.calendar.dto.GoogleCalendarResponse;
 import com.judtih.judith_management_system.domain.calendar.service.GoogleCalendarService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,12 +12,25 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
 public class CalendarController {
 
     private final GoogleCalendarService googleCalendarService;
+
+    @Value("${google.calendar.id}")
+    private String calendarId;
+
+    // Public — Google Calendar embed URL
+    @GetMapping("/api/public/calendar/embed")
+    public ResponseEntity<Map<String, String>> getEmbedUrl() {
+        String embedUrl = "https://calendar.google.com/calendar/embed?src=" + calendarId
+                + "&src=ko.south_korea%23holiday%40group.v.calendar.google.com"
+                + "&ctz=Asia%2FSeoul&hl=ko&mode=MONTH";
+        return ResponseEntity.ok(Map.of("embedUrl", embedUrl));
+    }
 
     // All members — view events for a date range
     @GetMapping("/api/dashboard/calendar")
