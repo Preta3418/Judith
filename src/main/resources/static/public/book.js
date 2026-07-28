@@ -66,7 +66,7 @@ function displayEvent(event) {
     renderSchedules(event.schedules || []);
 
     // Update page title
-    document.title = `${event.title} - 예매 | Judith`;
+    document.title = `${event.title} - 예매 | JUDITH`;
 
     // Show pamphlet link if available
     if (event.pamphletUrl) {
