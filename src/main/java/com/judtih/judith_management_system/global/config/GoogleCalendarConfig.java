@@ -2,7 +2,7 @@ package com.judtih.judith_management_system.global.config;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.client.util.Value;
+import org.springframework.beans.factory.annotation.Value;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.CalendarScopes;
 import com.google.auth.http.HttpCredentialsAdapter;
