@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시즌 선택 — Judith</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<div class="dash-shell">
+
+    <nav class="dash-nav">
+        <div class="dash-nav-inner">
+            <a href="/" class="dash-logo">
+                <img src="/images/logo-symbol-light.png" alt="Judith">
+                <span class="dash-logo-text">Judith</span>
+            </a>
+            <div class="dash-nav-tabs" id="navTabs">
+                <a href="/dashboard/index.html" class="dash-tab">홈</a>
+                <a href="/dashboard/notifications.html" class="dash-tab">공지사항</a>
+                <a href="/dashboard/scripts.html" class="dash-tab">대본</a>
+                <a href="/dashboard/schedule.html" class="dash-tab">일정</a>
+            </div>
+            <div class="dash-nav-right">
+                <div class="dash-avatar" id="userAvatar">U</div>
+                <span class="dash-user-name" id="userName"></span>
+                <button class="dash-btn-logout" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dash-main" id="pageContainer">
+        <div class="loading"><div class="spinner"></div></div>
+    </main>
+
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/dashboard.js"></script>
+<script>
+const ROLE_LABELS = {
+    LEADER: '회장', PRODUCER: '연출', SUB_PRODUCER: '부연출', PLANNER: '기획',
+    ACTOR: '배우', STAFF: '스태프', SOUND_OPERATOR: '음향',
+    LIGHT_OPERATOR: '조명', SOUND_DESIGN: '음향 디자인',
+    LIGHT_DESIGN: '조명 디자인', IMAGE_DESIGN: '홍보 디자인', STAGE_DESIGN: '무대 디자인'
+};
+
+function loadPageContent() {
+    const container = document.getElementById('pageContainer');
+    container.innerHTML = `
+        <div class="dash-page-header">
+            <div class="dash-greeting">시즌 선택</div>
+            <div class="dash-subtitle">참여한 시즌을 선택하세요</div>
+        </div>
+        <div class="season-grid">
+            ${mySeasons.map(s => `
+                <a href="/dashboard/index.html?seasonId=${s.seasonId}" class="season-card">
+                    <div class="season-card-header">
+                        <span class="season-card-name">${escHtml(s.seasonName)}</span>
+                        ${statusBadge(s.status)}
+                    </div>
+                    <div class="season-card-dates">
+                        ${s.startDate ? fmtDate(s.startDate) : '시작일 미정'}
+                        ${s.endDate ? ' — ' + fmtDate(s.endDate) : ''}
+                    </div>
+                    <div class="season-card-roles">
+                        ${s.myRoles ? [...s.myRoles].map(r => `<span class="role-tag">${ROLE_LABELS[r] || r}</span>`).join('') : ''}
+                    </div>
+                </a>
+            `).join('')}
+        </div>
+    `;
+}
+</script>
+</body>
+</html>

@@ -15,8 +15,18 @@ async function loadDashboard() {
     try {
         mySeasons = await api('/api/dashboard/seasons');
         if (!mySeasons || mySeasons.length === 0) {
-            document.getElementById('pageContainer').innerHTML =
-                '<div class="dash-empty"><div class="dash-empty-icon">&#x1F3AD;</div><p class="dash-empty-text">현재 배정된 시즌이 없습니다.<br>운영진에게 문의하세요.</p></div>';
+            if (!isAdmin()) {
+                document.getElementById('pageContainer').innerHTML =
+                    '<div class="dash-empty"><div class="dash-empty-icon">&#x1F3AD;</div><p class="dash-empty-text">현재 배정된 시즌이 없습니다.<br>운영진에게 문의하세요.</p></div>';
+            }
+            return;
+        }
+
+        const hasActiveSeason = mySeasons.some(s => s.status === 'ACTIVE');
+        const onSeasonsPage = window.location.pathname === '/dashboard/seasons.html';
+
+        if (!hasActiveSeason && !onSeasonsPage) {
+            window.location.href = '/dashboard/seasons.html';
             return;
         }
 
@@ -61,10 +71,10 @@ function setupAdminNav() {
     divider.textContent = '|';
 
     const adminLinks = [
-        { href: '/admin/users.html',    label: '부원' },
-        { href: '/admin/seasons.html',  label: '시즌' },
-        { href: '/admin/events.html',   label: '공연' },
-        { href: '/admin/messages.html', label: '문자' },
+        { href: '/users.html',    label: '부원' },
+        { href: '/seasons.html',  label: '시즌' },
+        { href: '/events.html',   label: '공연' },
+        { href: '/messages.html', label: '문자' },
     ];
 
     tabs.appendChild(divider);
@@ -79,18 +89,10 @@ function setupAdminNav() {
 }
 
 function populateSeasonSelector() {
-    const selector = document.getElementById('seasonSelector');
-    if (!selector) return;
-
-    selector.innerHTML = mySeasons.map(s =>
-        `<option value="${s.seasonId}" ${s.seasonId == currentSeasonId ? 'selected' : ''}>${escHtml(s.seasonName)}</option>`
-    ).join('');
-
-    selector.addEventListener('change', () => {
-        const url = new URL(window.location.href);
-        url.searchParams.set('seasonId', selector.value);
-        window.location.href = url.toString();
-    });
+    const btn = document.getElementById('seasonSelector');
+    if (!btn) return;
+    btn.textContent = currentSeason.seasonName;
+    btn.onclick = () => { window.location.href = '/dashboard/seasons.html'; };
 }
 
 // ==================== Formatters ====================
