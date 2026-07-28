@@ -101,5 +101,56 @@ function dashboardUrl(page) {
     return url.toString();
 }
 
+// ==================== Calendar API ====================
+const calendarApi = {
+    getEvents: (from, to) => api(`/api/dashboard/calendar?from=${from}&to=${to}`),
+    createEvent: (req) => api('/api/admin/calendar', { method: 'POST', body: JSON.stringify(req) }),
+    updateEvent: (id, req) => api(`/api/admin/calendar/${id}`, { method: 'PUT', body: JSON.stringify(req) }),
+    deleteEvent: (id) => api(`/api/admin/calendar/${id}`, { method: 'DELETE' }),
+};
+
+// ==================== Calendar Widgets (reusable) ====================
+
+// Renders Google Calendar iframe into any container element
+// Usage: await renderCalendarEmbed('myDivId')
+async function renderCalendarEmbed(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    try {
+        const data = await fetch('/api/public/calendar/embed').then(r => r.json());
+        container.innerHTML = `
+            <iframe src="${data.embedUrl}"
+                style="border:0; width:100%; height:520px; border-radius:12px;"
+                frameborder="0" scrolling="no">
+            </iframe>`;
+    } catch (e) {
+        container.innerHTML = '<p style="color:var(--text-muted);font-size:0.875rem;">캘린더를 불러올 수 없습니다.</p>';
+    }
+}
+
+// Renders today's events list into any container element
+// Usage: await renderTodayEvents('myDivId')
+async function renderTodayEvents(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        const events = await calendarApi.getEvents(today, today);
+        if (!events || events.length === 0) {
+            container.innerHTML = '<p style="color:var(--text-muted);font-size:0.875rem;">오늘 일정이 없습니다.</p>';
+            return;
+        }
+        container.innerHTML = events.map(e => `
+            <div class="dash-cal-event">
+                <div class="dash-cal-event-title">${escHtml(e.title)}</div>
+                <div class="dash-cal-event-time">${fmtDateTime(e.start)} — ${fmtDateTime(e.end)}</div>
+                ${e.description ? `<div class="dash-cal-event-desc">${escHtml(e.description)}</div>` : ''}
+            </div>
+        `).join('');
+    } catch (e) {
+        container.innerHTML = '<p style="color:var(--text-muted);font-size:0.875rem;">일정을 불러올 수 없습니다.</p>';
+    }
+}
+
 // ==================== Init ====================
 document.addEventListener('DOMContentLoaded', loadDashboard);
