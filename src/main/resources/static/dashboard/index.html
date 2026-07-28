@@ -23,6 +23,7 @@
                 <a href="/dashboard/index.html" class="dash-tab active">홈</a>
                 <a href="/dashboard/notifications.html" class="dash-tab">공지사항</a>
                 <a href="/dashboard/scripts.html" class="dash-tab">대본</a>
+                <a href="/dashboard/schedule.html" class="dash-tab">일정</a>
             </div>
             <div class="dash-nav-right">
                 <select class="dash-season-select" id="seasonSelector"></select>
@@ -47,11 +48,22 @@ async function loadPageContent() {
     const container = document.getElementById('pageContainer');
     const name = getCurrentUserName();
 
+    const dday = computeDDay(currentSeason.eventDate);
+    const ddayHtml = dday !== null ? `
+        <div class="dash-dday-panel">
+            <span class="dash-dday-label">공연까지</span>
+            <span class="dash-dday-value">${dday === 0 ? 'D-DAY' : dday > 0 ? 'D-' + dday : 'D+' + Math.abs(dday)}</span>
+            <span class="dash-dday-date">${fmtDate(currentSeason.eventDate)}</span>
+        </div>
+    ` : '';
+
     container.innerHTML = `
         <div class="dash-page-header">
             <div class="dash-greeting">${escHtml(name)}님, 안녕하세요 👋</div>
             <div class="dash-subtitle">${escHtml(currentSeason.seasonName)}</div>
         </div>
+
+        ${ddayHtml}
 
         <div class="dash-stats">
             <a href="${dashboardUrl('notifications.html')}" class="dash-stat">
@@ -112,11 +124,27 @@ async function loadPageContent() {
                 <div class="spinner"></div>
             </div>
         </div>
+
+        <div class="dash-card">
+            <div class="dash-card-header">
+                <span class="dash-card-title">오늘의 일정</span>
+                <a href="${dashboardUrl('schedule.html')}" style="font-size:0.8rem;color:var(--primary);">전체 보기</a>
+            </div>
+            <div id="todayEventsHome"><div class="spinner" style="width:20px;height:20px;"></div></div>
+        </div>
     `;
 
     loadUnreadCount();
     loadScriptCount();
     loadMembers();
+    renderTodayEvents('todayEventsHome');
+}
+
+function computeDDay(eventDate) {
+    if (!eventDate) return null;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const target = new Date(eventDate); target.setHours(0,0,0,0);
+    return Math.floor((target - today) / (1000 * 60 * 60 * 24));
 }
 
 async function loadUnreadCount() {

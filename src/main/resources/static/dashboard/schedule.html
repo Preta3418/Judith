@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일정 — Judith</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<div class="dash-shell">
+
+    <nav class="dash-nav">
+        <div class="dash-nav-inner">
+            <a href="/" class="dash-logo">
+                <img src="/images/logo-symbol-light.png" alt="Judith">
+                <span class="dash-logo-text">Judith</span>
+            </a>
+            <div class="dash-nav-tabs">
+                <a href="/dashboard/index.html" class="dash-tab">홈</a>
+                <a href="/dashboard/notifications.html" class="dash-tab">공지사항</a>
+                <a href="/dashboard/scripts.html" class="dash-tab">대본</a>
+                <a href="/dashboard/schedule.html" class="dash-tab active">일정</a>
+            </div>
+            <div class="dash-nav-right">
+                <select class="dash-season-select" id="seasonSelector"></select>
+                <div class="dash-avatar" id="userAvatar">U</div>
+                <span class="dash-user-name" id="userName"></span>
+                <button class="dash-btn-logout" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dash-main" id="pageContainer">
+        <div class="loading"><div class="spinner"></div></div>
+    </main>
+
+</div>
+
+<!-- Create Event Modal -->
+<div class="modal-overlay" id="createEventModal" style="display:none;">
+    <div class="modal" style="max-width:480px;">
+        <div class="modal-header">
+            <h3 class="modal-title">일정 추가</h3>
+            <button class="modal-close" onclick="closeCreateModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label required">제목</label>
+                <input type="text" class="form-input" id="evTitle" placeholder="일정 제목">
+            </div>
+            <div class="form-group">
+                <label class="form-label">설명</label>
+                <textarea class="form-input" id="evDesc" rows="3" placeholder="설명 (선택)"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label required">시작</label>
+                <input type="datetime-local" class="form-input" id="evStart">
+            </div>
+            <div class="form-group">
+                <label class="form-label">종료</label>
+                <input type="datetime-local" class="form-input" id="evEnd">
+                <div class="form-hint">비워두면 시작 +1시간으로 자동 설정됩니다</div>
+            </div>
+        </div>
+        <div class="modal-footer" style="display:flex;justify-content:flex-end;gap:8px;padding:16px 24px;border-top:1px solid var(--border-light);">
+            <button class="btn btn-secondary" onclick="closeCreateModal()">취소</button>
+            <button class="btn btn-primary" onclick="submitCreateEvent()">추가</button>
+        </div>
+    </div>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/dashboard.js"></script>
+<script>
+async function loadPageContent() {
+    const isAdmin = currentSeason && currentSeason.myFullAccess;
+
+    document.getElementById('pageContainer').innerHTML = `
+        <div class="dash-page-header">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div class="dash-greeting">일정</div>
+                    <div class="dash-subtitle">${escHtml(currentSeason.seasonName)}</div>
+                </div>
+                ${isAdmin ? `<button class="btn btn-primary" onclick="openCreateModal()">+ 일정 추가</button>` : ''}
+            </div>
+        </div>
+
+        <!-- Today's Events -->
+        <div class="dash-card">
+            <div class="dash-card-header">
+                <span class="dash-card-title">오늘의 일정</span>
+            </div>
+            <div id="todayEvents"><div class="spinner"></div></div>
+        </div>
+
+        <!-- Google Calendar Embed -->
+        <div class="dash-card">
+            <div class="dash-card-header">
+                <span class="dash-card-title">전체 캘린더</span>
+            </div>
+            <div id="calendarEmbed"><div class="spinner"></div></div>
+        </div>
+
+        ${isAdmin ? `
+        <!-- Admin: This Week's Events for management -->
+        <div class="dash-card">
+            <div class="dash-card-header">
+                <span class="dash-card-title">이번 주 일정 관리</span>
+                <button class="btn btn-ghost btn-sm" onclick="loadWeekEvents()">새로고침</button>
+            </div>
+            <div id="weekEvents"><div class="spinner"></div></div>
+        </div>
+        ` : ''}
+    `;
+
+    renderTodayEvents('todayEvents');
+    renderCalendarEmbed('calendarEmbed');
+    if (isAdmin) loadWeekEvents();
+}
+
+async function loadWeekEvents() {
+    const container = document.getElementById('weekEvents');
+    if (!container) return;
+    try {
+        const today = new Date();
+        const from = today.toISOString().split('T')[0];
+        const to = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const events = await calendarApi.getEvents(from, to);
+
+        if (!events || events.length === 0) {
+            container.innerHTML = '<p style="color:var(--text-muted);font-size:0.875rem;">이번 주 일정이 없습니다.</p>';
+            return;
+        }
+
+        container.innerHTML = events.map(e => `
+            <div class="dash-cal-event" style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;">
+                <div>
+                    <div class="dash-cal-event-title">${escHtml(e.title)}</div>
+                    <div class="dash-cal-event-time">${fmtDateTime(e.start)}</div>
+                </div>
+                <button class="btn btn-ghost btn-sm" style="color:#ef4444;flex-shrink:0;"
+                    onclick="deleteEvent('${escHtml(e.googleEventId)}')">삭제</button>
+            </div>
+        `).join('');
+    } catch (err) {
+        container.innerHTML = '<p style="color:var(--text-muted);font-size:0.875rem;">일정을 불러올 수 없습니다.</p>';
+    }
+}
+
+function openCreateModal() {
+    document.getElementById('createEventModal').style.display = 'flex';
+}
+
+function closeCreateModal() {
+    document.getElementById('createEventModal').style.display = 'none';
+    document.getElementById('evTitle').value = '';
+    document.getElementById('evDesc').value = '';
+    document.getElementById('evStart').value = '';
+    document.getElementById('evEnd').value = '';
+}
+
+async function submitCreateEvent() {
+    const title = document.getElementById('evTitle').value.trim();
+    const desc = document.getElementById('evDesc').value.trim();
+    const start = document.getElementById('evStart').value;
+    const end = document.getElementById('evEnd').value;
+
+    if (!title) { alert('제목을 입력해주세요.'); return; }
+    if (!start) { alert('시작 시간을 입력해주세요.'); return; }
+
+    try {
+        await calendarApi.createEvent({
+            title,
+            description: desc || null,
+            start: start.replace('T', ' '),
+            end: end ? end.replace('T', ' ') : null
+        });
+        closeCreateModal();
+        alert('일정이 추가되었습니다. 캘린더에 반영되기까지 잠시 걸릴 수 있습니다.');
+        loadWeekEvents();
+    } catch (err) {
+        alert('일정 추가에 실패했습니다: ' + err.message);
+    }
+}
+
+async function deleteEvent(googleEventId) {
+    if (!confirm('이 일정을 삭제하시겠습니까?')) return;
+    try {
+        await calendarApi.deleteEvent(googleEventId);
+        alert('삭제되었습니다.');
+        loadWeekEvents();
+    } catch (err) {
+        alert('삭제에 실패했습니다: ' + err.message);
+    }
+}
+</script>
+</body>
+</html>

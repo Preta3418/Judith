@@ -54,4 +54,6 @@ jobs:
               -e AWS_SNS_REGION=${{ secrets.AWS_SNS_REGION }} \
               -e AWS_DEFAULT_REGION=${{ secrets.AWS_DEFAULT_REGION }} \
               -e S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }} \
+              -e GOOGLE_CALENDAR_ID=${{ secrets.GOOGLE_CALENDAR_ID }} \
+              -e GOOGLE_SERVICE_ACCOUNT_JSON=${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }} \
               ghcr.io/preta3418/judith-app:latest
