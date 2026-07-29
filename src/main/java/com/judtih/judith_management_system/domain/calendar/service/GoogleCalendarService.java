@@ -20,6 +20,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
+/**
+ * Wraps Google Calendar API calls using a Service Account.
+ * Google Calendar is the source of truth — no events are stored in our DB.
+ * Admin creates/edits/deletes via our dashboard; changes sync to Google Calendar in real time.
+ */
 @Service
 @RequiredArgsConstructor
 public class GoogleCalendarService {
@@ -29,6 +34,7 @@ public class GoogleCalendarService {
     @Value("${google.calendar.id}")
     private String calendarId;
 
+    // Fetches events in the given date range from the club's Google Calendar.
     public List<GoogleCalendarResponse> getEvents(LocalDate from, LocalDate to) throws IOException {
         Events events = googleCalendar.events().list(calendarId)
                 .setTimeMin(toGoogleDateTime(from.atStartOfDay()))
@@ -42,6 +48,7 @@ public class GoogleCalendarService {
                 .collect(Collectors.toList());
     }
 
+    // Creates a new event. If no end time is provided, defaults to start + 1 hour.
     public GoogleCalendarResponse createEvent(GoogleCalendarRequest req) throws IOException {
         LocalDateTime end = req.getEnd() != null ? req.getEnd() : req.getStart().plusHours(1);
 
@@ -63,6 +70,7 @@ public class GoogleCalendarService {
     }
 
 
+    // Fetches the existing event from Google, applies changes, and pushes the update back.
     public GoogleCalendarResponse updateEvent(String googleEventId, GoogleCalendarRequest req) throws IOException {
         LocalDateTime end = req.getEnd() != null ? req.getEnd() : req.getStart().plusHours(1);
 
@@ -84,6 +92,7 @@ public class GoogleCalendarService {
         return toResponse(updated);
     }
 
+    // Deletes an event from Google Calendar by its Google-assigned event ID.
     public void deleteEvent(String googleEventId) throws IOException {
         googleCalendar.events().delete(calendarId, googleEventId).execute();
     }

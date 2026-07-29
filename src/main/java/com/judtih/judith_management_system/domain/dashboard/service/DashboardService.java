@@ -6,10 +6,11 @@ import com.judtih.judith_management_system.domain.dashboard.exception.NotASeason
 import com.judtih.judith_management_system.domain.season.Season;
 import com.judtih.judith_management_system.domain.season.SeasonRepository;
 import com.judtih.judith_management_system.domain.season.exception.NoSeasonFoundException;
-import com.judtih.judith_management_system.domain.user.entity.UserSeason;
 import com.judtih.judith_management_system.domain.user.exception.NoUserSeasonFoundException;
 import com.judtih.judith_management_system.domain.season.Status;
 import com.judtih.judith_management_system.domain.season.exception.SeasonClosedException;
+import com.judtih.judith_management_system.domain.user.enums.UserRole;
+import com.judtih.judith_management_system.domain.user.repository.UserRepository;
 import com.judtih.judith_management_system.domain.user.repository.UserSeasonRepository;
 import com.judtih.judith_management_system.global.notification.dto.NotificationResponse;
 import com.judtih.judith_management_system.global.notification.dto.UserNotificationRequest;
@@ -25,7 +26,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 
+/**
+ * Orchestrates all member dashboard data. This service has no entity of its own —
+ * it aggregates data from Season, UserSeason, StoredFile, and Notification.
+ *
+ * Access control pattern:
+ * Every public method accepts a {@code hasFullAccess} boolean that is determined
+ * by the controller from Spring Security (ROLE_ADMIN). The service itself never
+ * decides who is admin — it just acts on the flag. When true, membership checks
+ * are skipped and the user is treated as if they hold LEADER in every season.
+ */
 @Service
 @RequiredArgsConstructor
 public class DashboardService {
@@ -35,9 +47,26 @@ public class DashboardService {
     private final UserNotificationRepository userNotificationRepository;
     private final NotificationService notificationService;
     private final SeasonRepository seasonRepository;
+    private final UserRepository userRepository;
 
 
-    public List<DashboardSeasonResponse> getMySeasonsWithDetail(Long userId) {
+    // Returns all seasons the user participated in, with their roles per season.
+    // Admin has no UserSeason rows, so we skip that table entirely and return
+    // all seasons from seasonRepository, assigning LEADER role on each.
+    public List<DashboardSeasonResponse> getMySeasonsWithDetail(Long userId, boolean hasFullAccess) {
+        if (hasFullAccess) {
+            return seasonRepository.findAll().stream()
+                    .map(season -> DashboardSeasonResponse.builder()
+                            .seasonId(season.getId())
+                            .seasonName(season.getName())
+                            .status(season.getStatus())
+                            .startDate(season.getStartDate())
+                            .endDate(season.getEndDate())
+                            .eventDate(season.getEventDate())
+                            .myRoles(Set.of(UserRole.LEADER))
+                            .build())
+                    .toList();
+        }
         return userSeasonRepository.findByUserId(userId).stream()
                 .map(us -> DashboardSeasonResponse.builder()
                         .seasonId(us.getSeason().getId())
@@ -51,14 +80,19 @@ public class DashboardService {
                 .toList();
     }
 
-    public DashboardSeasonResponse getSeasonForMember(Long userId, Long seasonId) {
-        assertMembership(userId, seasonId);
+    // Returns detail for a single season. Verifies membership first (skipped for admin).
+    // Role resolution follows the same pattern: admin gets LEADER, member fetches from UserSeason.
+    public DashboardSeasonResponse getSeasonForMember(Long userId, Long seasonId, boolean hasFullAccess) {
+        assertMembership(userId, seasonId, hasFullAccess);
 
         Season season = seasonRepository.findById(seasonId)
                 .orElseThrow(() -> new NoSeasonFoundException("no season found with seasonId:" + seasonId, 404, "Not Found"));
 
-        UserSeason userSeason = userSeasonRepository.findByUserIdAndSeasonId(userId, seasonId)
-                .orElseThrow(() -> new NoUserSeasonFoundException("No userSeason found with userId:" + userId, 404, "Not Found"));
+        Set<UserRole> roles = hasFullAccess
+                ? Set.of(UserRole.LEADER)
+                : userSeasonRepository.findByUserIdAndSeasonId(userId, seasonId)
+                        .orElseThrow(() -> new NoUserSeasonFoundException("No userSeason found with userId:" + userId, 404, "Not Found"))
+                        .getUserRoles();
 
         return DashboardSeasonResponse.builder()
                 .seasonId(seasonId)
@@ -67,13 +101,14 @@ public class DashboardService {
                 .startDate(season.getStartDate())
                 .endDate(season.getEndDate())
                 .eventDate(season.getEventDate())
-                .myRoles(userSeason.getUserRoles())
+                .myRoles(roles)
                 .build();
-
     }
 
-    public List<StoredFileResponse> getScriptsForSeason(Long userId, Long seasonId) {
-        assertMembership(userId, seasonId);
+    // Returns all script files uploaded to this season (StorageFolder.SCRIPT).
+    // Upload itself is handled by the existing admin upload endpoint — this is read-only.
+    public List<StoredFileResponse> getScriptsForSeason(Long userId, Long seasonId, boolean hasFullAccess) {
+        assertMembership(userId, seasonId, hasFullAccess);
         return storageRepository.findBySeasonIdAndFileType(seasonId, StorageFolder.SCRIPT).stream()
                 .map(file -> StoredFileResponse.builder()
                         .id(file.getId())
@@ -86,8 +121,9 @@ public class DashboardService {
                 .toList();
     }
 
-    public List<UserNotificationResponse> getSeasonNotifications(Long userId, Long seasonId) {
-        assertMembership(userId, seasonId);
+    // Returns all notifications delivered to this user that belong to this season (sourceType=LMS, sourceId=seasonId).
+    public List<UserNotificationResponse> getSeasonNotifications(Long userId, Long seasonId, boolean hasFullAccess) {
+        assertMembership(userId, seasonId, hasFullAccess);
         return userNotificationRepository.findSeasonNotifications(userId, SourceType.LMS, seasonId).stream()
                 .map(un -> UserNotificationResponse.builder()
                         .userNotificationId(un.getId())
@@ -98,11 +134,13 @@ public class DashboardService {
                         .createdAt(un.getNotification().getCreatedAt())
                         .build())
                 .toList();
-
     }
 
-    public NotificationResponse createSeasonNotification(Long userId, Long seasonId, DashboardNotificationRequest request) {
-        assertMembership(userId, seasonId);
+    // Creates an announcement notification and sends it to all members of this season.
+    // Season must be ACTIVE — closed seasons are fully read-only.
+    // targetRoles=null means NotificationService sends to every member in the season.
+    public NotificationResponse createSeasonNotification(Long userId, Long seasonId, DashboardNotificationRequest request, boolean hasFullAccess) {
+        assertMembership(userId, seasonId, hasFullAccess);
 
         Season season = seasonRepository.findById(seasonId)
                 .orElseThrow(() -> new NoSeasonFoundException("no season found with seasonId:" + seasonId, 404, "Not Found"));
@@ -123,8 +161,10 @@ public class DashboardService {
         return notificationService.createNotification(notificationRequest);
     }
 
-    // Single guard called at the top of every dashboard endpoint — membership check can't be accidentally skipped
-    private void assertMembership(Long userId, Long seasonId) {
+    // Central membership gate called by every method above.
+    // Admin always passes — they have no UserSeason rows but can access everything.
+    private void assertMembership(Long userId, Long seasonId, boolean hasFullAccess) {
+        if (hasFullAccess) return;
         if (!userSeasonRepository.existsByUserIdAndSeasonId(userId, seasonId)) {
             throw new NotASeasonMemberException("Not a member of this season");
         }
