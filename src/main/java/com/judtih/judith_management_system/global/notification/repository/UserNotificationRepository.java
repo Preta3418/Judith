@@ -1,17 +1,12 @@
 package com.judtih.judith_management_system.global.notification.repository;
 
-
 import com.judtih.judith_management_system.global.notification.entity.UserNotification;
 import com.judtih.judith_management_system.global.notification.enums.NotificationType;
-import com.judtih.judith_management_system.global.notification.enums.SourceType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-/** Repository for per-user notification records; supports read-state filtering and season-scoped notification queries. */
 @Repository
 public interface UserNotificationRepository extends JpaRepository<UserNotification, Long> {
 
@@ -21,16 +16,9 @@ public interface UserNotificationRepository extends JpaRepository<UserNotificati
 
     Integer countByUserIdAndIsReadFalse(Long userId);
 
-    // Used by NotificationEventListener to avoid sending duplicate PASSWORD_NOT_CHANGED notifications
-    boolean existsByUserIdAndIsReadFalseAndNotification_NotificationType(Long userId, NotificationType notificationType);
+    boolean existsByUserIdAndIsReadFalseAndNotificationType(Long userId, NotificationType notificationType);
 
-    @Query("SELECT un FROM UserNotification un " +
-            "JOIN un.notification n " +
-            "WHERE un.user.id = :userId " +
-            "AND n.sourceType = :sourceType " +
-            "AND n.sourceId = :sourceId")
-    List<UserNotification> findSeasonNotifications(
-            @Param("userId") Long userId,
-            @Param("sourceType") SourceType sourceType,
-            @Param("sourceId") Long sourceId);
+    List<UserNotification> findByUserIdAndAnnouncementIdIn(Long userId, List<Long> announcementIds);
+
+    void deleteByAnnouncementId(Long announcementId);
 }

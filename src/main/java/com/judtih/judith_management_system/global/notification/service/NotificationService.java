@@ -1,185 +1,94 @@
 package com.judtih.judith_management_system.global.notification.service;
 
-import com.judtih.judith_management_system.domain.season.Season;
-import com.judtih.judith_management_system.domain.season.SeasonRepository;
-import com.judtih.judith_management_system.domain.season.Status;
 import com.judtih.judith_management_system.domain.user.entity.User;
 import com.judtih.judith_management_system.domain.user.entity.UserSeason;
 import com.judtih.judith_management_system.domain.user.enums.UserStatus;
 import com.judtih.judith_management_system.domain.user.repository.UserSeasonRepository;
-import com.judtih.judith_management_system.global.notification.dto.NotificationResponse;
-import com.judtih.judith_management_system.global.notification.dto.UserNotificationRequest;
 import com.judtih.judith_management_system.global.notification.dto.UserNotificationResponse;
-import com.judtih.judith_management_system.global.notification.entity.Notification;
 import com.judtih.judith_management_system.global.notification.entity.UserNotification;
 import com.judtih.judith_management_system.global.notification.enums.NotificationType;
-import com.judtih.judith_management_system.global.notification.enums.SourceType;
 import com.judtih.judith_management_system.global.notification.exception.NoNotificationFoundException;
-import com.judtih.judith_management_system.global.notification.repository.NotificationRepository;
 import com.judtih.judith_management_system.global.notification.repository.UserNotificationRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
-/** Creates and delivers notifications to season members, and manages per-user read state. */
+/** Delivers notifications to users and manages per-user read state. Does not own any content entity. */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
 
-    private final NotificationRepository notificationRepository;
     private final UserNotificationRepository userNotificationRepository;
     private final UserSeasonRepository userSeasonRepository;
-    private final SeasonRepository seasonRepository;
 
-
+    /** Sends a notification to a single user — used for system alerts (password reminder etc.). */
     @Transactional
-    public NotificationResponse createNotification(UserNotificationRequest request) {
-        log.info("createNotification: title={}, targetRoles={}", request.getTitle(), request.getTargetRoles());
-        Notification notification = Notification.builder()
-                .title(request.getTitle())
-                .content(request.getContent())
-                .notificationType(request.getNotificationType())
-                .sourceType(request.getSourceType())
-                .sourceId(request.getSourceId())
-                .build();
-
-
-        notificationRepository.save(notification);
-
-        List<User> targetUsers = new ArrayList<>();
-
-        Optional<Season> activeSeason = seasonRepository.findByStatus(Status.ACTIVE);
-
-        if (activeSeason.isPresent()) {
-            List<UserSeason> seasonUsers = userSeasonRepository.findBySeasonId(activeSeason.get().getId());
-
-            for (UserSeason userSeason : seasonUsers) {
-
-                // null or empty targetRoles means broadcast to the entire active season cast
-                boolean hasTargetRole = request.getTargetRoles() == null
-                        || request.getTargetRoles().isEmpty()
-                        || !Collections.disjoint(userSeason.getUserRoles(), request.getTargetRoles());
-
-                boolean isActive = userSeason.getUser().getStatus() == UserStatus.ACTIVE;
-                boolean notAlreadyAdded = !targetUsers.contains(userSeason.getUser());
-
-                if (hasTargetRole && isActive && notAlreadyAdded) {
-                    targetUsers.add(userSeason.getUser());
-                }
-            }
-        }
-
-
-        List<UserNotification> userNotificationList = new ArrayList<>();
-
-        for(User user : targetUsers) {
-            UserNotification userNotification = new UserNotification(user, notification);
-            userNotificationList.add(userNotification);
-        }
-
-        userNotificationRepository.saveAll(userNotificationList);
-
-        int count = userNotificationList.size();
-        log.info("createNotification: delivered to {} users", count);
-
-        return createNotificationResponse(notification, count);
-
+    public void sendToUser(User user, String title, String content, NotificationType type, Long announcementId) {
+        log.info("sendToUser: userId={}, type={}", user.getId(), type);
+        userNotificationRepository.save(new UserNotification(user, title, content, type, announcementId));
     }
 
-    /** Used by NotificationEventListener to deliver a single-target notification (e.g., password reminder on login). */
+    /** Fans out a notification to all active members of a season. */
     @Transactional
-    public void createNotificationForOneUser(User user, Notification notification) {
-        log.info("createNotificationForOneUser: userId={}, title={}", user.getId(), notification.getTitle());
-        notificationRepository.save(notification);
-
-        UserNotification userNotification = new UserNotification(user, notification);
-        userNotificationRepository.save(userNotification);
+    public void sendToSeasonMembers(Long seasonId, String title, String content, NotificationType type, Long announcementId) {
+        log.info("sendToSeasonMembers: seasonId={}, type={}", seasonId, type);
+        List<UserNotification> notifications = userSeasonRepository.findBySeasonId(seasonId).stream()
+                .filter(us -> us.getUser().getStatus() == UserStatus.ACTIVE)
+                .map(us -> new UserNotification(us.getUser(), title, content, type, announcementId))
+                .toList();
+        userNotificationRepository.saveAll(notifications);
+        log.info("sendToSeasonMembers: delivered to {} users", notifications.size());
     }
 
-
-
-    public List<UserNotificationResponse> getNotificationForUser(Long userId) {
-        List<UserNotification> userNotifications = userNotificationRepository.findByUserId(userId);
-
-        List<UserNotificationResponse> userNotificationResponses = new ArrayList<>();
-
-        for (UserNotification notification: userNotifications) {
-            UserNotificationResponse response = createUserNotificationResponse(notification);
-            userNotificationResponses.add(response);
-        }
-
-        return userNotificationResponses;
-    }
-
-    public List<UserNotificationResponse> getUnreadNotifications(Long userId) {
-        List<UserNotification> userNotifications = userNotificationRepository.findByUserIdAndIsReadFalse(userId);
-
-        List<UserNotificationResponse> userNotificationResponses = new ArrayList<>();
-
-        return userNotifications.stream()
-                .map(this::createUserNotificationResponse)
+    public List<UserNotificationResponse> getNotificationsForUser(Long userId) {
+        return userNotificationRepository.findByUserId(userId).stream()
+                .map(this::toResponse)
                 .toList();
     }
 
+    public List<UserNotificationResponse> getUnreadNotifications(Long userId) {
+        return userNotificationRepository.findByUserIdAndIsReadFalse(userId).stream()
+                .map(this::toResponse)
+                .toList();
+    }
 
     public int getUnreadCount(Long userId) {
         return userNotificationRepository.countByUserIdAndIsReadFalse(userId);
     }
 
-
     @Transactional
     public void markAsRead(Long userNotificationId) {
         log.debug("markAsRead: userNotificationId={}", userNotificationId);
-        UserNotification userNotification = userNotificationRepository.findById(userNotificationId)
-                .orElseThrow(() -> new NoNotificationFoundException("No notification was found with id: " + userNotificationId, 404, "Not Found"));
-
-        userNotification.markAsRead();
+        userNotificationRepository.findById(userNotificationId)
+                .orElseThrow(() -> new NoNotificationFoundException("Notification not found", 404, "Not Found"))
+                .markAsRead();
     }
-
 
     @Transactional
     public void markAllAsRead(Long userId) {
         log.debug("markAllAsRead: userId={}", userId);
-        List<UserNotification> userNotifications = userNotificationRepository.findByUserIdAndIsReadFalse(userId);
-
-        for (UserNotification notification : userNotifications) {
-            notification.markAsRead();
-        }
-
+        userNotificationRepository.findByUserIdAndIsReadFalse(userId)
+                .forEach(UserNotification::markAsRead);
     }
 
-
-
-    //Helper////////////////////////////////////
-
-    private NotificationResponse createNotificationResponse (Notification notification, int count) {
-        return NotificationResponse.builder()
-                .id(notification.getId())
-                .title(notification.getTitle())
-                .content(notification.getContent())
-                .notificationType(notification.getNotificationType())
-                .sourceType(notification.getSourceType())
-                .recipientCount(count)
-                .createdAt(notification.getCreatedAt())
-                .build();
+    public boolean hasUnreadOfType(Long userId, NotificationType type) {
+        return userNotificationRepository.existsByUserIdAndIsReadFalseAndNotificationType(userId, type);
     }
 
-    private UserNotificationResponse createUserNotificationResponse(UserNotification userNotification) {
+    private UserNotificationResponse toResponse(UserNotification un) {
         return UserNotificationResponse.builder()
-                .userNotificationId(userNotification.getId())
-                .title(userNotification.getNotification().getTitle())
-                .content(userNotification.getNotification().getContent())
-                .isRead(userNotification.isRead())
-                .readAt(userNotification.getReadAt())
-                .createdAt(userNotification.getNotification().getCreatedAt())
+                .userNotificationId(un.getId())
+                .title(un.getTitle())
+                .content(un.getContent())
+                .notificationType(un.getNotificationType())
+                .announcementId(un.getAnnouncementId())
+                .isRead(un.isRead())
+                .readAt(un.getReadAt())
+                .createdAt(un.getCreatedAt())
                 .build();
     }
-
 }
