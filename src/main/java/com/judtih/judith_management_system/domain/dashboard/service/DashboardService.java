@@ -6,7 +6,7 @@ import com.judtih.judith_management_system.domain.dashboard.exception.NotASeason
 import com.judtih.judith_management_system.domain.season.Season;
 import com.judtih.judith_management_system.domain.season.SeasonRepository;
 import com.judtih.judith_management_system.domain.season.exception.NoSeasonFoundException;
-import com.judtih.judith_management_system.domain.user.exception.NoUserSeasonFoundException;
+import com.judtih.judith_management_system.domain.user.entity.UserSeason;
 import com.judtih.judith_management_system.domain.season.Status;
 import com.judtih.judith_management_system.domain.season.exception.SeasonClosedException;
 import com.judtih.judith_management_system.domain.user.enums.UserRole;
@@ -27,7 +27,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Orchestrates all member dashboard data. This service has no entity of its own —
@@ -52,9 +54,10 @@ public class DashboardService {
     private final UserRepository userRepository;
 
 
-    // Returns all seasons the user participated in, with their roles per season.
-    // Admin has no UserSeason rows, so we skip that table entirely and return
-    // all seasons from seasonRepository, assigning LEADER role on each.
+    // Returns seasons visible to this user.
+    // Admin sees all seasons as LEADER.
+    // Current active season members see ALL seasons (own with real roles, others read-only with empty roles).
+    // Past-only members see only their own seasons.
     public List<DashboardSeasonResponse> getMySeasonsWithDetail(Long userId, boolean hasFullAccess) {
         log.debug("getMySeasonsWithDetail: userId={}, hasFullAccess={}", userId, hasFullAccess);
         if (hasFullAccess) {
@@ -70,7 +73,27 @@ public class DashboardService {
                             .build())
                     .toList();
         }
-        return userSeasonRepository.findByUserId(userId).stream()
+
+        List<UserSeason> mySeasons = userSeasonRepository.findByUserId(userId);
+        boolean isCurrentMember = userSeasonRepository.existsByUserIdAndSeason_StatusIn(userId, List.of(Status.ACTIVE, Status.PREPARING));
+
+        if (isCurrentMember) {
+            Map<Long, Set<UserRole>> roleMap = mySeasons.stream()
+                    .collect(Collectors.toMap(us -> us.getSeason().getId(), us -> us.getUserRoles()));
+            return seasonRepository.findAll().stream()
+                    .map(season -> DashboardSeasonResponse.builder()
+                            .seasonId(season.getId())
+                            .seasonName(season.getName())
+                            .status(season.getStatus())
+                            .startDate(season.getStartDate())
+                            .endDate(season.getEndDate())
+                            .eventDate(season.getEventDate())
+                            .myRoles(roleMap.getOrDefault(season.getId(), Set.of()))
+                            .build())
+                    .toList();
+        }
+
+        return mySeasons.stream()
                 .map(us -> DashboardSeasonResponse.builder()
                         .seasonId(us.getSeason().getId())
                         .seasonName(us.getSeason().getName())
@@ -83,11 +106,12 @@ public class DashboardService {
                 .toList();
     }
 
-    // Returns detail for a single season. Verifies membership first (skipped for admin).
-    // Role resolution follows the same pattern: admin gets LEADER, member fetches from UserSeason.
+    // Returns detail for a single season. Uses assertReadAccess — member need not be in this season
+    // if they are currently in the active season (cross-season read access).
+    // Role resolution: admin → LEADER, own season → real roles, cross-season viewer → empty set.
     public DashboardSeasonResponse getSeasonForMember(Long userId, Long seasonId, boolean hasFullAccess) {
         log.debug("getSeasonForMember: userId={}, seasonId={}", userId, seasonId);
-        assertMembership(userId, seasonId, hasFullAccess);
+        assertReadAccess(userId, seasonId, hasFullAccess);
 
         Season season = seasonRepository.findById(seasonId)
                 .orElseThrow(() -> new NoSeasonFoundException("no season found with seasonId:" + seasonId, 404, "Not Found"));
@@ -95,8 +119,8 @@ public class DashboardService {
         Set<UserRole> roles = hasFullAccess
                 ? Set.of(UserRole.LEADER)
                 : userSeasonRepository.findByUserIdAndSeasonId(userId, seasonId)
-                        .orElseThrow(() -> new NoUserSeasonFoundException("No userSeason found with userId:" + userId, 404, "Not Found"))
-                        .getUserRoles();
+                        .map(us -> us.getUserRoles())
+                        .orElse(Set.of());
 
         return DashboardSeasonResponse.builder()
                 .seasonId(seasonId)
@@ -112,7 +136,7 @@ public class DashboardService {
     // Returns all script files uploaded to this season (StorageFolder.SCRIPT).
     // Upload itself is handled by the existing admin upload endpoint — this is read-only.
     public List<StoredFileResponse> getScriptsForSeason(Long userId, Long seasonId, boolean hasFullAccess) {
-        assertMembership(userId, seasonId, hasFullAccess);
+        assertReadAccess(userId, seasonId, hasFullAccess);
         return storageRepository.findBySeasonIdAndFileType(seasonId, StorageFolder.SCRIPT).stream()
                 .map(file -> StoredFileResponse.builder()
                         .id(file.getId())
@@ -127,7 +151,7 @@ public class DashboardService {
 
     // Returns all notifications delivered to this user that belong to this season (sourceType=LMS, sourceId=seasonId).
     public List<UserNotificationResponse> getSeasonNotifications(Long userId, Long seasonId, boolean hasFullAccess) {
-        assertMembership(userId, seasonId, hasFullAccess);
+        assertReadAccess(userId, seasonId, hasFullAccess);
         return userNotificationRepository.findSeasonNotifications(userId, SourceType.LMS, seasonId).stream()
                 .map(un -> UserNotificationResponse.builder()
                         .userNotificationId(un.getId())
@@ -166,12 +190,22 @@ public class DashboardService {
         return notificationService.createNotification(notificationRequest);
     }
 
-    // Central membership gate called by every method above.
-    // Admin always passes — they have no UserSeason rows but can access everything.
+    // Write gate — caller must be a member of this exact season. Used for notification creation.
     private void assertMembership(Long userId, Long seasonId, boolean hasFullAccess) {
         if (hasFullAccess) return;
         if (!userSeasonRepository.existsByUserIdAndSeasonId(userId, seasonId)) {
             throw new NotASeasonMemberException("Not a member of this season");
         }
+    }
+
+    // Read gate — passes if: admin, own season member, or member of any current season (ACTIVE or PREPARING).
+    // PREPARING included so members added before activation keep cross-season access during transition gaps.
+    private static final List<Status> CURRENT_SEASON_STATUSES = List.of(Status.ACTIVE, Status.PREPARING);
+
+    private void assertReadAccess(Long userId, Long seasonId, boolean hasFullAccess) {
+        if (hasFullAccess) return;
+        if (userSeasonRepository.existsByUserIdAndSeasonId(userId, seasonId)) return;
+        if (userSeasonRepository.existsByUserIdAndSeason_StatusIn(userId, CURRENT_SEASON_STATUSES)) return;
+        throw new NotASeasonMemberException("Not a member of this season");
     }
 }
