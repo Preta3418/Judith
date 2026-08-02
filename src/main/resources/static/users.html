@@ -183,6 +183,14 @@
 if (!requireAuth()) { /* redirects */ }
 if (!isAdmin()) { window.location.href = '/dashboard/index.html'; }
 
+// Restore season context in dashboard nav links
+const _sid = sessionStorage.getItem('judithSeasonId');
+if (_sid) {
+    document.querySelectorAll('.dash-nav-tabs a[href^="/dashboard/"]').forEach(a => {
+        try { const u = new URL(a.href); u.searchParams.set('seasonId', _sid); a.href = u.toString(); } catch(e) {}
+    });
+}
+
 // Setup nav
 const _uname = getCurrentUserName();
 document.getElementById('userName').textContent = _uname;
