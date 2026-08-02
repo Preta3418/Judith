@@ -1,7 +1,5 @@
 package com.judtih.judith_management_system.global.notification;
 
-import com.judtih.judith_management_system.global.notification.dto.NotificationResponse;
-import com.judtih.judith_management_system.global.notification.dto.UserNotificationRequest;
 import com.judtih.judith_management_system.global.notification.dto.UserNotificationResponse;
 import com.judtih.judith_management_system.global.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -11,29 +9,17 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/** Admin endpoint for creating notifications and member endpoints for reading/marking notifications. */
+/** Member endpoints for reading and marking bell notifications. */
 @RestController
 @RequiredArgsConstructor
 public class NotificationController {
 
     private final NotificationService service;
 
-
-    // ==================== Admin Endpoints ====================
-
-    @PostMapping("/api/admin/notifications")
-    public ResponseEntity<NotificationResponse> createNotification(@RequestBody UserNotificationRequest request) {
-        return ResponseEntity.status(201).body(service.createNotification(request));
-    }
-
-
-    // ==================== Member Endpoints ====================
-
-    // @PreAuthorize checks that the JWT's userId claim matches the path variable — users can only read their own notifications
     @PreAuthorize("authentication.details == #userId")
     @GetMapping("/api/notifications/{userId}")
     public ResponseEntity<List<UserNotificationResponse>> getNotificationsForUser(@PathVariable Long userId) {
-        return ResponseEntity.ok(service.getNotificationForUser(userId));
+        return ResponseEntity.ok(service.getNotificationsForUser(userId));
     }
 
     @PreAuthorize("authentication.details == #userId")
@@ -60,5 +46,4 @@ public class NotificationController {
         service.markAllAsRead(userId);
         return ResponseEntity.noContent().build();
     }
-
 }
