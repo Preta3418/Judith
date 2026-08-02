@@ -23,6 +23,7 @@ import com.judtih.judith_management_system.global.storage.StorageFolder;
 import com.judtih.judith_management_system.global.storage.dto.StoredFileResponse;
 import com.judtih.judith_management_system.global.storage.repository.StorageRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -38,6 +39,7 @@ import java.util.Set;
  * decides who is admin — it just acts on the flag. When true, membership checks
  * are skipped and the user is treated as if they hold LEADER in every season.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DashboardService {
@@ -54,6 +56,7 @@ public class DashboardService {
     // Admin has no UserSeason rows, so we skip that table entirely and return
     // all seasons from seasonRepository, assigning LEADER role on each.
     public List<DashboardSeasonResponse> getMySeasonsWithDetail(Long userId, boolean hasFullAccess) {
+        log.debug("getMySeasonsWithDetail: userId={}, hasFullAccess={}", userId, hasFullAccess);
         if (hasFullAccess) {
             return seasonRepository.findAll().stream()
                     .map(season -> DashboardSeasonResponse.builder()
@@ -83,6 +86,7 @@ public class DashboardService {
     // Returns detail for a single season. Verifies membership first (skipped for admin).
     // Role resolution follows the same pattern: admin gets LEADER, member fetches from UserSeason.
     public DashboardSeasonResponse getSeasonForMember(Long userId, Long seasonId, boolean hasFullAccess) {
+        log.debug("getSeasonForMember: userId={}, seasonId={}", userId, seasonId);
         assertMembership(userId, seasonId, hasFullAccess);
 
         Season season = seasonRepository.findById(seasonId)
@@ -140,6 +144,7 @@ public class DashboardService {
     // Season must be ACTIVE — closed seasons are fully read-only.
     // targetRoles=null means NotificationService sends to every member in the season.
     public NotificationResponse createSeasonNotification(Long userId, Long seasonId, DashboardNotificationRequest request, boolean hasFullAccess) {
+        log.info("createSeasonNotification: userId={}, seasonId={}, title={}", userId, seasonId, request.getTitle());
         assertMembership(userId, seasonId, hasFullAccess);
 
         Season season = seasonRepository.findById(seasonId)

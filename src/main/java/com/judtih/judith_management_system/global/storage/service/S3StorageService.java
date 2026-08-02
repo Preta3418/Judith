@@ -9,6 +9,7 @@ import com.judtih.judith_management_system.global.storage.entity.StoredFile;
 import com.judtih.judith_management_system.global.storage.exception.FileStorageException;
 import com.judtih.judith_management_system.global.storage.repository.StorageRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import java.io.IOException;
 
 /** StorageService implementation for the prod profile; uploads files to S3 and stores the public URL. */
+@Slf4j
 @Service
 @Profile("prod")
 @RequiredArgsConstructor
@@ -37,7 +39,7 @@ public class S3StorageService implements StorageService {
 
     @Override
     public StoredFileResponse uploadFile(MultipartFile file, StorageFolder folder, Long seasonId) {
-
+        log.info("uploadFile: folder={}, file={}, seasonId={}", folder, file.getOriginalFilename(), seasonId);
         String filename = file.getOriginalFilename();
         if (filename == null) {
             throw new FileStorageException("could not find file name after upload", 500, "IO Error");
@@ -56,6 +58,7 @@ public class S3StorageService implements StorageService {
             s3Client.putObject(putRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
 
         } catch (IOException e) {
+            log.error("uploadFile: S3 upload failed for {} in {}", filename, folder, e);
             throw new FileStorageException("failed to upload file to S3", 500, "IO Error", e);
         }
 

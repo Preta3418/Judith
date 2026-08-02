@@ -13,6 +13,7 @@ import com.judtih.judith_management_system.domain.user.repository.UserRepository
 import com.judtih.judith_management_system.domain.user.repository.UserSeasonRepository;
 import com.judtih.judith_management_system.domain.user.service.UserSeasonService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SeasonService {
@@ -32,9 +34,10 @@ public class SeasonService {
 
     @Transactional
     public SeasonResponse createSeason(SeasonRequest request) {
-
+        log.info("createSeason: name={}, memberCount={}", request.getName(), request.getMembers() == null ? 0 : request.getMembers().size());
 
         if(seasonRepository.existsByStatusNot(Status.CLOSED)) {
+            log.warn("createSeason: rejected — a non-CLOSED season already exists");
             throw new AlreadyActiveSeasonException("Cannot create season when one is already active", 409, "Conflict" );
         }
 
@@ -54,6 +57,7 @@ public class SeasonService {
         }
 
         if (!hasFullAccess) {
+            log.warn("createSeason: rejected — no full-access member in request");
             throw new NoFullAccessMemberFound("At least one member must have a full access role", 400, "Bad Request");
         }
 
@@ -73,11 +77,17 @@ public class SeasonService {
 
     @Transactional
     public SeasonResponse activateSeason(long id) {
+        log.info("activateSeason: seasonId={}", id);
         Season season = seasonRepository.findById(id)
                 .orElseThrow(() -> new NoSeasonFoundException("no season was found with id: " + id, 404, "Not Found"));
 
-        if (season.getStatus() == Status.CLOSED) throw new SeasonClosedException("This season is a closed season", 409, "Conflict");
-        else if (season.getStatus() == Status.ACTIVE) throw new AlreadyActiveSeasonException("This season is already active", 409, "Conflict");
+        if (season.getStatus() == Status.CLOSED) {
+            log.warn("activateSeason: rejected — season {} is CLOSED", id);
+            throw new SeasonClosedException("This season is a closed season", 409, "Conflict");
+        } else if (season.getStatus() == Status.ACTIVE) {
+            log.warn("activateSeason: rejected — season {} is already ACTIVE", id);
+            throw new AlreadyActiveSeasonException("This season is already active", 409, "Conflict");
+        }
 
 
         // All User must have a role to activate
@@ -94,6 +104,7 @@ public class SeasonService {
             List<String> names = noRoleUser.stream()
                     .map(us -> us.getUser().getName())
                     .toList();
+            log.warn("activateSeason: rejected — members without roles: {}", names);
             throw new NoRoleAssignedException("No roles assigned for: " + names, 400, "Bad Request");
         }
 
@@ -107,6 +118,7 @@ public class SeasonService {
             }
         }
         if (!hasFullAccess) {
+            log.warn("activateSeason: rejected — no full-access member in season {}", id);
             throw new NoFullAccessMemberFound("At least one member must have a full access role", 400, "Bad Request");
         }
 
@@ -146,6 +158,7 @@ public class SeasonService {
 
     @Transactional
     public SeasonResponse updateSeason(SeasonRequest request) {
+        log.info("updateSeason: seasonId={}", request.getId());
         Season season = seasonRepository.findById(request.getId())
                 .orElseThrow(() -> new NoSeasonFoundException("UpdateSeason: went wrong somewhere. No Event was found with id: " + request.getId(), 404, "Not Found")) ;
 
@@ -156,11 +169,18 @@ public class SeasonService {
 
     @Transactional
     public SeasonResponse closeSeason(long id) {
+        log.info("closeSeason: seasonId={}", id);
         Season season = seasonRepository.findById(id)
                 .orElseThrow(() -> new NoSeasonFoundException("closeSeason: went wrong somewhere. No Event was found with id: " + id, 404, "Not Found"));
 
-        if(season.getStatus() == Status.CLOSED) throw new SeasonClosedException("Season is already closed with id: " + id, 409, "Conflict");
-        if(season.getStatus() == Status.PREPARING) throw new SeasonPreparingException("Season is in Preparing state, which is not closable id: " + id, 409, "Conflict");
+        if(season.getStatus() == Status.CLOSED) {
+            log.warn("closeSeason: rejected — season {} is already CLOSED", id);
+            throw new SeasonClosedException("Season is already closed with id: " + id, 409, "Conflict");
+        }
+        if(season.getStatus() == Status.PREPARING) {
+            log.warn("closeSeason: rejected — season {} is PREPARING, activate first", id);
+            throw new SeasonPreparingException("Season is in Preparing state, which is not closable id: " + id, 409, "Conflict");
+        }
 
         season.closeSeason();
 
@@ -170,11 +190,14 @@ public class SeasonService {
 
     @Transactional
     public SeasonResponse reopenSeason(long id) {
+        log.info("reopenSeason: seasonId={}", id);
         Season season = seasonRepository.findById(id)
                 .orElseThrow(() -> new NoSeasonFoundException("reopenSeason: No season found with id: " + id, 404, "Not Found"));
 
-        if (season.getStatus() != Status.CLOSED)
+        if (season.getStatus() != Status.CLOSED) {
+            log.warn("reopenSeason: rejected — season {} is not CLOSED (status={})", id, season.getStatus());
             throw new SeasonClosedException("Only CLOSED seasons can be reopened", 409, "Conflict");
+        }
 
         season.reopenSeason();
         return createSeasonResponse(season);

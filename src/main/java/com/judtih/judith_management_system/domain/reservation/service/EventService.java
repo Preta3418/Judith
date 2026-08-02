@@ -9,6 +9,7 @@ import com.judtih.judith_management_system.domain.reservation.repository.Reserva
 import com.judtih.judith_management_system.global.storage.StorageFolder;
 import com.judtih.judith_management_system.global.storage.service.StorageService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 /** Manages CRUD for Events and EventSchedules, and computes live remaining-seat counts from reservations. */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EventService {
@@ -32,6 +34,7 @@ public class EventService {
 
     @Transactional
     public EventResponse createEvent(EventRequest eventRequest) {
+        log.info("createEvent: title={}", eventRequest.getTitle());
         Event event = Event.builder()
                 .title(eventRequest.getTitle())
                 .description(eventRequest.getDescription())
@@ -49,6 +52,7 @@ public class EventService {
 
     @Transactional
     public EventScheduleResponse createEventSchedule (EventScheduleRequest request) {
+        log.info("createEventSchedule: eventId={}, date={}", request.getEventId(), request.getEventDate());
         Event event = eventRepository.findById(request.getEventId())
                 .orElseThrow(() -> new RuntimeException("event not found"));
 
@@ -66,6 +70,7 @@ public class EventService {
 
     @Transactional
     public EventResponse updateEvent(Long id, EventRequest request) {
+        log.info("updateEvent: id={}", id);
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
 
@@ -79,6 +84,7 @@ public class EventService {
 
     @Transactional
     public EventScheduleResponse updateSchedule(Long id, EventScheduleRequest request) {
+        log.info("updateSchedule: id={}", id);
         EventSchedule schedule = scheduleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Schedule not found"));
 
@@ -92,12 +98,14 @@ public class EventService {
 
     @Transactional
     public void deleteEventById(Long id) {
+        log.info("deleteEventById: id={}", id);
         eventRepository.deleteById(id);
 
     }
 
     @Transactional
     public void deleteScheduleById(Long id) {
+        log.info("deleteScheduleById: id={}", id);
         scheduleRepository.deleteById(id);
     }
 
@@ -105,6 +113,7 @@ public class EventService {
 
     @Transactional(readOnly = true)
     public EventResponse getLatestEvent() {
+        log.debug("getLatestEvent");
         Optional<Event> event = eventRepository.findTopByStatusOrderByCreatedAtDesc(com.judtih.judith_management_system.domain.reservation.entity.EventStatus.OPEN);
         if (event.isEmpty()) {
             event = eventRepository.findTopByOrderByCreatedAtDesc();
@@ -121,6 +130,7 @@ public class EventService {
 
     @Transactional(readOnly = true)
     public EventResponse getEventById(Long id) {
+        log.debug("getEventById: id={}", id);
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("event not found"));
 
@@ -162,6 +172,7 @@ public class EventService {
 
     @Transactional
     public EventResponse uploadPamphlet(Long eventId, MultipartFile file, Long seasonId) {
+        log.info("uploadPamphlet: eventId={}, file={}", eventId, file.getOriginalFilename());
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
         String url = storageService.uploadFile(file, StorageFolder.PAMPHLET, seasonId).getUrl();

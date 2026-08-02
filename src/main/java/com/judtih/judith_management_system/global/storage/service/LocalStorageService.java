@@ -8,6 +8,7 @@ import com.judtih.judith_management_system.global.storage.entity.StoredFile;
 import com.judtih.judith_management_system.global.storage.exception.FileStorageException;
 import com.judtih.judith_management_system.global.storage.repository.StorageRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /** StorageService implementation for the local profile; saves files to the filesystem under upload.base-path. */
+@Slf4j
 @Service
 @Profile("local")
 @RequiredArgsConstructor
@@ -32,7 +34,7 @@ public class LocalStorageService implements StorageService {
 
 
     public StoredFileResponse uploadFile (MultipartFile file, StorageFolder folder, Long seasonId) {
-
+        log.info("uploadFile: folder={}, file={}, seasonId={}", folder, file.getOriginalFilename(), seasonId);
         try {
             Path folderPath = Paths.get(basePath, folder.getFolderName());
 
@@ -56,6 +58,7 @@ public class LocalStorageService implements StorageService {
             return createStoredFileResponse(storedFile);
 
         } catch (IOException e) {
+            log.error("uploadFile: failed to save {} to {}", file.getOriginalFilename(), folder, e);
             throw new FileStorageException("failed to save file", 500, "IO Error", e);
         }
     }

@@ -8,6 +8,7 @@ import com.judtih.judith_management_system.domain.user.enums.UserStatus;
 import com.judtih.judith_management_system.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.services.sns.SnsClient;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 
 /** Handles bulk SMS delivery to INACTIVE (alumni) users via AWS SNS and persists the audit record. */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MessageService {
@@ -39,6 +41,7 @@ public class MessageService {
         List<User> gradUser = userRepository.findByStatus(UserStatus.INACTIVE);
         List<MessageFailure> failureList = new ArrayList<>();
 
+        log.info("sendMessage: starting bulk SMS to {} alumni", gradUser.size());
         Message message = Message.builder().messageContent(messageContent).build();
 
         for (User user : gradUser) {
@@ -53,11 +56,11 @@ public class MessageService {
 
                 PublishResponse result = snsClient.publish(request);
 
-                System.out.println(result);
-
+                log.info("sendMessage: published to {} ({}), messageId={}", user.getName(), phoneNum, result.messageId());
                 successCount++;
 
             } catch (SnsException e) {
+                log.warn("sendMessage: SNS error for {} ({}): {}", user.getName(), user.getPhoneNumber(), e.awsErrorDetails().errorMessage());
                 MessageFailure failure = MessageFailure.builder()
                         .userId(user.getId())
                         .message(message)
@@ -70,10 +73,11 @@ public class MessageService {
                 failureCount++;
 
             } catch (RuntimeException e) {
-                System.err.println(user.getName() + ": " + e.getMessage());
+                log.error("sendMessage: unexpected error for {}: {}", user.getName(), e.getMessage());
                 failureCount++;
             }
         }
+        log.info("sendMessage: done — success={}, failure={}", successCount, failureCount);
 
         message.updateMessage(null, successCount + failureCount, failureCount, failureList);
 
