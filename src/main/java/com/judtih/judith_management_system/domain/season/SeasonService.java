@@ -1,5 +1,8 @@
 package com.judtih.judith_management_system.domain.season;
 
+import com.judtih.judith_management_system.domain.reservation.entity.Event;
+import com.judtih.judith_management_system.domain.reservation.entity.EventStatus;
+import com.judtih.judith_management_system.domain.reservation.repository.EventRepository;
 import com.judtih.judith_management_system.domain.season.dto.CountdownResponse;
 import com.judtih.judith_management_system.domain.season.dto.SeasonMemberRequest;
 import com.judtih.judith_management_system.domain.season.dto.SeasonRequest;
@@ -30,6 +33,7 @@ public class SeasonService {
     private final UserRepository userRepository;
     private final UserSeasonRepository userSeasonRepository;
     private final UserSeasonService userSeasonService;
+    private final EventRepository eventRepository;
 
 
     @Transactional
@@ -184,6 +188,12 @@ public class SeasonService {
 
         season.closeSeason();
 
+        List<Event> openEvents = eventRepository.findBySeasonIdAndStatus(id, EventStatus.OPEN);
+        openEvents.forEach(e -> e.eventUpdate(null, null, null, null, EventStatus.COMPLETED, null));
+        if (!openEvents.isEmpty()) {
+            log.info("closeSeason: auto-completed {} open event(s) for season {}", openEvents.size(), id);
+        }
+
         return createSeasonResponse(season);
 
     }
@@ -197,6 +207,11 @@ public class SeasonService {
         if (season.getStatus() != Status.CLOSED) {
             log.warn("reopenSeason: rejected — season {} is not CLOSED (status={})", id, season.getStatus());
             throw new SeasonClosedException("Only CLOSED seasons can be reopened", 409, "Conflict");
+        }
+
+        if (seasonRepository.existsByStatusNot(Status.CLOSED)) {
+            log.warn("reopenSeason: rejected — another non-CLOSED season already exists");
+            throw new AlreadyActiveSeasonException("Cannot reopen season when another is already active", 409, "Conflict");
         }
 
         season.reopenSeason();

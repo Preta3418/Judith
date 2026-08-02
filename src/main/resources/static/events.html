@@ -38,295 +38,50 @@
         </div>
     </nav>
 
-    <main class="dash-main">
-        <div class="dash-page-header">
-            <div style="display:flex;align-items:center;justify-content:space-between;">
-                <div>
-                    <div class="dash-greeting">공연 관리</div>
-                    <div class="dash-subtitle">공연 생성, 일정 관리, 예매 현황</div>
-                </div>
-                <button class="btn btn-primary" onclick="openCreateEventModal()">+ 새 공연</button>
-            </div>
-        </div>
-
-        <div id="eventList" class="grid grid-cols-3">
-            <div class="loading" style="grid-column:1/-1;"><div class="spinner"></div></div>
-        </div>
+    <main class="dash-main" id="pageContainer">
+        <div class="loading"><div class="spinner"></div></div>
     </main>
 </div>
 
-<!-- Event Detail Modal (User view) -->
-<div class="modal-overlay" id="eventDetailModal">
-    <div class="modal">
-        <div class="modal-header">
-            <h3 class="modal-title" id="eventTitle">공연</h3>
-            <button class="modal-close" onclick="closeModal('eventDetailModal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div id="eventPosterContainer" class="mb-16" style="display:none;">
-                <img id="eventPoster" src="" alt="공연 포스터" style="width:100%;border-radius:var(--radius);max-height:200px;object-fit:cover;">
-            </div>
-            <div class="mb-24">
-                <p id="eventDescription" class="text-secondary"></p>
-            </div>
-            <div class="flex justify-between items-center mb-12" style="padding-bottom:12px;border-bottom:1px solid var(--border-light);">
-                <span class="text-secondary">장소</span>
-                <span id="eventLocation">-</span>
-            </div>
-            <div class="flex justify-between items-center mb-24" style="padding-bottom:12px;border-bottom:1px solid var(--border-light);">
-                <span class="text-secondary">좌석 수</span>
-                <span id="eventCapacity">-</span>
-            </div>
-            <h4 class="mb-12">일정 선택</h4>
-            <div class="list" id="eventSchedules" style="border:1px solid var(--border-light);border-radius:var(--radius);"></div>
-        </div>
-    </div>
-</div>
-
-<!-- Reservation Modal -->
-<div class="modal-overlay" id="reservationModal">
-    <div class="modal">
-        <div class="modal-header">
-            <h3 class="modal-title">예약하기</h3>
-            <button class="modal-close" onclick="closeModal('reservationModal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="card mb-24" style="background:var(--gray-50);">
-                <div class="card-body" style="padding:16px;">
-                    <div class="flex justify-between items-center mb-8">
-                        <span class="text-secondary">공연</span>
-                        <span class="font-medium" id="reserveEventName">-</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-secondary">일시</span>
-                        <span id="reserveScheduleDate">-</span>
-                    </div>
-                </div>
-            </div>
-            <form id="reservationForm" onsubmit="createReservation(event)">
-                <div class="form-group">
-                    <label class="form-label required" for="reserveName">이름</label>
-                    <input type="text" class="form-input" id="reserveName" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label required" for="reservePhone">전화번호</label>
-                    <input type="tel" class="form-input" id="reservePhone" placeholder="010-1234-5678" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label required" for="reserveTickets">인원</label>
-                    <input type="number" class="form-input" id="reserveTickets" min="1" max="10" value="1" required>
-                </div>
-            </form>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('reservationModal')">취소</button>
-            <button class="btn btn-primary" onclick="document.getElementById('reservationForm').requestSubmit()">예약 확정</button>
-        </div>
-    </div>
-</div>
-
-<!-- Create Event Modal (Admin) -->
-<div class="modal-overlay" id="createEventModal">
-    <div class="modal">
-        <div class="modal-header">
-            <h3 class="modal-title">공연 생성</h3>
-            <button class="modal-close" onclick="closeModal('createEventModal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="createEventForm" onsubmit="return false;">
-                <div class="form-group">
-                    <label class="form-label required" for="createEventTitle">제목</label>
-                    <input type="text" class="form-input" id="createEventTitle" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label required" for="createEventDescription">설명</label>
-                    <textarea class="form-textarea" id="createEventDescription" required></textarea>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label required" for="createEventLocation">장소</label>
-                        <input type="text" class="form-input" id="createEventLocation" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label required" for="createEventCapacity">좌석 수</label>
-                        <input type="number" class="form-input" id="createEventCapacity" min="1" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="createEventStatus">상태</label>
-                    <select class="form-select" id="createEventStatus">
-                        <option value="OPEN">예약 가능</option>
-                        <option value="CLOSED">예약 마감</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">포스터 이미지</label>
-                    <div class="upload-area" id="createUploadArea" onclick="document.getElementById('createPosterFile').click()">
-                        <input type="file" id="createPosterFile" accept="image/*" style="display:none" onchange="handleFileSelect(this, 'create')">
-                        <div class="upload-placeholder" id="createUploadPlaceholder">
-                            <div class="upload-icon">&#x1F4C1;</div>
-                            <p class="upload-text">이미지를 클릭하거나 드래그하세요</p>
-                        </div>
-                        <div class="upload-preview" id="createUploadPreview" style="display:none">
-                            <img id="createPreviewImg" src="" alt="미리보기" style="max-height:150px;">
-                            <button type="button" class="btn btn-sm btn-danger mt-8" onclick="clearUpload('create', event)">삭제</button>
-                        </div>
-                    </div>
-                    <input type="hidden" id="createEventPoster">
-                </div>
-            </form>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('createEventModal')">취소</button>
-            <button class="btn btn-primary" onclick="submitCreateEvent()">공연 생성</button>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Event Modal (Admin) -->
-<div class="modal-overlay" id="editEventModal">
-    <div class="modal" style="max-width:600px;">
-        <div class="modal-header">
-            <h3 class="modal-title">공연 수정</h3>
-            <button class="modal-close" onclick="closeModal('editEventModal')">&times;</button>
-        </div>
-        <div class="modal-body">
-            <input type="hidden" id="editEventId">
-            <form id="editEventForm" onsubmit="updateEvent(event)">
-                <div class="form-group">
-                    <label class="form-label required" for="editEventTitle">제목</label>
-                    <input type="text" class="form-input" id="editEventTitle" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label required" for="editEventDescription">설명</label>
-                    <textarea class="form-textarea" id="editEventDescription" required></textarea>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label required" for="editEventLocation">장소</label>
-                        <input type="text" class="form-input" id="editEventLocation" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label required" for="editEventCapacity">좌석 수</label>
-                        <input type="number" class="form-input" id="editEventCapacity" min="1" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="editEventStatus">상태</label>
-                    <select class="form-select" id="editEventStatus">
-                        <option value="CLOSED">예약 마감</option>
-                        <option value="OPEN">예약 가능</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">포스터 이미지</label>
-                    <div class="upload-area" id="editUploadArea" onclick="document.getElementById('editPosterFile').click()">
-                        <input type="file" id="editPosterFile" accept="image/*" style="display:none" onchange="handleFileSelect(this, 'edit')">
-                        <div class="upload-placeholder" id="editUploadPlaceholder">
-                            <div class="upload-icon">&#x1F4C1;</div>
-                            <p class="upload-text">이미지를 클릭하거나 드래그하세요</p>
-                        </div>
-                        <div class="upload-preview" id="editUploadPreview" style="display:none">
-                            <img id="editPreviewImg" src="" alt="미리보기" style="max-height:150px;">
-                            <button type="button" class="btn btn-sm btn-danger mt-8" onclick="clearUpload('edit', event)">삭제</button>
-                        </div>
-                    </div>
-                    <input type="hidden" id="editEventPoster">
-                </div>
-                <!-- Schedules Section -->
-                <div class="mt-24">
-                    <div class="flex justify-between items-center mb-12">
-                        <h4>공연 일정</h4>
-                        <button type="button" class="btn btn-sm btn-outline" onclick="openAddScheduleModal()">+ 일정 추가</button>
-                    </div>
-                    <div id="editEventSchedules" style="border:1px solid var(--border-light);border-radius:var(--radius);overflow:hidden;"></div>
-                </div>
-                <!-- Public URL Section -->
-                <div class="mt-24">
-                    <h4 class="mb-12">공개 예매 링크</h4>
-                    <div class="flex gap-8">
-                        <input type="text" class="form-input" id="publicEventUrl" readonly style="background:var(--gray-50);">
-                        <button type="button" class="btn btn-outline" onclick="copyPublicUrl()">복사</button>
-                    </div>
-                    <div class="form-hint">이 링크를 공유하면 누구나 예매할 수 있습니다</div>
-                </div>
-                <!-- Pamphlet Section -->
-                <div class="mt-24">
-                    <h4 class="mb-12">팸플릿 PDF</h4>
-                    <div id="pamphletCurrentWrap" style="display:none;margin-bottom:12px;">
-                        <div class="flex gap-8 items-center" style="background:var(--gray-50);border:1px solid var(--border-light);border-radius:var(--radius);padding:10px 14px;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;color:var(--primary)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                            <a id="pamphletCurrentLink" href="#" target="_blank" class="text-primary" style="font-size:0.85rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">팸플릿 보기</a>
-                            <a id="pamphletViewLink" href="#" target="_blank" class="btn btn-sm btn-ghost">미리보기</a>
-                        </div>
-                    </div>
-                    <div class="flex gap-8">
-                        <input type="file" id="pamphletFile" accept="application/pdf" style="display:none" onchange="uploadPamphlet()">
-                        <button type="button" class="btn btn-outline" onclick="document.getElementById('pamphletFile').click()" id="pamphletUploadBtn">PDF 업로드</button>
-                        <span id="pamphletUploadStatus" style="font-size:0.82rem;color:var(--text-secondary);align-self:center;"></span>
-                    </div>
-                    <div class="form-hint">업로드 후 팸플릿 페이지에서 확인할 수 있습니다</div>
-                </div>
-                <!-- Casting Section -->
-                <div class="mt-24" id="editCastingSection" style="display:none;">
-                    <div class="flex justify-between items-center mb-12">
-                        <h4>출연진 및 스태프</h4>
-                        <a href="/seasons.html" class="btn btn-sm btn-ghost text-primary">시즌 관리에서 편집</a>
-                    </div>
-                    <div id="editCastingContent" style="border:1px solid var(--border-light);border-radius:var(--radius);padding:16px;background:var(--gray-50);"></div>
-                </div>
-            </form>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-danger" onclick="deleteEvent()">삭제</button>
-            <button type="button" class="btn btn-primary" onclick="document.getElementById('editEventForm').requestSubmit()">저장</button>
-        </div>
-    </div>
-</div>
-
-<!-- Create Schedule Modal (Admin) -->
-<div class="modal-overlay" id="createScheduleModal">
+<!-- Add Schedule Modal -->
+<div class="modal-overlay" id="addScheduleModal">
     <div class="modal" style="max-width:400px;">
         <div class="modal-header">
             <h3 class="modal-title">일정 추가</h3>
-            <button class="modal-close" onclick="closeModal('createScheduleModal')">&times;</button>
+            <button class="modal-close" onclick="closeModal('addScheduleModal')">&times;</button>
         </div>
         <div class="modal-body">
-            <input type="hidden" id="scheduleEventId">
-            <form id="createScheduleForm" onsubmit="createSchedule(event)">
+            <form id="addScheduleForm" onsubmit="submitAddSchedule(event)">
                 <div class="form-group">
-                    <label class="form-label required" for="scheduleDate">공연 일시</label>
+                    <label class="form-label required">공연 일시</label>
                     <input type="datetime-local" class="form-input" id="scheduleDate" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label required" for="scheduleDeadline">예약 마감일</label>
+                    <label class="form-label required">예약 마감일</label>
                     <input type="datetime-local" class="form-input" id="scheduleDeadline" required>
                 </div>
             </form>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('createScheduleModal')">취소</button>
-            <button class="btn btn-primary" onclick="document.getElementById('createScheduleForm').requestSubmit()">일정 추가</button>
+            <button class="btn btn-secondary" onclick="closeModal('addScheduleModal')">취소</button>
+            <button class="btn btn-primary" onclick="document.getElementById('addScheduleForm').requestSubmit()">추가</button>
         </div>
     </div>
 </div>
 
-<!-- Reservations List Modal (Admin) -->
+<!-- Reservations Modal -->
 <div class="modal-overlay" id="reservationsModal">
     <div class="modal" style="max-width:600px;">
         <div class="modal-header">
-            <h3 class="modal-title" id="reservationsModalTitle">예약 목록</h3>
+            <h3 class="modal-title" id="reservationsTitle">예매 목록</h3>
             <button class="modal-close" onclick="closeModal('reservationsModal')">&times;</button>
         </div>
-        <div class="modal-body">
-            <div id="scheduleReservations"></div>
-        </div>
+        <div class="modal-body" id="reservationsBody"></div>
     </div>
 </div>
 
 <script src="/js/auth.js"></script>
 <script src="/js/api.js"></script>
-<script src="/js/reservation.js"></script>
 <script>
 if (!requireAuth()) { /* redirects */ }
 if (!isAdmin()) { window.location.href = '/dashboard/index.html'; }
@@ -334,12 +89,472 @@ if (!isAdmin()) { window.location.href = '/dashboard/index.html'; }
 const _uname = getCurrentUserName();
 document.getElementById('userName').textContent = _uname;
 document.getElementById('userAvatar').textContent = _uname.charAt(0).toUpperCase();
-
 checkPasswordChangeNeeded();
 
-if (new URLSearchParams(window.location.search).get('action') === 'create') {
-    window.addEventListener('DOMContentLoaded', () => openModal('createEventModal'));
+// ==================== State ====================
+let currentSeason = null;
+let currentEvent = null;
+
+// ==================== Init ====================
+async function init() {
+    try {
+        currentSeason = await seasonApi.getCurrent();
+    } catch(e) { currentSeason = null; }
+
+    if (!currentSeason || !currentSeason.id) {
+        renderNoSeason();
+        return;
+    }
+
+    const event = await eventApi.getBySeasonId(currentSeason.id);
+    if (event) {
+        currentEvent = event;
+        renderEvent();
+    } else {
+        renderCreateForm();
+    }
 }
+
+// ==================== Views ====================
+function renderNoSeason() {
+    document.getElementById('pageContainer').innerHTML = `
+        <div class="dash-page-header">
+            <div class="dash-greeting">공연 관리</div>
+            <div class="dash-subtitle">활성 시즌이 없습니다</div>
+        </div>
+        <div class="dash-card" style="text-align:center;padding:48px 24px;">
+            <div style="font-size:2.5rem;margin-bottom:16px;">🎭</div>
+            <p style="color:var(--text-muted);margin-bottom:20px;">공연을 등록하려면 먼저 시즌을 활성화해주세요.</p>
+            <a href="/seasons.html" class="btn btn-primary">시즌 관리</a>
+        </div>
+    `;
+}
+
+function renderCreateForm() {
+    document.getElementById('pageContainer').innerHTML = `
+        <div class="dash-page-header">
+            <div class="dash-greeting">공연 관리</div>
+            <div class="dash-subtitle">${escHtml(currentSeason.name)} — 등록된 공연 없음</div>
+        </div>
+        <div class="dash-card">
+            <div class="dash-card-header">
+                <span class="dash-card-title">새 공연 등록</span>
+            </div>
+            <div class="form-group">
+                <label class="form-label required">공연 제목</label>
+                <input type="text" class="form-input" id="createTitle" placeholder="예: 2026 봄 정기공연">
+            </div>
+            <div class="form-group">
+                <label class="form-label required">설명</label>
+                <textarea class="form-textarea" id="createDesc" rows="4" placeholder="공연 소개 및 내용"></textarea>
+            </div>
+            <div style="display:flex;gap:16px;">
+                <div class="form-group" style="flex:1;">
+                    <label class="form-label required">장소</label>
+                    <input type="text" class="form-input" id="createLocation" placeholder="예: 홍익대학교 대학로 아트센터">
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label class="form-label required">총 좌석 수</label>
+                    <input type="number" class="form-input" id="createCapacity" min="1" placeholder="100">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">초기 상태</label>
+                <select class="form-input" id="createStatus">
+                    <option value="CLOSED">예매 미시작</option>
+                    <option value="OPEN">예매 시작</option>
+                </select>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:24px;">
+                <button class="btn btn-primary" onclick="submitCreate()">공연 등록</button>
+            </div>
+        </div>
+    `;
+}
+
+function renderEvent() {
+    const STATUS = {
+        OPEN:      { label: '예매중',    cls: 'badge-success' },
+        CLOSED:    { label: '예매 전',   cls: 'badge-warning' },
+        COMPLETED: { label: '공연 완료', cls: 'badge-secondary' }
+    };
+    const s = STATUS[currentEvent.status] || { label: currentEvent.status, cls: 'badge-secondary' };
+
+    const actionBtn = currentEvent.status === 'OPEN'
+        ? `<button class="btn btn-secondary" onclick="closeCurrentEvent()">예매 마감</button>`
+        : currentEvent.status === 'CLOSED'
+        ? `<button class="btn btn-success" onclick="openCurrentEvent()">예매 시작</button>`
+        : '';
+
+    document.getElementById('pageContainer').innerHTML = `
+        <div class="dash-page-header">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                <div>
+                    <div class="dash-greeting">${escHtml(currentEvent.title)}</div>
+                    <div class="dash-subtitle" style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+                        ${escHtml(currentSeason.name)}
+                        <span class="badge ${s.cls}">${s.label}</span>
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    ${actionBtn}
+                    <button class="btn btn-ghost" style="color:var(--danger);" onclick="deleteCurrentEvent()">삭제</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 기본 정보 -->
+        <div class="dash-card">
+            <div class="dash-card-header"><span class="dash-card-title">기본 정보</span></div>
+            <div class="form-group">
+                <label class="form-label required">공연 제목</label>
+                <input type="text" class="form-input" id="editTitle" value="${escHtml(currentEvent.title)}">
+            </div>
+            <div class="form-group">
+                <label class="form-label required">설명</label>
+                <textarea class="form-textarea" id="editDesc" rows="4">${escHtml(currentEvent.description)}</textarea>
+            </div>
+            <div style="display:flex;gap:16px;">
+                <div class="form-group" style="flex:1;">
+                    <label class="form-label required">장소</label>
+                    <input type="text" class="form-input" id="editLocation" value="${escHtml(currentEvent.location)}">
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label class="form-label required">총 좌석 수</label>
+                    <input type="number" class="form-input" id="editCapacity" value="${currentEvent.capacityLimit}" min="1">
+                </div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+                <button class="btn btn-primary" onclick="saveInfo()">저장</button>
+            </div>
+        </div>
+
+        <!-- 포스터 -->
+        <div class="dash-card">
+            <div class="dash-card-header"><span class="dash-card-title">포스터</span></div>
+            ${currentEvent.posterImageUrl
+                ? `<img src="${currentEvent.posterImageUrl}" alt="포스터" style="max-height:220px;border-radius:var(--radius);margin-bottom:12px;display:block;">`
+                : '<p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:12px;">등록된 포스터가 없습니다.</p>'}
+            <div style="display:flex;align-items:center;gap:12px;">
+                <input type="file" id="posterFile" accept="image/*" style="display:none" onchange="uploadPosterFile()">
+                <button class="btn btn-outline" id="posterBtn" onclick="document.getElementById('posterFile').click()">
+                    ${currentEvent.posterImageUrl ? '포스터 교체' : '포스터 업로드'}
+                </button>
+                <span id="posterStatus" style="font-size:0.82rem;color:var(--text-muted);"></span>
+            </div>
+        </div>
+
+        <!-- 공연 일정 -->
+        <div class="dash-card">
+            <div class="dash-card-header">
+                <span class="dash-card-title">공연 일정</span>
+                <button class="btn btn-sm btn-outline" onclick="openModal('addScheduleModal')">+ 일정 추가</button>
+            </div>
+            <div id="scheduleList">${renderScheduleList()}</div>
+        </div>
+
+        <!-- 공개 예매 링크 -->
+        <div class="dash-card">
+            <div class="dash-card-header"><span class="dash-card-title">공개 예매 링크</span></div>
+            <div style="display:flex;gap:8px;">
+                <input type="text" class="form-input" id="publicUrl" readonly
+                    value="${window.location.origin}/public/book.html?id=${currentEvent.id}"
+                    style="background:var(--gray-50);">
+                <button class="btn btn-outline" onclick="copyUrl()">복사</button>
+            </div>
+            <div class="form-hint" style="margin-top:6px;">이 링크를 공유하면 누구나 예매할 수 있습니다.</div>
+        </div>
+
+        <!-- 팸플릿 -->
+        <div class="dash-card">
+            <div class="dash-card-header"><span class="dash-card-title">팸플릿 PDF</span></div>
+            ${currentEvent.pamphletUrl ? `
+                <div style="display:flex;align-items:center;gap:8px;background:var(--gray-50);border:1px solid var(--border-light);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--primary);flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <a href="${currentEvent.pamphletUrl}" target="_blank" class="text-primary" style="font-size:0.85rem;flex:1;">팸플릿 보기</a>
+                    <a href="/public/pamphlet.html?id=${currentEvent.id}" target="_blank" class="btn btn-sm btn-ghost">미리보기</a>
+                </div>` : ''}
+            <div style="display:flex;align-items:center;gap:12px;">
+                <input type="file" id="pamphletFile" accept="application/pdf" style="display:none" onchange="uploadPamphletFile()">
+                <button class="btn btn-outline" id="pamphletBtn" onclick="document.getElementById('pamphletFile').click()">
+                    ${currentEvent.pamphletUrl ? 'PDF 교체' : 'PDF 업로드'}
+                </button>
+                <span id="pamphletStatus" style="font-size:0.82rem;color:var(--text-muted);"></span>
+            </div>
+            <div class="form-hint" style="margin-top:6px;">업로드 후 팸플릿 페이지에서 확인할 수 있습니다.</div>
+        </div>
+
+        <!-- 출연진 -->
+        <div class="dash-card">
+            <div class="dash-card-header">
+                <span class="dash-card-title">출연진 및 스태프</span>
+                <a href="/seasons.html" class="btn btn-sm btn-ghost" style="color:var(--primary);">시즌 관리에서 편집</a>
+            </div>
+            <div id="castingSection"><div class="spinner" style="width:20px;height:20px;"></div></div>
+        </div>
+    `;
+
+    loadCasting();
+}
+
+function renderScheduleList() {
+    if (!currentEvent.schedules || currentEvent.schedules.length === 0) {
+        return '<p style="color:var(--text-muted);font-size:0.875rem;">등록된 일정이 없습니다.</p>';
+    }
+    return currentEvent.schedules.map(s => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border-light);">
+            <div>
+                <div style="font-weight:500;">${fmtDT(s.eventDate)}</div>
+                <div style="font-size:0.8rem;color:var(--text-muted);">
+                    예약 마감 ${fmtDT(s.registrationDeadLine)} &middot; 잔여 ${s.remainingSeats}석
+                </div>
+            </div>
+            <button class="btn btn-sm btn-ghost" onclick="viewReservations(${s.eventScheduleId})">예매 목록</button>
+        </div>
+    `).join('');
+}
+
+// ==================== Create ====================
+async function submitCreate() {
+    const title    = document.getElementById('createTitle').value.trim();
+    const desc     = document.getElementById('createDesc').value.trim();
+    const location = document.getElementById('createLocation').value.trim();
+    const capacity = document.getElementById('createCapacity').value;
+    const status   = document.getElementById('createStatus').value;
+
+    if (!title || !desc || !location || !capacity) {
+        showToast('모든 필수 항목을 입력해주세요', 'error');
+        return;
+    }
+    try {
+        await eventApi.create({ title, description: desc, location, capacityLimit: parseInt(capacity), status });
+        showToast('공연이 등록되었습니다', 'success');
+        await refreshPage();
+    } catch(e) {
+        showToast('등록 실패: ' + e.message, 'error');
+    }
+}
+
+// ==================== Edit basic info ====================
+async function saveInfo() {
+    const title    = document.getElementById('editTitle').value.trim();
+    const desc     = document.getElementById('editDesc').value.trim();
+    const location = document.getElementById('editLocation').value.trim();
+    const capacity = document.getElementById('editCapacity').value;
+
+    if (!title || !desc || !location || !capacity) {
+        showToast('모든 필수 항목을 입력해주세요', 'error');
+        return;
+    }
+    try {
+        await eventApi.update(currentEvent.id, {
+            title, description: desc, location,
+            capacityLimit: parseInt(capacity),
+            status: currentEvent.status,
+            posterImageUrl: currentEvent.posterImageUrl
+        });
+        showToast('저장되었습니다', 'success');
+        await refreshPage();
+    } catch(e) {
+        showToast('저장 실패: ' + e.message, 'error');
+    }
+}
+
+// ==================== Status actions ====================
+async function openCurrentEvent() {
+    if (!confirm('예매를 시작하시겠습니까?')) return;
+    try {
+        await eventApi.update(currentEvent.id, {
+            title: currentEvent.title, description: currentEvent.description,
+            location: currentEvent.location, capacityLimit: currentEvent.capacityLimit,
+            status: 'OPEN', posterImageUrl: currentEvent.posterImageUrl
+        });
+        showToast('예매가 시작되었습니다', 'success');
+        await refreshPage();
+    } catch(e) { showToast('실패: ' + e.message, 'error'); }
+}
+
+async function closeCurrentEvent() {
+    if (!confirm('예매를 마감하시겠습니까? 공연이 완료 처리됩니다.')) return;
+    try {
+        await eventApi.closeEvent(currentEvent.id);
+        showToast('예매가 마감되었습니다', 'success');
+        await refreshPage();
+    } catch(e) { showToast('실패: ' + e.message, 'error'); }
+}
+
+async function deleteCurrentEvent() {
+    if (!confirm('공연을 삭제하시겠습니까? 모든 예매 정보도 함께 삭제됩니다.')) return;
+    try {
+        await eventApi.delete(currentEvent.id);
+        showToast('공연이 삭제되었습니다', 'success');
+        currentEvent = null;
+        renderCreateForm();
+    } catch(e) { showToast('삭제 실패: ' + e.message, 'error'); }
+}
+
+// ==================== Schedules ====================
+async function submitAddSchedule(e) {
+    e.preventDefault();
+    try {
+        await scheduleApi.create({
+            eventId: currentEvent.id,
+            eventDate: document.getElementById('scheduleDate').value,
+            registrationDeadLine: document.getElementById('scheduleDeadline').value
+        });
+        showToast('일정이 추가되었습니다', 'success');
+        closeModal('addScheduleModal');
+        document.getElementById('addScheduleForm').reset();
+        await refreshPage();
+    } catch(e) { showToast('추가 실패: ' + e.message, 'error'); }
+}
+
+async function viewReservations(scheduleId) {
+    try {
+        const reservations = await scheduleApi.getReservations(scheduleId);
+        document.getElementById('reservationsTitle').textContent = `예매 목록 (${reservations.length}건)`;
+        document.getElementById('reservationsBody').innerHTML = reservations.length === 0
+            ? '<p style="color:var(--text-muted);text-align:center;padding:24px;">예매 내역이 없습니다.</p>'
+            : reservations.map(r => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border-light);">
+                    <div>
+                        <div style="font-weight:500;">${escHtml(r.name)}</div>
+                        <div style="font-size:0.82rem;color:var(--text-muted);">${formatPhone(r.phoneNumber)}</div>
+                    </div>
+                    <span style="font-size:0.875rem;">${r.ticketCount}명</span>
+                </div>
+            `).join('');
+        openModal('reservationsModal');
+    } catch(e) { showToast('예매 목록을 불러오지 못했습니다', 'error'); }
+}
+
+// ==================== Poster upload ====================
+async function uploadPosterFile() {
+    const file = document.getElementById('posterFile').files[0];
+    if (!file) return;
+    const status = document.getElementById('posterStatus');
+    const btn    = document.getElementById('posterBtn');
+    status.textContent = '업로드 중...';
+    btn.disabled = true;
+    try {
+        const url = await uploadPoster(file, currentSeason.id);
+        await eventApi.update(currentEvent.id, {
+            title: currentEvent.title, description: currentEvent.description,
+            location: currentEvent.location, capacityLimit: currentEvent.capacityLimit,
+            status: currentEvent.status, posterImageUrl: url
+        });
+        showToast('포스터가 업로드되었습니다', 'success');
+        await refreshPage();
+    } catch(e) {
+        status.textContent = '업로드 실패';
+        btn.disabled = false;
+        showToast('업로드 실패: ' + e.message, 'error');
+    }
+}
+
+// ==================== Pamphlet upload ====================
+async function uploadPamphletFile() {
+    const file = document.getElementById('pamphletFile').files[0];
+    if (!file) return;
+    const status = document.getElementById('pamphletStatus');
+    const btn    = document.getElementById('pamphletBtn');
+    status.textContent = '업로드 중...';
+    btn.disabled = true;
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('seasonId', currentSeason.id);
+        const resp = await fetch(`/api/admin/events/${currentEvent.id}/pamphlet`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${getToken()}` },
+            body: formData
+        });
+        if (!resp.ok) throw new Error('서버 오류');
+        showToast('팸플릿이 업로드되었습니다', 'success');
+        await refreshPage();
+    } catch(e) {
+        status.textContent = '업로드 실패';
+        btn.disabled = false;
+        showToast('팸플릿 업로드 실패: ' + e.message, 'error');
+    }
+}
+
+// ==================== Casting ====================
+async function loadCasting() {
+    const container = document.getElementById('castingSection');
+    if (!container) return;
+    try {
+        const users = await userSeasonApi.getUsersBySeason(currentSeason.id);
+        if (!users || users.length === 0) {
+            container.innerHTML = '<p style="color:var(--text-muted);font-size:0.875rem;">이 시즌에 배정된 부원이 없습니다.</p>';
+            return;
+        }
+        const groups = {
+            production: { title: '제작진', roles: ['LEADER','PRODUCER','SUB_PRODUCER','PLANNER'], members: [] },
+            cast:       { title: '출연',   roles: ['ACTOR'], members: [] },
+            design:     { title: '디자인', roles: ['SOUND_DESIGN','LIGHT_DESIGN','IMAGE_DESIGN','STAGE_DESIGN'], members: [] },
+            tech:       { title: '기술',   roles: ['SOUND_OPERATOR','LIGHT_OPERATOR','STAFF'], members: [] }
+        };
+        users.forEach(user => {
+            user.roles.forEach(role => {
+                for (const g of Object.values(groups)) {
+                    if (g.roles.includes(role) && !g.members.find(m => m.userId === user.userId && m.role === role)) {
+                        g.members.push({ userId: user.userId, name: user.userName, role });
+                    }
+                }
+            });
+        });
+        let html = '<div class="casting-admin-grid">';
+        for (const g of Object.values(groups)) {
+            if (!g.members.length) continue;
+            html += `<div class="casting-admin-group">
+                <div class="casting-admin-title">${g.title}</div>
+                <div class="casting-admin-list">
+                    ${g.members.map(m => `
+                        <span class="casting-admin-member">
+                            <span class="role-tag ${isFullAccessRole(m.role) ? 'full-access' : ''}">${getRoleLabel(m.role)}</span>
+                            ${escHtml(m.name)}
+                        </span>`).join('')}
+                </div>
+            </div>`;
+        }
+        html += '</div>';
+        container.innerHTML = html;
+    } catch(e) {
+        container.innerHTML = '<p style="color:var(--text-muted);font-size:0.875rem;">출연진을 불러올 수 없습니다.</p>';
+    }
+}
+
+// ==================== Helpers ====================
+async function refreshPage() {
+    const event = await eventApi.getBySeasonId(currentSeason.id);
+    currentEvent = event;
+    renderEvent();
+}
+
+function copyUrl() {
+    const input = document.getElementById('publicUrl');
+    input.select();
+    navigator.clipboard.writeText(input.value)
+        .then(() => showToast('링크가 복사되었습니다', 'success'))
+        .catch(() => showToast('복사 실패', 'error'));
+}
+
+function escHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str ?? '';
+    return d.innerHTML;
+}
+
+function fmtDT(str) {
+    if (!str) return '-';
+    return new Date(str).toLocaleString('ko-KR', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+    });
+}
+
+document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
