@@ -93,13 +93,14 @@ async function loadNotifBadge() {
     if (!badge || !bell || !currentSeasonId) return;
 
     // Set click target now that seasonId is known
-    bell.onclick = () => { window.location.href = dashboardUrl('notifications.html'); };
+    bell.onclick = () => { window.location.href = '/dashboard/notifications.html'; };
 
     try {
-        const items = await api(`/api/dashboard/seasons/${currentSeasonId}/notifications`) || [];
-        const unread = items.filter(n => !n.read).length;
-        if (unread > 0) {
-            badge.textContent = unread > 99 ? '99+' : unread;
+        const userId = getCurrentUserId();
+        if (!userId) return;
+        const count = await api(`/api/notifications/${userId}/unread/count`) || 0;
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : count;
             badge.style.display = 'flex';
         } else {
             badge.style.display = 'none';
