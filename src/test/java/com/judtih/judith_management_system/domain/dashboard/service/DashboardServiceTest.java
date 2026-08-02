@@ -1,20 +1,14 @@
 package com.judtih.judith_management_system.domain.dashboard.service;
 
-import com.judtih.judith_management_system.domain.dashboard.dto.DashboardNotificationRequest;
 import com.judtih.judith_management_system.domain.dashboard.dto.DashboardSeasonResponse;
 import com.judtih.judith_management_system.domain.dashboard.exception.NotASeasonMemberException;
 import com.judtih.judith_management_system.domain.season.Season;
 import com.judtih.judith_management_system.domain.season.SeasonRepository;
 import com.judtih.judith_management_system.domain.season.Status;
-import com.judtih.judith_management_system.domain.season.exception.SeasonClosedException;
 import com.judtih.judith_management_system.domain.user.entity.User;
 import com.judtih.judith_management_system.domain.user.entity.UserSeason;
 import com.judtih.judith_management_system.domain.user.enums.UserRole;
 import com.judtih.judith_management_system.domain.user.repository.UserSeasonRepository;
-import com.judtih.judith_management_system.global.notification.dto.NotificationResponse;
-import com.judtih.judith_management_system.global.notification.repository.UserNotificationRepository;
-import com.judtih.judith_management_system.global.notification.service.NotificationService;
-import com.judtih.judith_management_system.domain.user.repository.UserRepository;
 import com.judtih.judith_management_system.global.storage.repository.StorageRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,14 +33,9 @@ public class DashboardServiceTest {
     @Mock private UserSeasonRepository userSeasonRepository;
     @Mock private SeasonRepository seasonRepository;
     @Mock private StorageRepository storageRepository;
-    @Mock private UserNotificationRepository userNotificationRepository;
-    @Mock private NotificationService notificationService;
-    @Mock private UserRepository userRepository;
 
     @InjectMocks
     private DashboardService dashboardService;
-
-    //getMySeasonsWithDetail
 
     @Test
     void getMySeasonsWithDetail_shouldReturnMappedSeasons() {
@@ -78,8 +67,6 @@ public class DashboardServiceTest {
         assertThat(result.get(0).isMyFullAccess()).isTrue();
     }
 
-    //getSeasonForMember
-
     @Test
     void getSeasonForMember_shouldThrow_whenNotMember() {
         when(userSeasonRepository.existsByUserIdAndSeasonId(1L, 10L)).thenReturn(false);
@@ -102,49 +89,6 @@ public class DashboardServiceTest {
 
         assertThat(result.getSeasonName()).isEqualTo("2025 봄 시즌");
     }
-
-    //createSeasonNotification
-
-    @Test
-    void createSeasonNotification_shouldThrow_whenNotMember() {
-        when(userSeasonRepository.existsByUserIdAndSeasonId(1L, 10L)).thenReturn(false);
-
-        assertThatThrownBy(() -> dashboardService.createSeasonNotification(
-                1L, 10L, new DashboardNotificationRequest("제목", "내용"), false))
-                .isInstanceOf(NotASeasonMemberException.class);
-    }
-
-    @Test
-    void createSeasonNotification_shouldThrow_whenSeasonNotActive() {
-        Season season = new Season("종료된 시즌");
-        season.closeSeason();
-
-        when(userSeasonRepository.existsByUserIdAndSeasonId(1L, 10L)).thenReturn(true);
-        when(seasonRepository.findById(10L)).thenReturn(Optional.of(season));
-
-        assertThatThrownBy(() -> dashboardService.createSeasonNotification(
-                1L, 10L, new DashboardNotificationRequest("제목", "내용"), false))
-                .isInstanceOf(SeasonClosedException.class);
-    }
-
-    @Test
-    void createSeasonNotification_shouldSucceed_whenMemberAndSeasonActive() {
-        Season season = new Season("진행 중인 시즌");
-        season.activateSeason();
-        NotificationResponse mockResponse = NotificationResponse.builder().title("제목").content("내용").build();
-
-        when(userSeasonRepository.existsByUserIdAndSeasonId(1L, 10L)).thenReturn(true);
-        when(seasonRepository.findById(10L)).thenReturn(Optional.of(season));
-        when(notificationService.createNotification(any())).thenReturn(mockResponse);
-
-        NotificationResponse result = dashboardService.createSeasonNotification(
-                1L, 10L, new DashboardNotificationRequest("제목", "내용"), false);
-
-        assertThat(result).isNotNull();
-        assertThat(result.getTitle()).isEqualTo("제목");
-    }
-
-    // hasFullAccess = true (admin)
 
     @Test
     void getMySeasonsWithDetail_shouldReturnAllSeasons_whenFullAccess() {

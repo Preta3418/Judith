@@ -40,14 +40,15 @@
 
 </div>
 
-<!-- Create Notification Modal (admin only) -->
-<div class="modal-overlay" id="createNotifModal">
+<!-- Create / Edit Notification Modal -->
+<div class="modal-overlay" id="notifModal">
     <div class="modal" style="max-width:500px;">
         <div class="modal-header">
-            <h3 class="modal-title">공지사항 작성</h3>
-            <button class="modal-close" onclick="closeModal('createNotifModal')">&times;</button>
+            <h3 class="modal-title" id="notifModalTitle">공지사항 작성</h3>
+            <button class="modal-close" onclick="closeNotifModal()">&times;</button>
         </div>
         <div class="modal-body">
+            <input type="hidden" id="editingNotifId">
             <div class="form-group">
                 <label class="form-label">제목</label>
                 <input type="text" class="form-input" id="notifTitle" placeholder="공지 제목">
@@ -59,7 +60,7 @@
             <div id="notifError" class="error-message" style="display:none;"></div>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('createNotifModal')">취소</button>
+            <button class="btn btn-secondary" onclick="closeNotifModal()">취소</button>
             <button class="btn btn-primary" id="notifSubmitBtn" onclick="submitNotification()">게시</button>
         </div>
     </div>
@@ -69,8 +70,13 @@
 <script src="/js/api.js"></script>
 <script src="/js/dashboard.js"></script>
 <script>
+let _canEdit = false;
+
 async function loadPageContent() {
+    _canEdit = currentSeason.myFullAccess;
+    const isClosed = currentSeason.status === 'CLOSED';
     const container = document.getElementById('pageContainer');
+
     container.innerHTML = `
         <div class="dash-page-header">
             <div class="dash-greeting">공지사항</div>
@@ -79,7 +85,7 @@ async function loadPageContent() {
 
         <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:16px;">
             <button class="btn btn-secondary btn-sm" onclick="markAllRead()">전체 읽음</button>
-            ${isAdmin() ? `<button class="btn btn-primary btn-sm" onclick="openModal('createNotifModal')">+ 공지 작성</button>` : ''}
+            ${(_canEdit && !isClosed) ? `<button class="btn btn-primary btn-sm" onclick="openCreateModal()">+ 공지 작성</button>` : ''}
         </div>
 
         <div class="dash-notifs" id="notifList">
@@ -103,19 +109,35 @@ async function loadNotifications() {
             return;
         }
 
-        list.innerHTML = items.map(n => `
-            <div class="dash-notif ${n.read ? '' : 'unread'}" id="notif-${n.userNotificationId}"
-                 onclick="toggleNotif(${n.userNotificationId})">
-                <div class="dash-notif-header">
-                    <div class="dash-notif-title-row">
+        list.innerHTML = items.map(n => {
+            const isPinned = n.isPinned || n.pinned || false;
+            const notifId = n.notificationId || null;
+            return `
+            <div class="dash-notif ${n.read ? '' : 'unread'}" id="notif-${n.userNotificationId}">
+                <div class="dash-notif-header" onclick="toggleNotif(${n.userNotificationId})" style="cursor:pointer;">
+                    <div class="dash-notif-title-row" style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
                         ${n.read ? '' : '<span class="dash-unread-dot"></span>'}
+                        ${isPinned ? `<span style="font-size:0.75rem;background:var(--primary-bg);color:var(--primary);padding:2px 6px;border-radius:4px;font-weight:600;flex-shrink:0;">📌 고정</span>` : ''}
                         <span class="dash-notif-title">${escHtml(n.title)}</span>
                     </div>
-                    <span class="dash-notif-date">${fmtDateTime(n.createdAt)}</span>
+                    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                        <span class="dash-notif-date">${fmtDateTime(n.createdAt)}</span>
+                        ${_canEdit && notifId ? `
+                        <button class="btn btn-ghost btn-sm" title="${isPinned ? '고정 해제' : '고정'}"
+                            onclick="event.stopPropagation(); togglePin(${notifId}, ${isPinned})"
+                            style="font-size:1rem;padding:2px 4px;color:${isPinned ? 'var(--primary)' : 'var(--text-muted)'};">📌</button>
+                        <button class="btn btn-ghost btn-sm" title="수정"
+                            onclick="event.stopPropagation(); openEditModal(${notifId}, ${JSON.stringify(n.title).replace(/'/g,"&#39;")}, ${JSON.stringify(n.content || '').replace(/'/g,"&#39;")})"
+                            style="font-size:0.9rem;padding:2px 4px;">✏️</button>
+                        <button class="btn btn-ghost btn-sm" title="삭제"
+                            onclick="event.stopPropagation(); deleteNotification(${notifId})"
+                            style="font-size:0.9rem;padding:2px 4px;color:#ef4444;">🗑️</button>
+                        ` : ''}
+                    </div>
                 </div>
                 <div class="dash-notif-body">${escHtml(n.content)}</div>
             </div>
-        `).join('');
+        `}).join('');
     } catch(e) {
         list.innerHTML = '<div class="alert alert-danger">공지사항을 불러올 수 없습니다.</div>';
     }
@@ -144,9 +166,35 @@ async function markAllRead() {
     }
 }
 
+// ==================== Create / Edit ====================
+function openCreateModal() {
+    document.getElementById('editingNotifId').value = '';
+    document.getElementById('notifModalTitle').textContent = '공지사항 작성';
+    document.getElementById('notifSubmitBtn').textContent = '게시';
+    document.getElementById('notifTitle').value = '';
+    document.getElementById('notifContent').value = '';
+    document.getElementById('notifError').style.display = 'none';
+    openModal('notifModal');
+}
+
+function openEditModal(notifId, title, content) {
+    document.getElementById('editingNotifId').value = notifId;
+    document.getElementById('notifModalTitle').textContent = '공지사항 수정';
+    document.getElementById('notifSubmitBtn').textContent = '저장';
+    document.getElementById('notifTitle').value = title;
+    document.getElementById('notifContent').value = content;
+    document.getElementById('notifError').style.display = 'none';
+    openModal('notifModal');
+}
+
+function closeNotifModal() {
+    closeModal('notifModal');
+}
+
 async function submitNotification() {
     const title = document.getElementById('notifTitle').value.trim();
     const content = document.getElementById('notifContent').value.trim();
+    const editingId = document.getElementById('editingNotifId').value;
     const errEl = document.getElementById('notifError');
     const btn = document.getElementById('notifSubmitBtn');
 
@@ -158,23 +206,53 @@ async function submitNotification() {
     }
 
     btn.disabled = true;
-    btn.textContent = '게시 중...';
+    btn.textContent = editingId ? '저장 중...' : '게시 중...';
     try {
-        await api(`/api/admin/seasons/${currentSeasonId}/notifications`, {
-            method: 'POST',
-            body: JSON.stringify({ title, content })
-        });
-        closeModal('createNotifModal');
-        document.getElementById('notifTitle').value = '';
-        document.getElementById('notifContent').value = '';
-        showToast('공지사항이 게시되었습니다', 'success');
+        if (editingId) {
+            await api(`/api/admin/seasons/${currentSeasonId}/notifications/${editingId}`, {
+                method: 'PUT',
+                body: JSON.stringify({ title, content })
+            });
+            showToast('공지사항이 수정되었습니다', 'success');
+        } else {
+            await api(`/api/admin/seasons/${currentSeasonId}/notifications`, {
+                method: 'POST',
+                body: JSON.stringify({ title, content })
+            });
+            showToast('공지사항이 게시되었습니다', 'success');
+        }
+        closeNotifModal();
         await loadNotifications();
     } catch(e) {
         errEl.textContent = e.message || '오류가 발생했습니다.';
         errEl.style.display = 'block';
     } finally {
         btn.disabled = false;
-        btn.textContent = '게시';
+        btn.textContent = editingId ? '저장' : '게시';
+    }
+}
+
+// ==================== Delete ====================
+async function deleteNotification(notifId) {
+    if (!confirm('이 공지사항을 삭제하시겠습니까? 모든 부원의 알림에서도 사라집니다.')) return;
+    try {
+        await api(`/api/admin/seasons/${currentSeasonId}/notifications/${notifId}`, { method: 'DELETE' });
+        showToast('공지사항이 삭제되었습니다', 'success');
+        await loadNotifications();
+    } catch(e) {
+        showToast('삭제에 실패했습니다', 'error');
+    }
+}
+
+// ==================== Pin ====================
+async function togglePin(notifId, currentlyPinned) {
+    const pinned = !currentlyPinned;
+    try {
+        await api(`/api/admin/seasons/${currentSeasonId}/notifications/${notifId}/pin?pinned=${pinned}`, { method: 'PUT' });
+        showToast(pinned ? '홈 화면에 고정되었습니다' : '고정이 해제되었습니다', 'success');
+        await loadNotifications();
+    } catch(e) {
+        showToast('처리에 실패했습니다', 'error');
     }
 }
 </script>

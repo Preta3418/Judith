@@ -78,7 +78,14 @@
 <script src="/js/dashboard.js"></script>
 <script>
 async function loadPageContent() {
-    const isAdmin = currentSeason && currentSeason.myFullAccess;
+    const isClosed = currentSeason.status === 'CLOSED';
+    const canEdit = currentSeason.myFullAccess && !isClosed;
+
+    // Closed season: show eventDate month in calendar
+    let calendarDate = null;
+    if (isClosed && currentSeason.eventDate) {
+        calendarDate = currentSeason.eventDate.replace(/-/g, '');
+    }
 
     document.getElementById('pageContainer').innerHTML = `
         <div class="dash-page-header">
@@ -87,19 +94,27 @@ async function loadPageContent() {
                     <div class="dash-greeting">일정</div>
                     <div class="dash-subtitle">${escHtml(currentSeason.seasonName)}</div>
                 </div>
-                ${isAdmin ? `<button class="btn btn-primary" onclick="openCreateModal()">+ 일정 추가</button>` : ''}
+                ${canEdit ? `<button class="btn btn-primary" onclick="openCreateModal()">+ 일정 추가</button>` : ''}
             </div>
         </div>
 
-        <!-- Today's Events -->
+        ${isClosed ? `
+        <div style="background:var(--primary-bg);border:1px solid var(--border-light);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">
+            <span style="font-size:1.5rem;">🎭</span>
+            <div>
+                <div style="font-weight:600;color:var(--primary);">요번 한 학기 고생하셨습니다!</div>
+                <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:2px;">${escHtml(currentSeason.seasonName)} 시즌이 종료되었습니다.</div>
+            </div>
+        </div>
+        ` : `
         <div class="dash-card">
             <div class="dash-card-header">
                 <span class="dash-card-title">오늘의 일정</span>
             </div>
             <div id="todayEvents"><div class="spinner"></div></div>
         </div>
+        `}
 
-        <!-- Google Calendar Embed -->
         <div class="dash-card">
             <div class="dash-card-header">
                 <span class="dash-card-title">전체 캘린더</span>
@@ -107,8 +122,7 @@ async function loadPageContent() {
             <div id="calendarEmbed"><div class="spinner"></div></div>
         </div>
 
-        ${isAdmin ? `
-        <!-- Admin: This Week's Events for management -->
+        ${canEdit ? `
         <div class="dash-card">
             <div class="dash-card-header">
                 <span class="dash-card-title">이번 주 일정 관리</span>
@@ -119,9 +133,9 @@ async function loadPageContent() {
         ` : ''}
     `;
 
-    renderTodayEvents('todayEvents');
-    renderCalendarEmbed('calendarEmbed');
-    if (isAdmin) loadWeekEvents();
+    if (!isClosed) renderTodayEvents('todayEvents');
+    renderCalendarEmbed('calendarEmbed', calendarDate);
+    if (canEdit) loadWeekEvents();
 }
 
 async function loadWeekEvents() {
