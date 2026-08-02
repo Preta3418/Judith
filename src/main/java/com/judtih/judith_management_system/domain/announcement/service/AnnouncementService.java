@@ -10,10 +10,12 @@ import com.judtih.judith_management_system.domain.season.SeasonRepository;
 import com.judtih.judith_management_system.domain.season.Status;
 import com.judtih.judith_management_system.domain.season.exception.NoSeasonFoundException;
 import com.judtih.judith_management_system.domain.season.exception.SeasonClosedException;
-import com.judtih.judith_management_system.global.notification.entity.UserNotification;
 import com.judtih.judith_management_system.domain.user.repository.UserSeasonRepository;
+import com.judtih.judith_management_system.global.notification.entity.UserNotification;
 import com.judtih.judith_management_system.global.notification.enums.NotificationType;
+import com.judtih.judith_management_system.global.notification.enums.SourceType;
 import com.judtih.judith_management_system.global.notification.exception.NoNotificationFoundException;
+import com.judtih.judith_management_system.global.notification.repository.NotificationRepository;
 import com.judtih.judith_management_system.global.notification.repository.UserNotificationRepository;
 import com.judtih.judith_management_system.global.notification.service.NotificationService;
 import jakarta.transaction.Transactional;
@@ -32,6 +34,7 @@ public class AnnouncementService {
 
     private final AnnouncementRepository announcementRepository;
     private final UserNotificationRepository userNotificationRepository;
+    private final NotificationRepository notificationRepository;
     private final UserSeasonRepository userSeasonRepository;
     private final SeasonRepository seasonRepository;
     private final NotificationService notificationService;
@@ -43,8 +46,8 @@ public class AnnouncementService {
 
         List<Long> ids = announcements.stream().map(Announcement::getId).toList();
         Map<Long, UserNotification> readMap = userNotificationRepository
-                .findByUserIdAndAnnouncementIdIn(userId, ids)
-                .stream().collect(Collectors.toMap(UserNotification::getAnnouncementId, un -> un));
+                .findByUserIdAndNotification_SourceTypeAndNotification_SourceIdIn(userId, SourceType.LMS, ids)
+                .stream().collect(Collectors.toMap(un -> un.getNotification().getSourceId(), un -> un, (a, b) -> a));
 
         return announcements.stream().map(a -> {
             UserNotification un = readMap.get(a.getId());
@@ -78,7 +81,7 @@ public class AnnouncementService {
                 .build());
 
         notificationService.sendToSeasonMembers(seasonId, req.getTitle(), req.getContent(),
-                NotificationType.ANNOUNCEMENT, announcement.getId());
+                NotificationType.ANNOUNCEMENT, SourceType.LMS, announcement.getId());
 
         return AnnouncementResponse.builder()
                 .id(announcement.getId())
@@ -105,7 +108,8 @@ public class AnnouncementService {
         if (!hasFullAccess) throw new SeasonClosedException("Forbidden", 403, "Forbidden");
         announcementRepository.findById(announcementId)
                 .orElseThrow(() -> new NoNotificationFoundException("Announcement not found", 404, "Not Found"));
-        userNotificationRepository.deleteByAnnouncementId(announcementId);
+        userNotificationRepository.deleteByNotification_SourceTypeAndNotification_SourceId(SourceType.LMS, announcementId);
+        notificationRepository.deleteBySourceTypeAndSourceId(SourceType.LMS, announcementId);
         announcementRepository.deleteById(announcementId);
     }
 

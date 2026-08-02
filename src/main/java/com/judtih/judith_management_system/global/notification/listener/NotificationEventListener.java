@@ -2,6 +2,7 @@ package com.judtih.judith_management_system.global.notification.listener;
 
 import com.judtih.judith_management_system.domain.user.entity.User;
 import com.judtih.judith_management_system.global.notification.enums.NotificationType;
+import com.judtih.judith_management_system.global.notification.enums.SourceType;
 import com.judtih.judith_management_system.global.notification.service.NotificationService;
 import com.judtih.judith_management_system.global.security.event.UserLoggedInEvent;
 import jakarta.transaction.Transactional;
@@ -31,6 +32,7 @@ public class NotificationEventListener {
                 "비밀번호를 변경해 주세요",
                 "보안을 위해 비밀번호를 변경하는 것을 권장합니다.",
                 NotificationType.PASSWORD_NOT_CHANGED,
+                SourceType.AUTH,
                 null
         );
     }

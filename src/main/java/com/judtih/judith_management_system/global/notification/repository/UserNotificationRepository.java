@@ -2,6 +2,7 @@ package com.judtih.judith_management_system.global.notification.repository;
 
 import com.judtih.judith_management_system.global.notification.entity.UserNotification;
 import com.judtih.judith_management_system.global.notification.enums.NotificationType;
+import com.judtih.judith_management_system.global.notification.enums.SourceType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -16,9 +17,10 @@ public interface UserNotificationRepository extends JpaRepository<UserNotificati
 
     Integer countByUserIdAndIsReadFalse(Long userId);
 
-    boolean existsByUserIdAndIsReadFalseAndNotificationType(Long userId, NotificationType notificationType);
+    boolean existsByUserIdAndIsReadFalseAndNotification_NotificationType(Long userId, NotificationType notificationType);
 
-    List<UserNotification> findByUserIdAndAnnouncementIdIn(Long userId, List<Long> announcementIds);
+    List<UserNotification> findByUserIdAndNotification_SourceTypeAndNotification_SourceIdIn(
+            Long userId, SourceType sourceType, List<Long> sourceIds);
 
-    void deleteByAnnouncementId(Long announcementId);
+    void deleteByNotification_SourceTypeAndNotification_SourceId(SourceType sourceType, Long sourceId);
 }
