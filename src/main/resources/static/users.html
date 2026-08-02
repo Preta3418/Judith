@@ -31,6 +31,7 @@
                 <a href="/messages.html" class="dash-tab">문자</a>
             </div>
             <div class="dash-nav-right">
+                <button class="dash-season-btn" id="seasonSelector" style="display:none;"></button>
                 <div class="dash-avatar" id="userAvatar">U</div>
                 <span class="dash-user-name" id="userName"></span>
                 <button class="dash-btn-logout" onclick="logout()">로그아웃</button>
@@ -45,10 +46,11 @@
                     <div class="dash-greeting">부원 관리</div>
                     <div class="dash-subtitle">전체 부원 조회 및 관리</div>
                 </div>
-                <button class="btn btn-primary" onclick="openModal('createUserModal')">+ 부원 추가</button>
+                <button class="btn btn-primary" id="addUserBtn" onclick="openModal('createUserModal')">+ 부원 추가</button>
             </div>
         </div>
 
+        <div id="usersContent" style="position:relative;">
         <!-- Filter Tabs -->
         <div style="display:inline-flex;gap:4px;margin-bottom:16px;background:white;border:1px solid var(--border-light);border-radius:var(--radius);padding:4px;">
             <button class="btn btn-sm tab active" data-filter="all" onclick="filterUsers('all')" style="border-radius:calc(var(--radius) - 2px);">전체</button>
@@ -77,6 +79,7 @@
                     </tbody>
                 </table>
             </div>
+        </div>
         </div>
     </main>
 </div>
@@ -410,10 +413,39 @@ function fmtDateSimple(dateString) {
 
 // Initialize
 checkPasswordChangeNeeded();
-loadUsers();
-if (new URLSearchParams(window.location.search).get('action') === 'create') {
-    openModal('createUserModal');
-}
+
+const CLOSED_MASK_HTML = `
+    <div style="position:absolute;inset:0;background:rgba(255,255,255,0.65);backdrop-filter:blur(6px);z-index:10;display:flex;align-items:center;justify-content:center;border-radius:var(--radius);">
+        <div style="text-align:center;background:white;padding:32px 40px;border-radius:var(--radius);box-shadow:0 4px 24px rgba(0,0,0,0.12);">
+            <p style="font-size:1rem;font-weight:600;color:var(--text-primary);margin-bottom:6px;">종료된 학기입니다</p>
+            <p style="color:var(--text-muted);font-size:0.85rem;">시즌을 활성화한 후 이용해주세요.</p>
+        </div>
+    </div>
+`;
+
+(async () => {
+    // Season selector
+    try {
+        const season = await seasonApi.getCurrent();
+        const btn = document.getElementById('seasonSelector');
+        if (btn && season) {
+            btn.textContent = season.name;
+            btn.style.display = '';
+            btn.onclick = () => window.location.href = '/dashboard/index.html';
+        }
+        // Active season — load normally
+        loadUsers();
+        if (new URLSearchParams(window.location.search).get('action') === 'create') {
+            openModal('createUserModal');
+        }
+    } catch(e) {
+        // No active season — blur content, don't fetch
+        const content = document.getElementById('usersContent');
+        if (content) content.insertAdjacentHTML('beforeend', CLOSED_MASK_HTML);
+        const addBtn = document.getElementById('addUserBtn');
+        if (addBtn) { addBtn.disabled = true; addBtn.style.opacity = '0.3'; addBtn.style.pointerEvents = 'none'; }
+    }
+})();
 </script>
 </body>
 </html>

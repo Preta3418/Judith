@@ -15,9 +15,11 @@ async function loadDashboard() {
     try {
         mySeasons = await api('/api/dashboard/seasons');
         if (!mySeasons || mySeasons.length === 0) {
-            if (!isAdmin()) {
-                document.getElementById('pageContainer').innerHTML =
-                    '<div class="dash-empty"><div class="dash-empty-icon">&#x1F3AD;</div><p class="dash-empty-text">현재 배정된 시즌이 없습니다.<br>운영진에게 문의하세요.</p></div>';
+            const c = document.getElementById('pageContainer');
+            if (isAdmin()) {
+                if (c) c.innerHTML = '<div class="dash-empty"><div class="dash-empty-icon">&#x1F3AD;</div><p class="dash-empty-text">배정된 시즌이 없습니다.</p><a href="/seasons.html" class="btn btn-primary" style="margin-top:16px;">시즌 관리</a></div>';
+            } else {
+                if (c) c.innerHTML = '<div class="dash-empty"><div class="dash-empty-icon">&#x1F3AD;</div><p class="dash-empty-text">현재 배정된 시즌이 없습니다.<br>운영진에게 문의하세요.</p></div>';
             }
             return;
         }

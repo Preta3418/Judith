@@ -149,9 +149,9 @@ function computeDDay(eventDate) {
 
 async function loadUnreadCount() {
     try {
-        const count = await api(`/api/notifications/${getCurrentUserId()}/unread/count`);
+        const items = await api(`/api/dashboard/seasons/${currentSeasonId}/notifications`) || [];
         const el = document.getElementById('statUnread');
-        if (el) el.textContent = count ?? 0;
+        if (el) el.textContent = items.filter(n => !n.read).length;
     } catch(e) {
         const el = document.getElementById('statUnread');
         if (el) el.textContent = '0';
