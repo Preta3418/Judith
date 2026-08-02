@@ -1,13 +1,15 @@
 package com.judtih.judith_management_system.global.notification.service;
 
 import com.judtih.judith_management_system.domain.user.entity.User;
-import com.judtih.judith_management_system.domain.user.entity.UserSeason;
 import com.judtih.judith_management_system.domain.user.enums.UserStatus;
 import com.judtih.judith_management_system.domain.user.repository.UserSeasonRepository;
 import com.judtih.judith_management_system.global.notification.dto.UserNotificationResponse;
+import com.judtih.judith_management_system.global.notification.entity.Notification;
 import com.judtih.judith_management_system.global.notification.entity.UserNotification;
 import com.judtih.judith_management_system.global.notification.enums.NotificationType;
+import com.judtih.judith_management_system.global.notification.enums.SourceType;
 import com.judtih.judith_management_system.global.notification.exception.NoNotificationFoundException;
+import com.judtih.judith_management_system.global.notification.repository.NotificationRepository;
 import com.judtih.judith_management_system.global.notification.repository.UserNotificationRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -16,32 +18,39 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/** Delivers notifications to users and manages per-user read state. Does not own any content entity. */
+/** Delivers notifications and manages per-user read state. Owns bell delivery only; content is owned by callers (Announcement, password reminder, etc.). */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
 
+    private final NotificationRepository notificationRepository;
     private final UserNotificationRepository userNotificationRepository;
     private final UserSeasonRepository userSeasonRepository;
 
     /** Sends a notification to a single user — used for system alerts (password reminder etc.). */
     @Transactional
-    public void sendToUser(User user, String title, String content, NotificationType type, Long announcementId) {
+    public void sendToUser(User user, String title, String content, NotificationType type, SourceType sourceType, Long sourceId) {
         log.info("sendToUser: userId={}, type={}", user.getId(), type);
-        userNotificationRepository.save(new UserNotification(user, title, content, type, announcementId));
+        Notification n = notificationRepository.save(Notification.builder()
+                .title(title).content(content).notificationType(type)
+                .sourceType(sourceType).sourceId(sourceId).build());
+        userNotificationRepository.save(new UserNotification(user, n));
     }
 
     /** Fans out a notification to all active members of a season. */
     @Transactional
-    public void sendToSeasonMembers(Long seasonId, String title, String content, NotificationType type, Long announcementId) {
+    public void sendToSeasonMembers(Long seasonId, String title, String content, NotificationType type, SourceType sourceType, Long sourceId) {
         log.info("sendToSeasonMembers: seasonId={}, type={}", seasonId, type);
-        List<UserNotification> notifications = userSeasonRepository.findBySeasonId(seasonId).stream()
+        Notification n = notificationRepository.save(Notification.builder()
+                .title(title).content(content).notificationType(type)
+                .sourceType(sourceType).sourceId(sourceId).build());
+        List<UserNotification> uns = userSeasonRepository.findBySeasonId(seasonId).stream()
                 .filter(us -> us.getUser().getStatus() == UserStatus.ACTIVE)
-                .map(us -> new UserNotification(us.getUser(), title, content, type, announcementId))
+                .map(us -> new UserNotification(us.getUser(), n))
                 .toList();
-        userNotificationRepository.saveAll(notifications);
-        log.info("sendToSeasonMembers: delivered to {} users", notifications.size());
+        userNotificationRepository.saveAll(uns);
+        log.info("sendToSeasonMembers: delivered to {} users", uns.size());
     }
 
     public List<UserNotificationResponse> getNotificationsForUser(Long userId) {
@@ -76,19 +85,17 @@ public class NotificationService {
     }
 
     public boolean hasUnreadOfType(Long userId, NotificationType type) {
-        return userNotificationRepository.existsByUserIdAndIsReadFalseAndNotificationType(userId, type);
+        return userNotificationRepository.existsByUserIdAndIsReadFalseAndNotification_NotificationType(userId, type);
     }
 
     private UserNotificationResponse toResponse(UserNotification un) {
         return UserNotificationResponse.builder()
                 .userNotificationId(un.getId())
-                .title(un.getTitle())
-                .content(un.getContent())
-                .notificationType(un.getNotificationType())
-                .announcementId(un.getAnnouncementId())
+                .title(un.getNotification().getTitle())
+                .content(un.getNotification().getContent())
                 .isRead(un.isRead())
                 .readAt(un.getReadAt())
-                .createdAt(un.getCreatedAt())
+                .createdAt(un.getNotification().getCreatedAt())
                 .build();
     }
 }
