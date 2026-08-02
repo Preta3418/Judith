@@ -17,6 +17,7 @@ import com.judtih.judith_management_system.domain.user.exception.UserSeasonAlrea
 import com.judtih.judith_management_system.domain.user.repository.UserRepository;
 import com.judtih.judith_management_system.domain.user.repository.UserSeasonRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,7 @@ import java.util.List;
 
 
 /** Manages season membership: enrollment, role updates, removal, and full-access checks used at login. */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserSeasonService {
@@ -34,7 +36,7 @@ public class UserSeasonService {
 
     @Transactional
     public UserSeasonResponse addUserToSeason(UserSeasonRequest request) {
-
+        log.info("addUserToSeason: userId={}, seasonId={}", request.getUserId(), request.getSeasonId());
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new NoUserFoundException("user not found with id:" + request.getUserId(), 404, "Not Found"));
 
@@ -42,16 +44,21 @@ public class UserSeasonService {
                 .orElseThrow(() -> new NoSeasonFoundException("season not found with id:" + request.getSeasonId(), 404, "Not Found"));
 
         if (userSeasonRepository.existsByUserIdAndSeasonId(request.getUserId(), request.getSeasonId())) {
+            log.warn("addUserToSeason: rejected — userId={} already in seasonId={}", request.getUserId(), request.getSeasonId());
             throw new UserSeasonAlreadyExistsException("User already assigned to this season", 409, "Conflict");
         }
 
         // CLOSED seasons are fully read-only; PREPARING allows role-less enrollment (roles assigned later at activation)
         if (season.getStatus() == Status.CLOSED) {
+            log.warn("addUserToSeason: rejected — season {} is CLOSED", request.getSeasonId());
             throw new NoSeasonFoundException("Cannot add user when season is closed", 400, "Bad Request");
         }
 
         if (season.getStatus() == Status.ACTIVE) {
-            if(request.getRoles() == null || request.getRoles().isEmpty()) throw new NoRoleAssignedException("no roles assigned for user:" + user.getName(), 400, "Bad Request");
+            if(request.getRoles() == null || request.getRoles().isEmpty()) {
+                log.warn("addUserToSeason: rejected — no roles for userId={} on ACTIVE season", request.getUserId());
+                throw new NoRoleAssignedException("no roles assigned for user:" + user.getName(), 400, "Bad Request");
+            }
         }
 
 
@@ -70,7 +77,7 @@ public class UserSeasonService {
 
     @Transactional
     public UserSeasonResponse updateUserRoles(UpdateUserRolesRequest request) {
-
+        log.info("updateUserRoles: userId={}, seasonId={}, roles={}", request.getUserId(), request.getSeasonId(), request.getUserRoles());
         UserSeason userSeason = findUserSeasonOrThrow(request.getUserId(), request.getSeasonId());
 
         userSeason.updateRoles(request.getUserRoles());
@@ -80,6 +87,7 @@ public class UserSeasonService {
 
     @Transactional
     public void removeUserFromSeason(Long userId, Long seasonId) {
+        log.info("removeUserFromSeason: userId={}, seasonId={}", userId, seasonId);
         UserSeason userSeason = findUserSeasonOrThrow(userId, seasonId);
 
         userSeasonRepository.delete(userSeason);

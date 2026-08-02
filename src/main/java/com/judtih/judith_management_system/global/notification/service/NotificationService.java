@@ -19,6 +19,7 @@ import com.judtih.judith_management_system.global.notification.repository.Notifi
 import com.judtih.judith_management_system.global.notification.repository.UserNotificationRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 
 /** Creates and delivers notifications to season members, and manages per-user read state. */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
@@ -39,6 +41,7 @@ public class NotificationService {
 
     @Transactional
     public NotificationResponse createNotification(UserNotificationRequest request) {
+        log.info("createNotification: title={}, targetRoles={}", request.getTitle(), request.getTargetRoles());
         Notification notification = Notification.builder()
                 .title(request.getTitle())
                 .content(request.getContent())
@@ -84,6 +87,7 @@ public class NotificationService {
         userNotificationRepository.saveAll(userNotificationList);
 
         int count = userNotificationList.size();
+        log.info("createNotification: delivered to {} users", count);
 
         return createNotificationResponse(notification, count);
 
@@ -92,6 +96,7 @@ public class NotificationService {
     /** Used by NotificationEventListener to deliver a single-target notification (e.g., password reminder on login). */
     @Transactional
     public void createNotificationForOneUser(User user, Notification notification) {
+        log.info("createNotificationForOneUser: userId={}, title={}", user.getId(), notification.getTitle());
         notificationRepository.save(notification);
 
         UserNotification userNotification = new UserNotification(user, notification);
@@ -131,6 +136,7 @@ public class NotificationService {
 
     @Transactional
     public void markAsRead(Long userNotificationId) {
+        log.debug("markAsRead: userNotificationId={}", userNotificationId);
         UserNotification userNotification = userNotificationRepository.findById(userNotificationId)
                 .orElseThrow(() -> new NoNotificationFoundException("No notification was found with id: " + userNotificationId, 404, "Not Found"));
 
@@ -140,6 +146,7 @@ public class NotificationService {
 
     @Transactional
     public void markAllAsRead(Long userId) {
+        log.debug("markAllAsRead: userId={}", userId);
         List<UserNotification> userNotifications = userNotificationRepository.findByUserIdAndIsReadFalse(userId);
 
         for (UserNotification notification : userNotifications) {

@@ -6,6 +6,7 @@ import com.judtih.judith_management_system.domain.user.entity.User;
 import com.judtih.judith_management_system.domain.user.enums.UserStatus;
 import com.judtih.judith_management_system.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /** CRUD service for user accounts; default password is the student number (BCrypt-encoded). */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -24,6 +26,7 @@ public class UserService {
 
     @Transactional
     public UserResponse createUser(UserRequest request) {
+        log.info("createUser: name={}, studentNumber={}", request.getName(), request.getStudentNumber());
         // Initial password is the student number; user is prompted to change it after first login
         String defaultPassword = passwordEncoder.encode(request.getStudentNumber());
 
@@ -65,6 +68,7 @@ public class UserService {
 
     @Transactional
     public UserResponse updateUser(Long id, UserRequest request) {
+        log.info("updateUser: id={}", id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
 
@@ -74,6 +78,7 @@ public class UserService {
 
     @Transactional
     public UserResponse deactivateUser(Long id) {
+        log.info("deactivateUser: id={}", id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
 
@@ -83,10 +88,12 @@ public class UserService {
 
     @Transactional
     public UserResponse reactivateUser(Long id) {
+        log.info("reactivateUser: id={}", id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
 
         if (user.getStatus() != UserStatus.INACTIVE) {
+            log.warn("reactivateUser: rejected — user {} is not INACTIVE (status={})", id, user.getStatus());
             throw new IllegalStateException("Only inactive users can be reactivated");
         }
 

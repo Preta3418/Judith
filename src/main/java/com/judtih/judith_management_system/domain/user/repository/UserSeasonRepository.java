@@ -1,5 +1,6 @@
 package com.judtih.judith_management_system.domain.user.repository;
 
+import com.judtih.judith_management_system.domain.season.Status;
 import com.judtih.judith_management_system.domain.user.entity.UserSeason;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -18,4 +19,7 @@ public interface UserSeasonRepository extends JpaRepository<UserSeason, Long> {
     Optional<UserSeason> findByUserIdAndSeasonId(Long userId, Long seasonId);
 
     boolean existsByUserIdAndSeasonId(Long userId, Long seasonId);
+
+    // Used by cross-season read access: is this user a member of any season with any of the given statuses?
+    boolean existsByUserIdAndSeason_StatusIn(Long userId, java.util.Collection<Status> statuses);
 }

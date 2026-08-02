@@ -9,6 +9,7 @@ import com.google.api.services.calendar.model.Events;
 import com.judtih.judith_management_system.domain.calendar.dto.GoogleCalendarRequest;
 import com.judtih.judith_management_system.domain.calendar.dto.GoogleCalendarResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
  * Google Calendar is the source of truth — no events are stored in our DB.
  * Admin creates/edits/deletes via our dashboard; changes sync to Google Calendar in real time.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GoogleCalendarService {
@@ -36,6 +38,7 @@ public class GoogleCalendarService {
 
     // Fetches events in the given date range from the club's Google Calendar.
     public List<GoogleCalendarResponse> getEvents(LocalDate from, LocalDate to) throws IOException {
+        log.debug("getEvents: from={}, to={}", from, to);
         Events events = googleCalendar.events().list(calendarId)
                 .setTimeMin(toGoogleDateTime(from.atStartOfDay()))
                 .setTimeMax(toGoogleDateTime(to.plusDays(1).atStartOfDay()))
@@ -50,6 +53,7 @@ public class GoogleCalendarService {
 
     // Creates a new event. If no end time is provided, defaults to start + 1 hour.
     public GoogleCalendarResponse createEvent(GoogleCalendarRequest req) throws IOException {
+        log.info("createEvent: title={}, start={}", req.getTitle(), req.getStart());
         LocalDateTime end = req.getEnd() != null ? req.getEnd() : req.getStart().plusHours(1);
 
         Event event = new Event()
@@ -72,6 +76,7 @@ public class GoogleCalendarService {
 
     // Fetches the existing event from Google, applies changes, and pushes the update back.
     public GoogleCalendarResponse updateEvent(String googleEventId, GoogleCalendarRequest req) throws IOException {
+        log.info("updateEvent: googleEventId={}", googleEventId);
         LocalDateTime end = req.getEnd() != null ? req.getEnd() : req.getStart().plusHours(1);
 
         Event event = googleCalendar.events().get(calendarId, googleEventId).execute();
@@ -94,6 +99,7 @@ public class GoogleCalendarService {
 
     // Deletes an event from Google Calendar by its Google-assigned event ID.
     public void deleteEvent(String googleEventId) throws IOException {
+        log.info("deleteEvent: googleEventId={}", googleEventId);
         googleCalendar.events().delete(calendarId, googleEventId).execute();
     }
 

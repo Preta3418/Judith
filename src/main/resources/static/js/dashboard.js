@@ -22,17 +22,21 @@ async function loadDashboard() {
             return;
         }
 
+        const urlParams = new URLSearchParams(window.location.search);
+        const paramSeasonId = urlParams.get('seasonId');
         const hasActiveSeason = mySeasons.some(s => s.status === 'ACTIVE');
         const onSeasonsPage = window.location.pathname === '/dashboard/seasons.html';
 
-        if (!hasActiveSeason && !onSeasonsPage) {
+        // Only redirect when no season is explicitly selected and there's no active season to default to.
+        // Without the !paramSeasonId guard, clicking a past-season card loops: index?seasonId=X → redirect → seasons.html → repeat.
+        if (!paramSeasonId && !hasActiveSeason && !onSeasonsPage) {
             window.location.href = '/dashboard/seasons.html';
             return;
         }
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const paramSeasonId = urlParams.get('seasonId');
-        currentSeason = (paramSeasonId && mySeasons.find(s => s.seasonId == paramSeasonId)) || mySeasons[0];
+        currentSeason = (paramSeasonId && mySeasons.find(s => s.seasonId == paramSeasonId))
+            || mySeasons.find(s => s.status === 'ACTIVE')
+            || mySeasons[0];
         currentSeasonId = currentSeason.seasonId;
 
         populateSeasonSelector();
