@@ -40,6 +40,35 @@
 
 </div>
 
+<!-- Add To-Do Modal -->
+<div class="modal-overlay" id="todoModal" style="display:none;">
+    <div class="modal" style="max-width:420px;">
+        <div class="modal-header">
+            <h3 class="modal-title">할 일 추가</h3>
+            <button class="modal-close" onclick="closeTodoModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label required">제목</label>
+                <input type="text" class="form-input" id="todoTitle" placeholder="할 일 내용">
+            </div>
+            <div class="form-group">
+                <label class="form-label required">날짜 및 시작 시간</label>
+                <input type="datetime-local" class="form-input" id="todoStart">
+            </div>
+            <div class="form-group">
+                <label class="form-label">종료 시간</label>
+                <input type="datetime-local" class="form-input" id="todoEnd">
+                <div class="form-hint">비워두면 시작 +1시간으로 자동 설정됩니다</div>
+            </div>
+        </div>
+        <div class="modal-footer" style="display:flex;justify-content:flex-end;gap:8px;padding:16px 24px;border-top:1px solid var(--border-light);">
+            <button class="btn btn-secondary" onclick="closeTodoModal()">취소</button>
+            <button class="btn btn-primary" onclick="submitTodo()">추가</button>
+        </div>
+    </div>
+</div>
+
 <script src="/js/auth.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/dashboard.js"></script>
@@ -47,6 +76,8 @@
 async function loadPageContent() {
     const container = document.getElementById('pageContainer');
     const name = getCurrentUserName();
+    const isClosed = currentSeason.status === 'CLOSED';
+    const canEdit = currentSeason.myFullAccess && !isClosed;
 
     const dday = computeDDay(currentSeason.eventDate);
     const ddayHtml = dday !== null ? `
@@ -57,87 +88,88 @@ async function loadPageContent() {
         </div>
     ` : '';
 
+    const myRolesHtml = (currentSeason.myRoles && currentSeason.myRoles.length > 0)
+        ? [...currentSeason.myRoles].map(r => `<span class="badge badge-primary">${escHtml(getRoleLabel(r))}</span>`).join('')
+        : '<span style="font-size:0.85rem;color:var(--text-muted);">배정된 역할 없음</span>';
+
+    const todayLabel = new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' });
+
     container.innerHTML = `
         <div class="dash-page-header">
-            <div class="dash-greeting">${escHtml(name)}님, 안녕하세요 👋</div>
-            <div class="dash-subtitle">${escHtml(currentSeason.seasonName)}</div>
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                <div>
+                    <div class="dash-greeting">${escHtml(name)}님, 안녕하세요</div>
+                    <div class="dash-subtitle" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                        <span>${escHtml(currentSeason.seasonName)}</span>
+                        ${statusBadge(currentSeason.status)}
+                    </div>
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;padding-top:6px;">
+                    ${myRolesHtml}
+                </div>
+            </div>
         </div>
 
         ${ddayHtml}
 
-        <div class="dash-stats">
-            <a href="${dashboardUrl('notifications.html')}" class="dash-stat">
-                <div class="dash-stat-value" id="statUnread">-</div>
-                <div class="dash-stat-label">읽지 않은 공지</div>
-            </a>
-            <a href="${dashboardUrl('scripts.html')}" class="dash-stat">
-                <div class="dash-stat-value" id="statScripts">-</div>
-                <div class="dash-stat-label">대본 파일</div>
-            </a>
-            <div class="dash-stat">
-                <div class="dash-stat-value" id="statMembers">-</div>
-                <div class="dash-stat-label">시즌 부원</div>
-            </div>
-        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
 
-        <div class="dash-card">
-            <div class="dash-card-header">
-                <span class="dash-card-title">시즌 정보</span>
-                ${statusBadge(currentSeason.status)}
-            </div>
-            <div class="dash-season-header">
-                <span class="dash-season-name">${escHtml(currentSeason.seasonName)}</span>
-            </div>
-            <div class="dash-info-grid">
-                <div class="dash-info-item">
-                    <span class="dash-info-label">시작일</span>
-                    <span class="dash-info-value">${fmtDate(currentSeason.startDate)}</span>
+            <!-- Left column -->
+            <div style="display:flex;flex-direction:column;gap:20px;">
+
+                <!-- 최근 공지 -->
+                <div class="dash-card">
+                    <div class="dash-card-header">
+                        <span class="dash-card-title">최근 공지</span>
+                        <a href="${dashboardUrl('notifications.html')}" style="font-size:0.8rem;color:var(--primary);">전체 보기</a>
+                    </div>
+                    <div id="latestNotice"><div class="spinner" style="width:20px;height:20px;"></div></div>
                 </div>
-                <div class="dash-info-item">
-                    <span class="dash-info-label">공연일</span>
-                    <span class="dash-info-value">${fmtDate(currentSeason.eventDate)}</span>
+
+                <!-- 할 일 -->
+                <div class="dash-card">
+                    <div class="dash-card-header">
+                        <span class="dash-card-title">할 일</span>
+                        ${canEdit ? `<button class="btn btn-sm btn-outline" onclick="openTodoModal()">+ 추가</button>` : ''}
+                    </div>
+                    <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:12px;">${todayLabel}</div>
+                    <div id="todayTodos"><div class="spinner" style="width:20px;height:20px;"></div></div>
                 </div>
-                <div class="dash-info-item">
-                    <span class="dash-info-label">종료일</span>
-                    <span class="dash-info-value">${fmtDate(currentSeason.endDate)}</span>
+
+            </div>
+
+            <!-- Right column -->
+            <div style="display:flex;flex-direction:column;gap:20px;">
+
+                <!-- 공유 파일 (placeholder) -->
+                <div class="dash-card">
+                    <div class="dash-card-header">
+                        <span class="dash-card-title">공유 파일</span>
+                    </div>
+                    <div style="padding:20px 0;text-align:center;">
+                        <div style="font-size:2rem;margin-bottom:8px;">📁</div>
+                        <p style="font-size:0.85rem;color:var(--text-muted);margin:0;">게시판 연동 후 이용 가능합니다</p>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="dash-card">
-            <div class="dash-card-header">
-                <span class="dash-card-title">내 역할</span>
-            </div>
-            <div class="dash-roles">
-                ${(currentSeason.myRoles && currentSeason.myRoles.length > 0)
-                    ? [...currentSeason.myRoles].map(r => `<span class="badge badge-primary">${escHtml(getRoleLabel(r))}</span>`).join('')
-                    : '<span class="text-muted" style="font-size:0.875rem;">배정된 역할이 없습니다</span>'
-                }
-            </div>
-        </div>
+                <!-- 부원 목록 -->
+                <div class="dash-card">
+                    <div class="dash-card-header">
+                        <span class="dash-card-title">이번 시즌 부원</span>
+                        <span id="memberCount" style="font-size:0.8rem;color:var(--text-muted);"></span>
+                    </div>
+                    <div class="dash-member-grid" id="memberGrid">
+                        <div class="spinner" style="width:20px;height:20px;"></div>
+                    </div>
+                </div>
 
-        <div class="dash-card">
-            <div class="dash-card-header">
-                <span class="dash-card-title">부원 목록</span>
             </div>
-            <div class="dash-member-grid" id="memberGrid">
-                <div class="spinner"></div>
-            </div>
-        </div>
-
-        <div class="dash-card">
-            <div class="dash-card-header">
-                <span class="dash-card-title">오늘의 일정</span>
-                <a href="${dashboardUrl('schedule.html')}" style="font-size:0.8rem;color:var(--primary);">전체 보기</a>
-            </div>
-            <div id="todayEventsHome"><div class="spinner" style="width:20px;height:20px;"></div></div>
         </div>
     `;
 
-    loadUnreadCount();
-    loadScriptCount();
+    loadLatestNotice();
+    loadTodayTodos(canEdit);
     loadMembers();
-    renderTodayEvents('todayEventsHome');
 }
 
 function computeDDay(eventDate) {
@@ -147,25 +179,69 @@ function computeDDay(eventDate) {
     return Math.floor((target - today) / (1000 * 60 * 60 * 24));
 }
 
-async function loadUnreadCount() {
+async function loadLatestNotice() {
+    const el = document.getElementById('latestNotice');
     try {
         const items = await api(`/api/dashboard/seasons/${currentSeasonId}/notifications`) || [];
-        const el = document.getElementById('statUnread');
-        if (el) el.textContent = items.filter(n => !n.read).length;
+        if (items.length === 0) {
+            el.innerHTML = '<p style="font-size:0.875rem;color:var(--text-muted);">등록된 공지사항이 없습니다.</p>';
+            return;
+        }
+        const n = items[0];
+        const preview = (n.content || '').substring(0, 80) + ((n.content || '').length > 80 ? '...' : '');
+        const isUnread = !n.read;
+        const isPinned = n.isPinned || n.pinned || false;
+        el.innerHTML = `
+            <a href="${dashboardUrl('notifications.html')}" style="text-decoration:none;color:inherit;">
+                <div style="display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:var(--radius);background:var(--gray-50);transition:background 0.15s;" onmouseover="this.style.background='var(--primary-bg)'" onmouseout="this.style.background='var(--gray-50)'">
+                    ${isUnread ? `<span style="width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0;margin-top:5px;"></span>` : `<span style="width:8px;height:8px;flex-shrink:0;"></span>`}
+                    <div style="min-width:0;">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                            ${isPinned ? `<span style="font-size:0.7rem;background:var(--primary-bg);color:var(--primary);padding:1px 5px;border-radius:4px;font-weight:600;flex-shrink:0;">📌 고정</span>` : ''}
+                            <span style="font-weight:${isUnread ? '600' : '500'};font-size:0.9rem;">${escHtml(n.title)}</span>
+                        </div>
+                        ${preview ? `<div style="font-size:0.8rem;color:var(--text-muted);line-height:1.4;">${escHtml(preview)}</div>` : ''}
+                        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:6px;">${fmtDate(n.createdAt)}</div>
+                    </div>
+                </div>
+            </a>
+        `;
     } catch(e) {
-        const el = document.getElementById('statUnread');
-        if (el) el.textContent = '0';
+        el.innerHTML = '<p style="font-size:0.875rem;color:var(--text-muted);">공지사항을 불러올 수 없습니다.</p>';
     }
 }
 
-async function loadScriptCount() {
+async function loadTodayTodos(canEdit) {
+    const el = document.getElementById('todayTodos');
     try {
-        const scripts = await api(`/api/dashboard/seasons/${currentSeasonId}/scripts`);
-        const el = document.getElementById('statScripts');
-        if (el) el.textContent = scripts ? scripts.length : 0;
+        const today = new Date().toISOString().split('T')[0];
+        const events = await calendarApi.getEvents(today, today);
+        if (!events || events.length === 0) {
+            el.innerHTML = '<p style="font-size:0.875rem;color:var(--text-muted);">오늘 일정이 없습니다.</p>';
+            return;
+        }
+        el.innerHTML = events.map(e => `
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--border-light);" class="todo-item">
+                <div style="min-width:0;">
+                    <div style="font-size:0.9rem;font-weight:500;">${escHtml(e.title)}</div>
+                    <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">${fmtDateTime(e.start)}</div>
+                </div>
+                ${canEdit ? `<button class="btn btn-ghost btn-sm" style="color:#ef4444;flex-shrink:0;font-size:0.8rem;" onclick="deleteTodo('${escHtml(e.googleEventId)}')">삭제</button>` : ''}
+            </div>
+        `).join('');
     } catch(e) {
-        const el = document.getElementById('statScripts');
-        if (el) el.textContent = '0';
+        el.innerHTML = '<p style="font-size:0.875rem;color:var(--text-muted);">일정을 불러올 수 없습니다.</p>';
+    }
+}
+
+async function deleteTodo(googleEventId) {
+    if (!confirm('이 일정을 삭제하시겠습니까?')) return;
+    try {
+        await calendarApi.deleteEvent(googleEventId);
+        showToast('삭제되었습니다.', 'success');
+        loadTodayTodos(true);
+    } catch(e) {
+        showToast('삭제에 실패했습니다.', 'error');
     }
 }
 
@@ -173,8 +249,8 @@ async function loadMembers() {
     const grid = document.getElementById('memberGrid');
     try {
         const members = await api(`/api/public/seasons/${currentSeasonId}/users`) || [];
-        const el = document.getElementById('statMembers');
-        if (el) el.textContent = members.length;
+        const countEl = document.getElementById('memberCount');
+        if (countEl) countEl.textContent = members.length + '명';
 
         if (members.length === 0) {
             grid.innerHTML = '<p style="color:var(--text-muted);font-size:0.875rem;">부원이 없습니다.</p>';
@@ -189,6 +265,43 @@ async function loadMembers() {
         `).join('');
     } catch(e) {
         if (grid) grid.innerHTML = '<p style="color:var(--text-muted);font-size:0.875rem;">부원 목록을 불러올 수 없습니다.</p>';
+    }
+}
+
+function openTodoModal() {
+    const now = new Date();
+    now.setMinutes(0, 0, 0);
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    document.getElementById('todoStart').value = local;
+    document.getElementById('todoEnd').value = '';
+    document.getElementById('todoTitle').value = '';
+    document.getElementById('todoModal').style.display = 'flex';
+}
+
+function closeTodoModal() {
+    document.getElementById('todoModal').style.display = 'none';
+}
+
+async function submitTodo() {
+    const title = document.getElementById('todoTitle').value.trim();
+    const start = document.getElementById('todoStart').value;
+    const end = document.getElementById('todoEnd').value;
+
+    if (!title) { showToast('제목을 입력해주세요.', 'error'); return; }
+    if (!start) { showToast('날짜와 시작 시간을 입력해주세요.', 'error'); return; }
+
+    try {
+        await calendarApi.createEvent({
+            title,
+            description: null,
+            start: start.replace('T', ' '),
+            end: end ? end.replace('T', ' ') : null
+        });
+        closeTodoModal();
+        showToast('추가되었습니다.', 'success');
+        loadTodayTodos(true);
+    } catch(e) {
+        showToast('추가에 실패했습니다.', 'error');
     }
 }
 </script>

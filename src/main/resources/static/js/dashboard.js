@@ -42,7 +42,12 @@ async function loadDashboard() {
         currentSeasonId = currentSeason.seasonId;
         sessionStorage.setItem('judithSeasonId', currentSeasonId);
 
+        document.querySelectorAll('.dash-nav-tabs a[href^="/dashboard/"]').forEach(a => {
+            try { const u = new URL(a.href); u.searchParams.set('seasonId', currentSeasonId); a.href = u.toString(); } catch(e) {}
+        });
+
         populateSeasonSelector();
+        loadNotifBadge();
 
         if (typeof loadPageContent === 'function') {
             loadPageContent();
@@ -61,7 +66,47 @@ function setupNav() {
     if (el('userName')) el('userName').textContent = userName;
     if (el('userAvatar')) el('userAvatar').textContent = userName.charAt(0).toUpperCase();
 
+    // Inject notification bell before the avatar
+    const navRight = document.querySelector('.dash-nav-right');
+    const avatar = el('userAvatar');
+    if (navRight && avatar && !el('notifBell')) {
+        const bell = document.createElement('button');
+        bell.id = 'notifBell';
+        bell.className = 'dash-notif-bell';
+        bell.title = '공지사항';
+        bell.innerHTML = `
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <span id="notifBadge" class="dash-notif-badge" style="display:none;"></span>
+        `;
+        navRight.insertBefore(bell, avatar);
+    }
+
     checkPasswordChangeNeeded();
+}
+
+async function loadNotifBadge() {
+    const badge = document.getElementById('notifBadge');
+    const bell = document.getElementById('notifBell');
+    if (!badge || !bell || !currentSeasonId) return;
+
+    // Set click target now that seasonId is known
+    bell.onclick = () => { window.location.href = dashboardUrl('notifications.html'); };
+
+    try {
+        const items = await api(`/api/dashboard/seasons/${currentSeasonId}/notifications`) || [];
+        const unread = items.filter(n => !n.read).length;
+        if (unread > 0) {
+            badge.textContent = unread > 99 ? '99+' : unread;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    } catch(e) {
+        badge.style.display = 'none';
+    }
 }
 
 function setupAdminNav() {
@@ -154,13 +199,15 @@ const calendarApi = {
 
 // Renders Google Calendar iframe into any container element
 // Usage: await renderCalendarEmbed('myDivId')
-async function renderCalendarEmbed(containerId) {
+async function renderCalendarEmbed(containerId, initialDate) {
     const container = document.getElementById(containerId);
     if (!container) return;
     try {
         const data = await fetch('/api/public/calendar/embed').then(r => r.json());
+        let embedUrl = data.embedUrl;
+        if (initialDate) embedUrl += `&date=${initialDate}`;
         container.innerHTML = `
-            <iframe src="${data.embedUrl}"
+            <iframe src="${embedUrl}"
                 style="border:0; width:100%; height:520px; border-radius:12px;"
                 frameborder="0" scrolling="no">
             </iframe>`;
