@@ -40,6 +40,7 @@ async function loadDashboard() {
             || mySeasons.find(s => s.status === 'ACTIVE')
             || mySeasons[0];
         currentSeasonId = currentSeason.seasonId;
+        sessionStorage.setItem('judithSeasonId', currentSeasonId);
 
         populateSeasonSelector();
 

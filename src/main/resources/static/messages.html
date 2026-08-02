@@ -126,6 +126,13 @@
 if (!requireAuth()) { /* redirects */ }
 if (!isAdmin()) { window.location.href = '/dashboard/index.html'; }
 
+const _sid = sessionStorage.getItem('judithSeasonId');
+if (_sid) {
+    document.querySelectorAll('.dash-nav-tabs a[href^="/dashboard/"]').forEach(a => {
+        try { const u = new URL(a.href); u.searchParams.set('seasonId', _sid); a.href = u.toString(); } catch(e) {}
+    });
+}
+
 const _uname = getCurrentUserName();
 document.getElementById('userName').textContent = _uname;
 document.getElementById('userAvatar').textContent = _uname.charAt(0).toUpperCase();
