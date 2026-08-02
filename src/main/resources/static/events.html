@@ -31,6 +31,7 @@
                 <a href="/messages.html" class="dash-tab">문자</a>
             </div>
             <div class="dash-nav-right">
+                <button class="dash-season-btn" id="seasonSelector" style="display:none;"></button>
                 <div class="dash-avatar" id="userAvatar">U</div>
                 <span class="dash-user-name" id="userName"></span>
                 <button class="dash-btn-logout" onclick="logout()">로그아웃</button>
@@ -97,22 +98,48 @@ let currentEvent = null;
 
 // ==================== Init ====================
 async function init() {
+    // Season selector
+    try {
+        const s = await seasonApi.getCurrent();
+        const btn = document.getElementById('seasonSelector');
+        if (btn && s) {
+            btn.textContent = s.name;
+            btn.style.display = '';
+            btn.onclick = () => window.location.href = '/dashboard/index.html';
+        }
+    } catch(e) {}
+
     try {
         currentSeason = await seasonApi.getCurrent();
     } catch(e) { currentSeason = null; }
 
-    if (!currentSeason || !currentSeason.id) {
-        renderNoSeason();
+    if (currentSeason && currentSeason.id) {
+        const event = await eventApi.getBySeasonId(currentSeason.id);
+        if (event) {
+            currentEvent = event;
+            renderEvent(false);
+        } else {
+            renderCreateForm();
+        }
         return;
     }
 
-    const event = await eventApi.getBySeasonId(currentSeason.id);
-    if (event) {
-        currentEvent = event;
-        renderEvent();
-    } else {
-        renderCreateForm();
-    }
+    // No active season — try to show last closed season's event in read-only mode
+    try {
+        const allSeasons = await seasonApi.getAll();
+        const closed = allSeasons.filter(s => s.status === 'CLOSED').sort((a, b) => b.id - a.id);
+        if (closed.length > 0) {
+            currentSeason = closed[0];
+            const event = await eventApi.getBySeasonId(currentSeason.id);
+            if (event) {
+                currentEvent = event;
+                renderEvent(true);
+                return;
+            }
+        }
+    } catch(e) {}
+
+    renderNoSeason();
 }
 
 // ==================== Views ====================
@@ -172,7 +199,7 @@ function renderCreateForm() {
     `;
 }
 
-function renderEvent() {
+function renderEvent(readOnly = false) {
     const STATUS = {
         OPEN:      { label: '예매중',    cls: 'badge-success' },
         CLOSED:    { label: '예매 전',   cls: 'badge-warning' },
@@ -295,6 +322,29 @@ function renderEvent() {
     `;
 
     loadCasting();
+
+    if (readOnly) {
+        // Insert closed-season banner at the top of pageContainer
+        document.getElementById('pageContainer').insertAdjacentHTML('afterbegin', `
+            <div style="background:var(--warning-bg,#fff8e1);border:1px solid var(--warning,#f59e0b);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+                <span style="font-size:1.1rem;">🔒</span>
+                <span style="font-weight:500;color:var(--text-primary);">종료된 학기입니다 — 조회만 가능합니다</span>
+            </div>
+        `);
+        // Disable all form inputs and buttons (except view-only ones)
+        document.querySelectorAll('#pageContainer input, #pageContainer textarea, #pageContainer select').forEach(el => {
+            el.disabled = true;
+            el.style.opacity = '0.6';
+        });
+        document.querySelectorAll('#pageContainer button').forEach(btn => {
+            // Keep reservation view buttons usable
+            if (!btn.textContent.includes('예매 목록')) {
+                btn.disabled = true;
+                btn.style.opacity = '0.4';
+                btn.style.pointerEvents = 'none';
+            }
+        });
+    }
 }
 
 function renderScheduleList() {
@@ -529,7 +579,7 @@ async function loadCasting() {
 async function refreshPage() {
     const event = await eventApi.getBySeasonId(currentSeason.id);
     currentEvent = event;
-    renderEvent();
+    renderEvent(false);
 }
 
 function copyUrl() {

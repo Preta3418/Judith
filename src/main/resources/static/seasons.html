@@ -31,6 +31,7 @@
                 <a href="/messages.html" class="dash-tab">문자</a>
             </div>
             <div class="dash-nav-right">
+                <button class="dash-season-btn" id="seasonSelector" style="display:none;"></button>
                 <div class="dash-avatar" id="userAvatar">U</div>
                 <span class="dash-user-name" id="userName"></span>
                 <button class="dash-btn-logout" onclick="logout()">로그아웃</button>
@@ -52,6 +53,7 @@
             </div>
         </div>
 
+        <div id="seasonsContent" style="position:relative;">
         <!-- Active Season Banner -->
         <div class="dash-dday-panel" id="currentSeasonBanner" style="display:none;margin-bottom:20px;">
             <span class="dash-dday-label">현재 활성 시즌</span>
@@ -102,6 +104,7 @@
                 </table>
             </div>
         </div>
+        </div><!-- end seasonsContent -->
     </main>
 </div>
 
@@ -293,6 +296,35 @@ document.getElementById('userName').textContent = _uname;
 document.getElementById('userAvatar').textContent = _uname.charAt(0).toUpperCase();
 
 checkPasswordChangeNeeded();
+
+const SEASONS_CLOSED_MASK = `
+    <div style="position:absolute;inset:0;background:rgba(255,255,255,0.65);backdrop-filter:blur(6px);z-index:10;display:flex;align-items:center;justify-content:center;border-radius:var(--radius);">
+        <div style="text-align:center;background:white;padding:32px 40px;border-radius:var(--radius);box-shadow:0 4px 24px rgba(0,0,0,0.12);">
+            <p style="font-size:1rem;font-weight:600;color:var(--text-primary);margin-bottom:6px;">종료된 학기입니다</p>
+            <p style="color:var(--text-muted);font-size:0.85rem;">시즌을 활성화한 후 이용해주세요.</p>
+        </div>
+    </div>
+`;
+
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const season = await seasonApi.getCurrent();
+        const btn = document.getElementById('seasonSelector');
+        if (btn && season) {
+            btn.textContent = season.name;
+            btn.style.display = '';
+            btn.onclick = () => window.location.href = '/dashboard/index.html';
+        }
+        // Active season — load data
+        loadSeasons();
+    } catch(e) {
+        // No active season — blur content, no API calls
+        const content = document.getElementById('seasonsContent');
+        if (content) content.insertAdjacentHTML('beforeend', SEASONS_CLOSED_MASK);
+        const tbody = document.getElementById('seasonsTableBody');
+        if (tbody) tbody.innerHTML = '';
+    }
+});
 </script>
 </body>
 </html>

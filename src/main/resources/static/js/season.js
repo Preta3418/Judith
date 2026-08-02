@@ -826,5 +826,4 @@ async function executeTransition() {
     }
 }
 
-// Initialize
-document.addEventListener('DOMContentLoaded', loadSeasons);
+// seasons.html controls init via initSeasonPage() to gate data loading
