@@ -2,10 +2,13 @@ package com.judtih.judith_management_system.domain.reservation.service;
 
 import com.judtih.judith_management_system.domain.reservation.entity.Event;
 import com.judtih.judith_management_system.domain.reservation.entity.EventSchedule;
+import com.judtih.judith_management_system.domain.reservation.entity.EventStatus;
 import com.judtih.judith_management_system.domain.reservation.eventDto.*;
 import com.judtih.judith_management_system.domain.reservation.repository.EventRepository;
 import com.judtih.judith_management_system.domain.reservation.repository.EventScheduleRepository;
 import com.judtih.judith_management_system.domain.reservation.repository.ReservationRepository;
+import com.judtih.judith_management_system.domain.season.SeasonRepository;
+import com.judtih.judith_management_system.domain.season.Status;
 import com.judtih.judith_management_system.global.storage.StorageFolder;
 import com.judtih.judith_management_system.global.storage.service.StorageService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +31,7 @@ public class EventService {
     private final EventScheduleRepository scheduleRepository;
     private final ReservationRepository reservationRepository;
     private final StorageService storageService;
+    private final SeasonRepository seasonRepository;
 
 
     //Admin methods ///////////////////////////////////////////////////////
@@ -44,6 +48,7 @@ public class EventService {
                 .posterImageUrl(eventRequest.getPosterImageUrl())
                 .build();
 
+        seasonRepository.findByStatus(Status.ACTIVE).ifPresent(event::linkSeason);
         eventRepository.save(event);
 
         return createEventResponse(event);
@@ -114,7 +119,7 @@ public class EventService {
     @Transactional(readOnly = true)
     public EventResponse getLatestEvent() {
         log.debug("getLatestEvent");
-        Optional<Event> event = eventRepository.findTopByStatusOrderByCreatedAtDesc(com.judtih.judith_management_system.domain.reservation.entity.EventStatus.OPEN);
+        Optional<Event> event = eventRepository.findTopByStatusOrderByCreatedAtDesc(EventStatus.OPEN);
         if (event.isEmpty()) {
             event = eventRepository.findTopByOrderByCreatedAtDesc();
         }
@@ -178,6 +183,28 @@ public class EventService {
         String url = storageService.uploadFile(file, StorageFolder.PAMPHLET, seasonId).getUrl();
         event.updatePamphletUrl(url);
         return createEventResponse(event);
+    }
+
+    @Transactional
+    public EventResponse closeEvent(Long id) {
+        log.info("closeEvent: id={}", id);
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        event.eventUpdate(null, null, null, null, EventStatus.COMPLETED, null);
+        return createEventResponse(event);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<EventResponse> getEventBySeasonId(Long seasonId) {
+        log.debug("getEventBySeasonId: seasonId={}", seasonId);
+        return eventRepository.findBySeasonId(seasonId).map(event -> {
+            List<EventSchedule> schedules = scheduleRepository.findByEventId(event.getId());
+            List<EventScheduleResponse> scheduleResponses = new ArrayList<>();
+            for (EventSchedule s : schedules) {
+                scheduleResponses.add(createEventScheduleResponse(s, event.getCapacityLimit()));
+            }
+            return createEventResponse(event, scheduleResponses);
+        });
     }
 
     //Helper method ///////////////////////////////////////////////////////

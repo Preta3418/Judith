@@ -77,6 +77,8 @@ const eventApi = {
     create: (event) => api('/api/admin/events', { method: 'POST', body: JSON.stringify(event) }),
     update: (id, event) => api(`/api/admin/events/${id}`, { method: 'PUT', body: JSON.stringify(event) }),
     delete: (id) => api(`/api/admin/events/${id}`, { method: 'DELETE' }),
+    closeEvent: (id) => api(`/api/admin/events/${id}/close`, { method: 'POST' }),
+    getBySeasonId: (seasonId) => api(`/api/admin/events/season/${seasonId}`),
 };
 
 // ==================== Schedule API (Admin) ====================

@@ -18,4 +18,8 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     Optional<Event> findTopByOrderByCreatedAtDesc();
 
+    Optional<Event> findBySeasonId(Long seasonId);
+
+    List<Event> findBySeasonIdAndStatus(Long seasonId, EventStatus status);
+
 }

@@ -138,6 +138,17 @@ public class ReservationController {
 
     }
 
+    @PostMapping("/api/admin/events/{eventId}/close")
+    public ResponseEntity<EventResponse> closeEvent(@PathVariable Long eventId) {
+        return ResponseEntity.ok(eventService.closeEvent(eventId));
+    }
+
+    @GetMapping("/api/admin/events/season/{seasonId}")
+    public ResponseEntity<EventResponse> getEventBySeason(@PathVariable Long seasonId) {
+        return eventService.getEventBySeasonId(seasonId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build());
+    }
 
 
 }

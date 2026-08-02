@@ -1,5 +1,6 @@
 package com.judtih.judith_management_system.domain.reservation.entity;
 
+import com.judtih.judith_management_system.domain.season.Season;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -46,6 +47,10 @@ public class Event {
 
     private String pamphletUrl;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "season_id")
+    private Season season;
+
     private LocalDateTime createdAt;
 
 
@@ -67,5 +72,9 @@ public class Event {
 
     public void updatePamphletUrl(String pamphletUrl) {
         this.pamphletUrl = pamphletUrl;
+    }
+
+    public void linkSeason(Season season) {
+        this.season = season;
     }
 }
