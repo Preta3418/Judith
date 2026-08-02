@@ -43,13 +43,6 @@
 <script src="/js/api.js"></script>
 <script src="/js/dashboard.js"></script>
 <script>
-const ROLE_LABELS = {
-    LEADER: '회장', PRODUCER: '연출', SUB_PRODUCER: '부연출', PLANNER: '기획',
-    ACTOR: '배우', STAFF: '스태프', SOUND_OPERATOR: '음향',
-    LIGHT_OPERATOR: '조명', SOUND_DESIGN: '음향 디자인',
-    LIGHT_DESIGN: '조명 디자인', IMAGE_DESIGN: '홍보 디자인', STAGE_DESIGN: '무대 디자인'
-};
-
 function loadPageContent() {
     const container = document.getElementById('pageContainer');
     container.innerHTML = `
@@ -69,7 +62,7 @@ function loadPageContent() {
                         ${s.endDate ? ' — ' + fmtDate(s.endDate) : ''}
                     </div>
                     <div class="season-card-roles">
-                        ${s.myRoles ? [...s.myRoles].map(r => `<span class="role-tag">${ROLE_LABELS[r] || r}</span>`).join('') : ''}
+                        ${s.myRoles ? [...s.myRoles].map(r => `<span class="role-tag">${getRoleLabel(r)}</span>`).join('') : ''}
                     </div>
                 </a>
             `).join('')}
