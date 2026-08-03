@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시판 — JUDITH</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        .board-layout { display:grid; grid-template-columns: 230px 1fr; gap:20px; align-items:start; }
+        @media (max-width: 768px) { .board-layout { grid-template-columns: 1fr; } }
+        .board-folder { display:flex; align-items:center; justify-content:space-between; padding:9px 12px;
+                        border-radius:var(--radius); cursor:pointer; font-size:0.9rem; }
+        .board-folder:hover { background: var(--gray-50); }
+        .board-folder.selected { background: var(--primary-bg); color: var(--primary); font-weight:600; }
+        .board-unread-dot { width:7px; height:7px; border-radius:50%; background:var(--primary); flex-shrink:0; }
+        .file-card { border:1px solid var(--border-light); border-radius:var(--radius); padding:12px;
+                     display:flex; flex-direction:column; gap:8px; position:relative; }
+        .file-card.pin-selected { border-color: var(--primary); background: var(--primary-bg); }
+        .post-row { padding:14px 16px; border-bottom:1px solid var(--border-light); cursor:pointer; }
+        .post-row:hover { background: var(--gray-50); }
+    </style>
+</head>
+<body>
+<div class="dash-shell">
+
+    <nav class="dash-nav">
+        <div class="dash-nav-inner">
+            <a href="/" class="dash-logo">
+                <img src="/images/logo-symbol-light.png" alt="JUDITH">
+                <span class="dash-logo-text">JUDITH</span>
+            </a>
+            <div class="dash-nav-tabs" id="navTabs">
+                <a href="/dashboard/index.html" class="dash-tab">홈</a>
+                <a href="/dashboard/announcements.html" class="dash-tab">공지사항</a>
+                <a href="/dashboard/scripts.html" class="dash-tab">대본</a>
+                <a href="/dashboard/schedule.html" class="dash-tab">일정</a>
+                <a href="/dashboard/board-select.html" class="dash-tab active">게시판</a>
+            </div>
+            <div class="dash-nav-right">
+                <button class="dash-season-btn" id="seasonSelector"></button>
+                <div class="dash-avatar" id="userAvatar">U</div>
+                <span class="dash-user-name" id="userName"></span>
+                <button class="dash-btn-logout" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dash-main" id="pageContainer">
+        <div class="loading"><div class="spinner"></div></div>
+    </main>
+
+</div>
+
+<!-- Create Post Modal -->
+<div class="modal-overlay" id="postModal" style="display:none;">
+    <div class="modal" style="max-width:560px;">
+        <div class="modal-header">
+            <h3 class="modal-title">게시물 작성</h3>
+            <button class="modal-close" onclick="closePostModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label required">제목</label>
+                <input type="text" class="form-input" id="postTitle" placeholder="게시물 제목">
+            </div>
+            <div class="form-group">
+                <label class="form-label">내용</label>
+                <textarea class="form-input" id="postContent" rows="4" placeholder="내용 (선택)" style="resize:vertical;"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">파일 / 음원 업로드</label>
+                <input type="file" class="form-input" id="postFiles" multiple>
+                <div class="form-hint">여러 개 선택 가능. 음원 파일(mp3 등)은 자동으로 플레이어로 표시됩니다.</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">URL 첨부</label>
+                <div style="display:flex;gap:8px;">
+                    <input type="url" class="form-input" id="postUrlInput" placeholder="https://...">
+                    <button class="btn btn-secondary btn-sm" type="button" onclick="addUrlToList()">추가</button>
+                </div>
+                <div id="postUrlList" style="margin-top:8px;display:flex;flex-direction:column;gap:4px;"></div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">저장 위치</label>
+                <select class="form-input" id="postFolderSelect">
+                    <option value="">루트 (폴더 없음)</option>
+                </select>
+            </div>
+            <div id="postError" class="error-message" style="display:none;"></div>
+        </div>
+        <div class="modal-footer" style="display:flex;justify-content:flex-end;gap:8px;padding:16px 24px;border-top:1px solid var(--border-light);">
+            <button class="btn btn-secondary" onclick="closePostModal()">취소</button>
+            <button class="btn btn-primary" id="postSubmitBtn" onclick="submitPost()">게시</button>
+        </div>
+    </div>
+</div>
+
+<!-- Post Detail Modal -->
+<div class="modal-overlay" id="detailModal" style="display:none;">
+    <div class="modal" style="max-width:640px;max-height:85vh;overflow-y:auto;">
+        <div class="modal-header">
+            <h3 class="modal-title" id="detailTitle"></h3>
+            <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="detailBody"></div>
+    </div>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/dashboard.js"></script>
+<script>
+// ==================== State ====================
+let dept = null;              // department config object
+let deptKey = null;
+let folders = [];
+let currentSelection = 'all'; // 'all' | 'root' | folderId(number)
+let currentPosts = [];
+let pinMode = false;
+let selectedPins = { post: new Set(), comment: new Set() };
+let _canPost = false;
+let _isClosed = false;
+
+async function loadPageContent() {
+    deptKey = new URLSearchParams(window.location.search).get('department');
+    dept = getDeptConfig(deptKey);
+    if (!dept) { window.location.href = dashboardUrl('board-select.html'); return; }
+
+    _isClosed = currentSeason.status === 'CLOSED';
+    _canPost = canPostToDept(deptKey) && !_isClosed;
+
+    const container = document.getElementById('pageContainer');
+    container.innerHTML = `
+        <div class="dash-page-header">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+                <div>
+                    <div class="dash-greeting">${dept.icon} ${dept.label}</div>
+                    <div class="dash-subtitle">${escHtml(currentSeason.seasonName)}${_isClosed ? ' · 읽기 전용 (시즌 종료)' : ''}</div>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    ${currentSeason.myFullAccess && !_isClosed ? `<button class="btn btn-secondary btn-sm" id="pinModeBtn" onclick="togglePinMode()">📌 핀 관리</button>` : ''}
+                    ${_canPost ? `<button class="btn btn-primary btn-sm" onclick="openPostModal()">+ 게시물 작성</button>` : ''}
+                </div>
+            </div>
+        </div>
+
+        <div class="board-layout">
+            <!-- Left: folders -->
+            <div class="dash-card" style="padding:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:0 4px;">
+                    <span style="font-size:0.8rem;font-weight:600;color:var(--text-muted);">폴더</span>
+                    ${_canPost ? `<button class="btn btn-ghost btn-sm" style="font-size:0.75rem;padding:2px 6px;" onclick="createFolderPrompt()">+ 새 폴더</button>` : ''}
+                </div>
+                <div id="folderList"><div class="spinner" style="width:18px;height:18px;"></div></div>
+            </div>
+
+            <!-- Right: files + posts -->
+            <div style="display:flex;flex-direction:column;gap:20px;min-width:0;">
+                <div class="dash-card" id="pinBar" style="display:none;background:var(--primary-bg);padding:12px 16px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+                        <span style="font-size:0.85rem;">파일 카드를 클릭해 선택하세요 (<span id="pinCount">0</span>개 선택됨)</span>
+                        <div style="display:flex;gap:6px;">
+                            <button class="btn btn-primary btn-sm" onclick="applyPin(true)">핀 고정</button>
+                            <button class="btn btn-secondary btn-sm" onclick="applyPin(false)">핀 해제</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dash-card">
+                    <div class="dash-card-header"><span class="dash-card-title">파일</span></div>
+                    <div id="fileSection" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;"></div>
+                </div>
+
+                <div class="dash-card" style="padding:0;overflow:hidden;">
+                    <div class="dash-card-header" style="padding:16px 16px 8px;"><span class="dash-card-title">게시물</span></div>
+                    <div id="postSection"></div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    await loadFolders();
+    await loadPosts();
+}
+
+// ==================== Folders (left panel) ====================
+async function loadFolders() {
+    try {
+        folders = await api(`${boardApiBase(deptKey)}/folders`) || [];
+    } catch (e) { folders = []; }
+    renderFolders();
+    populateFolderSelect();
+}
+
+function renderFolders() {
+    const el = document.getElementById('folderList');
+    if (!el) return;
+    el.innerHTML = `
+        <div class="board-folder ${currentSelection === 'all' ? 'selected' : ''}" onclick="selectFolder('all')">
+            <span>전체</span>
+        </div>
+        <div class="board-folder ${currentSelection === 'root' ? 'selected' : ''}" onclick="selectFolder('root')">
+            <span>루트</span>
+        </div>
+        ${folders.map(f => `
+            <div class="board-folder ${currentSelection === f.id ? 'selected' : ''}" onclick="selectFolder(${f.id})">
+                <span style="display:flex;align-items:center;gap:6px;min-width:0;">
+                    ${f.hasUnread ? '<span class="board-unread-dot"></span>' : ''}
+                    <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📁 ${escHtml(f.name)}</span>
+                    <span style="font-size:0.72rem;color:var(--text-muted);flex-shrink:0;">${f.postCount}</span>
+                </span>
+                ${_canPost ? `
+                <span style="display:flex;gap:2px;flex-shrink:0;">
+                    <button class="btn btn-ghost btn-sm" style="font-size:0.7rem;padding:1px 3px;" title="이름 변경"
+                        onclick="event.stopPropagation(); renameFolderPrompt(${f.id}, ${JSON.stringify(f.name).replace(/"/g,'&quot;')})">✏️</button>
+                    <button class="btn btn-ghost btn-sm" style="font-size:0.7rem;padding:1px 3px;color:#ef4444;" title="삭제"
+                        onclick="event.stopPropagation(); deleteFolderConfirm(${f.id})">🗑️</button>
+                </span>` : ''}
+            </div>
+        `).join('')}
+    `;
+}
+
+async function selectFolder(sel) {
+    currentSelection = sel;
+    renderFolders();
+    await loadPosts();
+    // Opening a folder marks it read server-side (getPostsInFolder does it) — refresh dots
+    if (typeof sel === 'number') await loadFolders();
+}
+
+async function createFolderPrompt() {
+    const name = prompt('새 폴더 이름을 입력하세요');
+    if (!name || !name.trim()) return;
+    try {
+        await api(`${boardApiBase(deptKey)}/folders`, { method: 'POST', body: JSON.stringify({ name: name.trim() }) });
+        showToast('폴더가 생성되었습니다', 'success');
+        await loadFolders();
+    } catch (e) { showToast(e.message || '폴더 생성에 실패했습니다', 'error'); }
+}
+
+async function renameFolderPrompt(folderId, currentName) {
+    const name = prompt('새 이름을 입력하세요', currentName);
+    if (!name || !name.trim() || name.trim() === currentName) return;
+    try {
+        await api(`${boardApiBase(deptKey)}/folders/${folderId}`, { method: 'PUT', body: JSON.stringify({ name: name.trim() }) });
+        await loadFolders();
+    } catch (e) { showToast(e.message || '이름 변경에 실패했습니다', 'error'); }
+}
+
+async function deleteFolderConfirm(folderId) {
+    if (!confirm('폴더를 삭제하시겠습니까? 폴더 안의 게시물은 루트로 이동합니다.')) return;
+    try {
+        await api(`${boardApiBase(deptKey)}/folders/${folderId}`, { method: 'DELETE' });
+        if (currentSelection === folderId) currentSelection = 'all';
+        showToast('폴더가 삭제되었습니다', 'success');
+        await loadFolders();
+        await loadPosts();
+    } catch (e) { showToast(e.message || '폴더 삭제에 실패했습니다', 'error'); }
+}
+
+// ==================== Posts (right panel) ====================
+async function loadPosts() {
+    let url;
+    if (currentSelection === 'all') url = `${boardApiBase(deptKey)}/posts`;
+    else if (currentSelection === 'root') url = `${boardApiBase(deptKey)}/posts/root`;
+    else url = `${boardApiBase(deptKey)}/folders/${currentSelection}/posts`;
+
+    try {
+        currentPosts = await api(url) || [];
+    } catch (e) { currentPosts = []; }
+    renderFileSection();
+    renderPostSection();
+}
+
+// 파일 섹션 — every attachment of the currently listed posts, as cards
+function renderFileSection() {
+    const el = document.getElementById('fileSection');
+    if (!el) return;
+    const cards = [];
+    currentPosts.forEach(p => (p.attachments || []).forEach(a => cards.push({ post: p, att: a })));
+
+    if (cards.length === 0) {
+        el.innerHTML = '<p style="font-size:0.85rem;color:var(--text-muted);grid-column:1/-1;">첨부된 파일이 없습니다.</p>';
+        return;
+    }
+
+    el.innerHTML = cards.map(({ post, att }) => {
+        const icon = att.contentType === 'URL' ? '🔗' : att.contentType === 'AUDIO' ? '🎵' : fileIcon(att.fileName);
+        const pinKey = att.source === 'COMMENT' ? 'comment' : 'post';
+        const isSelected = selectedPins[pinKey].has(att.id);
+        return `
+        <div class="file-card ${pinMode && isSelected ? 'pin-selected' : ''}"
+             ${pinMode ? `onclick="togglePinSelect('${pinKey}', ${att.id})" style="cursor:pointer;"` : ''}>
+            ${att.isPinnedToDashboard ? '<span style="position:absolute;top:6px;right:8px;font-size:0.7rem;">📌</span>' : ''}
+            <div style="font-size:1.6rem;">${icon}</div>
+            <div style="font-size:0.82rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                 title="${escHtml(att.fileName || att.linkUrl || '')}">${escHtml(att.fileName || att.linkUrl || '(이름 없음)')}</div>
+            <div style="font-size:0.72rem;color:var(--text-muted);">${att.fileSize ? fmtBytes(att.fileSize) : att.contentType}</div>
+            ${att.contentType === 'AUDIO' && att.fileUrl ? `<audio controls style="width:100%;height:30px;" src="${escHtml(att.fileUrl)}"></audio>` : ''}
+            ${!pinMode ? `
+            <div style="display:flex;gap:6px;margin-top:2px;">
+                ${att.contentType === 'URL'
+                    ? `<a href="${escHtml(att.linkUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="font-size:0.72rem;">열기</a>`
+                    : `<button class="btn btn-secondary btn-sm" style="font-size:0.72rem;" onclick="boardDownload('${deptKey}', '${pinKey}', ${att.id}, ${JSON.stringify(att.fileName || 'file').replace(/"/g,'&quot;')})">다운로드</button>`}
+                <button class="btn btn-ghost btn-sm" style="font-size:0.72rem;" onclick="openDetail(${att.postId})">게시물로</button>
+            </div>` : ''}
+        </div>`;
+    }).join('');
+}
+
+function fileIcon(name) {
+    if (!name) return '📄';
+    const ext = name.split('.').pop().toLowerCase();
+    if (['png','jpg','jpeg','gif','webp','svg'].includes(ext)) return '🖼️';
+    if (ext === 'pdf') return '📕';
+    if (['doc','docx','hwp'].includes(ext)) return '📝';
+    if (['xls','xlsx','csv'].includes(ext)) return '📊';
+    if (['zip','rar','7z'].includes(ext)) return '🗜️';
+    return '📄';
+}
+
+// 게시물 섹션 — text-first rows
+function renderPostSection() {
+    const el = document.getElementById('postSection');
+    if (!el) return;
+    if (currentPosts.length === 0) {
+        el.innerHTML = '<p style="font-size:0.85rem;color:var(--text-muted);padding:16px;">게시물이 없습니다.</p>';
+        return;
+    }
+    el.innerHTML = currentPosts.map(p => `
+        <div class="post-row" onclick="openDetail(${p.id})">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                <span style="font-weight:600;font-size:0.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(p.title)}</span>
+                <span style="font-size:0.75rem;color:var(--text-muted);flex-shrink:0;">${fmtDateTime(p.createdAt)}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:4px;font-size:0.78rem;color:var(--text-muted);">
+                <span>${escHtml(p.createdByUserName || '')}</span>
+                ${p.folderName ? `<span>📁 ${escHtml(p.folderName)}</span>` : ''}
+                ${(p.attachments || []).length > 0 ? `<span>📎 ${p.attachments.length}</span>` : ''}
+                <span>💬 ${p.commentCount}</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ==================== Post detail (modal) ====================
+async function openDetail(postId) {
+    let post;
+    try {
+        post = await api(`${boardApiBase(deptKey)}/posts/${postId}`);
+    } catch (e) { showToast('게시물을 불러올 수 없습니다', 'error'); return; }
+
+    const isMine = post.createdByUserId === getCurrentUserId();
+    const canModify = (isMine || currentSeason.myFullAccess) && !_isClosed;
+
+    document.getElementById('detailTitle').textContent = post.title;
+    document.getElementById('detailBody').innerHTML = `
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:10px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+            <span>${escHtml(post.createdByUserName || '')} · ${fmtDateTime(post.createdAt)}</span>
+            ${canModify ? `
+            <span style="display:flex;gap:6px;">
+                <button class="btn btn-ghost btn-sm" style="font-size:0.75rem;" onclick="movePostPrompt(${post.id})">폴더 이동</button>
+                <button class="btn btn-ghost btn-sm" style="font-size:0.75rem;color:#ef4444;" onclick="deletePostConfirm(${post.id})">삭제</button>
+            </span>` : ''}
+        </div>
+        ${post.content ? `<div style="font-size:0.9rem;line-height:1.6;white-space:pre-wrap;word-break:break-word;margin-bottom:14px;">${escHtml(post.content)}</div>` : ''}
+        ${(post.attachments || []).length > 0 ? `
+            <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
+                ${post.attachments.map(a => attachmentRow(a)).join('')}
+            </div>` : ''}
+
+        <div style="border-top:1px solid var(--border-light);padding-top:12px;">
+            <div style="font-size:0.85rem;font-weight:600;margin-bottom:10px;">댓글 ${post.comments ? post.comments.length : 0}</div>
+            <div id="commentList">
+                ${(post.comments || []).map(c => commentBlock(c)).join('') || '<p style="font-size:0.8rem;color:var(--text-muted);">댓글이 없습니다.</p>'}
+            </div>
+            ${!_isClosed ? `
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
+                <textarea class="form-input" id="commentContent" rows="2" placeholder="댓글 작성 (파일만 첨부해도 됩니다)"></textarea>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <input type="file" id="commentFiles" multiple style="font-size:0.78rem;flex:1;">
+                    <button class="btn btn-primary btn-sm" onclick="submitComment(${post.id})">등록</button>
+                </div>
+            </div>` : ''}
+        </div>
+    `;
+    document.getElementById('detailModal').style.display = 'flex';
+}
+
+function attachmentRow(a) {
+    const pinKey = a.source === 'COMMENT' ? 'comment' : 'post';
+    const label = a.fileName || a.linkUrl || '(첨부)';
+    if (a.contentType === 'URL')
+        return `<a href="${escHtml(a.linkUrl)}" target="_blank" rel="noopener" style="font-size:0.82rem;">🔗 ${escHtml(label)}</a>`;
+    if (a.contentType === 'AUDIO')
+        return `<div style="font-size:0.82rem;">🎵 ${escHtml(label)}<audio controls style="width:100%;height:30px;" src="${escHtml(a.fileUrl)}"></audio></div>`;
+    return `<button class="btn btn-ghost btn-sm" style="font-size:0.8rem;justify-content:flex-start;text-align:left;"
+        onclick="boardDownload('${deptKey}', '${pinKey}', ${a.id}, ${JSON.stringify(a.fileName || 'file').replace(/"/g,'&quot;')})">${fileIcon(a.fileName)} ${escHtml(label)}</button>`;
+}
+
+function commentBlock(c) {
+    const isMine = c.createdByUserId === getCurrentUserId();
+    const canDelete = (isMine || currentSeason.myFullAccess) && !_isClosed;
+    return `
+    <div id="comment-${c.id}" style="padding:8px 0;border-bottom:1px solid var(--border-light);">
+        <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--text-muted);">
+            <span>${escHtml(c.createdByUserName || '')} · ${fmtDateTime(c.createdAt)}</span>
+            ${canDelete ? `<button class="btn btn-ghost btn-sm" style="font-size:0.7rem;color:#ef4444;padding:0 4px;" onclick="deleteCommentConfirm(${c.id})">삭제</button>` : ''}
+        </div>
+        ${c.content ? `<div style="font-size:0.85rem;margin-top:4px;white-space:pre-wrap;word-break:break-word;">${escHtml(c.content)}</div>` : ''}
+        ${(c.attachments || []).length > 0 ? `<div style="display:flex;flex-direction:column;gap:4px;margin-top:6px;">${c.attachments.map(a => attachmentRow(a)).join('')}</div>` : ''}
+    </div>`;
+}
+
+function closeDetailModal() {
+    document.getElementById('detailModal').style.display = 'none';
+    loadPosts();      // refresh counts/attachments after possible changes
+}
+
+async function submitComment(postId) {
+    const content = document.getElementById('commentContent').value.trim();
+    const files = Array.from(document.getElementById('commentFiles').files || []);
+    if (!content && files.length === 0) { showToast('내용이나 파일을 입력해주세요', 'error'); return; }
+    try {
+        await boardMultipart(`${boardApiBase(deptKey)}/posts/${postId}/comments`, { content: content || null, urlAttachments: null }, files);
+        showToast('댓글이 등록되었습니다', 'success');
+        openDetail(postId);   // reload the detail view
+    } catch (e) { showToast(e.message || '댓글 등록에 실패했습니다', 'error'); }
+}
+
+async function deleteCommentConfirm(commentId) {
+    if (!confirm('댓글을 삭제하시겠습니까?')) return;
+    try {
+        await api(`${boardApiBase(deptKey)}/comments/${commentId}`, { method: 'DELETE' });
+        showToast('삭제되었습니다', 'success');
+        closeDetailModal();
+    } catch (e) { showToast(e.message || '삭제에 실패했습니다', 'error'); }
+}
+
+async function deletePostConfirm(postId) {
+    if (!confirm('게시물을 삭제하시겠습니까? 첨부파일과 댓글도 함께 삭제됩니다.')) return;
+    try {
+        await api(`${boardApiBase(deptKey)}/posts/${postId}`, { method: 'DELETE' });
+        showToast('게시물이 삭제되었습니다', 'success');
+        closeDetailModal();
+        await loadFolders();
+    } catch (e) { showToast(e.message || '삭제에 실패했습니다', 'error'); }
+}
+
+async function movePostPrompt(postId) {
+    const options = ['루트 (폴더 없음)', ...folders.map(f => f.name)];
+    const choice = prompt('이동할 폴더 번호를 입력하세요:\n' + options.map((o, i) => `${i}. ${o}`).join('\n'));
+    if (choice === null) return;
+    const idx = parseInt(choice, 10);
+    if (isNaN(idx) || idx < 0 || idx >= options.length) { showToast('잘못된 번호입니다', 'error'); return; }
+    const targetFolderId = idx === 0 ? null : folders[idx - 1].id;
+    try {
+        const q = targetFolderId != null ? `?targetFolderId=${targetFolderId}` : '';
+        await api(`${boardApiBase(deptKey)}/posts/${postId}/move${q}`, { method: 'PUT' });
+        showToast('이동되었습니다', 'success');
+        closeDetailModal();
+        await loadFolders();
+    } catch (e) { showToast(e.message || '이동에 실패했습니다', 'error'); }
+}
+
+// ==================== Create post ====================
+let urlAttachments = [];
+
+function openPostModal() {
+    urlAttachments = [];
+    document.getElementById('postTitle').value = '';
+    document.getElementById('postContent').value = '';
+    document.getElementById('postFiles').value = '';
+    document.getElementById('postUrlInput').value = '';
+    document.getElementById('postUrlList').innerHTML = '';
+    document.getElementById('postError').style.display = 'none';
+    populateFolderSelect();
+    document.getElementById('postModal').style.display = 'flex';
+}
+
+function closePostModal() {
+    document.getElementById('postModal').style.display = 'none';
+}
+
+function populateFolderSelect() {
+    const sel = document.getElementById('postFolderSelect');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">루트 (폴더 없음)</option>' +
+        folders.map(f => `<option value="${f.id}" ${currentSelection === f.id ? 'selected' : ''}>${escHtml(f.name)}</option>`).join('');
+}
+
+function addUrlToList() {
+    const input = document.getElementById('postUrlInput');
+    const url = input.value.trim();
+    if (!url) return;
+    urlAttachments.push(url);
+    input.value = '';
+    document.getElementById('postUrlList').innerHTML = urlAttachments.map((u, i) => `
+        <div style="display:flex;align-items:center;gap:6px;font-size:0.8rem;">
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">🔗 ${escHtml(u)}</span>
+            <button class="btn btn-ghost btn-sm" style="font-size:0.7rem;color:#ef4444;padding:0 4px;" onclick="removeUrl(${i})">×</button>
+        </div>`).join('');
+}
+
+function removeUrl(index) {
+    urlAttachments.splice(index, 1);
+    addUrlToList.refresh ? addUrlToList.refresh() : document.getElementById('postUrlList').innerHTML =
+        urlAttachments.map((u, i) => `
+        <div style="display:flex;align-items:center;gap:6px;font-size:0.8rem;">
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">🔗 ${escHtml(u)}</span>
+            <button class="btn btn-ghost btn-sm" style="font-size:0.7rem;color:#ef4444;padding:0 4px;" onclick="removeUrl(${i})">×</button>
+        </div>`).join('');
+}
+
+async function submitPost() {
+    const title = document.getElementById('postTitle').value.trim();
+    const content = document.getElementById('postContent').value.trim();
+    const files = Array.from(document.getElementById('postFiles').files || []);
+    const folderId = document.getElementById('postFolderSelect').value || null;
+    const errEl = document.getElementById('postError');
+    const btn = document.getElementById('postSubmitBtn');
+
+    errEl.style.display = 'none';
+    if (!title) { errEl.textContent = '제목을 입력해주세요.'; errEl.style.display = 'block'; return; }
+
+    btn.disabled = true;
+    btn.textContent = '게시 중...';
+    try {
+        await boardMultipart(`${boardApiBase(deptKey)}/posts`, {
+            title,
+            content: content || null,
+            folderId: folderId ? Number(folderId) : null,
+            urlAttachments: urlAttachments.map(u => ({ linkUrl: u }))
+        }, files);
+        showToast('게시물이 등록되었습니다', 'success');
+        closePostModal();
+        await loadFolders();
+        await loadPosts();
+    } catch (e) {
+        errEl.textContent = e.message || '게시에 실패했습니다.';
+        errEl.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '게시';
+    }
+}
+
+// ==================== Pin mode (full access) ====================
+function togglePinMode() {
+    pinMode = !pinMode;
+    selectedPins = { post: new Set(), comment: new Set() };
+    document.getElementById('pinBar').style.display = pinMode ? 'block' : 'none';
+    const btn = document.getElementById('pinModeBtn');
+    if (btn) btn.textContent = pinMode ? '📌 핀 관리 종료' : '📌 핀 관리';
+    renderFileSection();
+}
+
+function togglePinSelect(kind, id) {
+    if (selectedPins[kind].has(id)) selectedPins[kind].delete(id);
+    else selectedPins[kind].add(id);
+    document.getElementById('pinCount').textContent = selectedPins.post.size + selectedPins.comment.size;
+    renderFileSection();
+}
+
+async function applyPin(pinned) {
+    if (selectedPins.post.size + selectedPins.comment.size === 0) { showToast('선택된 파일이 없습니다', 'error'); return; }
+    try {
+        await api(`${boardApiBase(deptKey)}/attachments/bulk-pin`, {
+            method: 'POST',
+            body: JSON.stringify({
+                postAttachmentIds: [...selectedPins.post],
+                commentAttachmentIds: [...selectedPins.comment],
+                pinned
+            })
+        });
+        showToast(pinned ? '핀 고정되었습니다' : '핀이 해제되었습니다', 'success');
+        togglePinMode();
+        await loadPosts();
+    } catch (e) { showToast(e.message || '처리에 실패했습니다', 'error'); }
+}
+</script>
+</body>
+</html>

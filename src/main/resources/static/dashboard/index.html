@@ -24,6 +24,7 @@
                 <a href="/dashboard/announcements.html" class="dash-tab">공지사항</a>
                 <a href="/dashboard/scripts.html" class="dash-tab">대본</a>
                 <a href="/dashboard/schedule.html" class="dash-tab">일정</a>
+                <a href="/dashboard/board-select.html" class="dash-tab">게시판</a>
             </div>
             <div class="dash-nav-right">
                 <button class="dash-season-btn" id="seasonSelector"></button>
@@ -88,15 +89,13 @@ async function loadPageContent() {
             <div id="todayTodos"><div class="spinner" style="width:20px;height:20px;"></div></div>
         </div>
 
-        <!-- 공유 파일 (placeholder) -->
+        <!-- 공유 파일 — pinned board attachments across all departments -->
         <div class="dash-card">
             <div class="dash-card-header">
                 <span class="dash-card-title">공유 파일</span>
+                <a href="${dashboardUrl('board-select.html')}" style="font-size:0.8rem;color:var(--primary);">게시판으로</a>
             </div>
-            <div style="padding:20px 0;text-align:center;">
-                <div style="font-size:2rem;margin-bottom:8px;">📁</div>
-                <p style="font-size:0.85rem;color:var(--text-muted);margin:0;">게시판 연동 후 이용 가능합니다</p>
-            </div>
+            <div id="pinnedFiles"><div class="spinner" style="width:20px;height:20px;"></div></div>
         </div>
 
         <div class="dash-stats">
@@ -162,9 +161,51 @@ async function loadPageContent() {
 
     loadLatestNotice();
     loadTodayTodos(canEdit);
+    loadPinnedFiles();
     loadUnreadCount();
     loadScriptCount();
     loadMembers();
+}
+
+// 공유 파일 — fetches pinned attachments from all 4 department boards and merges them
+async function loadPinnedFiles() {
+    const el = document.getElementById('pinnedFiles');
+    if (!el) return;
+    try {
+        const results = await Promise.all(BOARD_DEPARTMENTS.map(d =>
+            api(`${boardApiBase(d.key)}/pinned-attachments`)
+                .then(list => (list || []).map(a => ({ dept: d, att: a })))
+                .catch(() => [])
+        ));
+        const pinned = results.flat();
+
+        if (pinned.length === 0) {
+            el.innerHTML = '<p style="font-size:0.85rem;color:var(--text-muted);">고정된 파일이 없습니다. 게시판에서 파일을 핀 고정하면 여기에 표시됩니다.</p>';
+            return;
+        }
+
+        el.innerHTML = pinned.map(({ dept, att }) => {
+            const label = att.fileName || att.linkUrl || '(첨부)';
+            const source = att.source === 'COMMENT' ? 'comment' : 'post';
+            let action;
+            if (att.contentType === 'URL') {
+                action = `<a href="${escHtml(att.linkUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="font-size:0.72rem;flex-shrink:0;">열기</a>`;
+            } else {
+                action = `<button class="btn btn-secondary btn-sm" style="font-size:0.72rem;flex-shrink:0;" onclick="boardDownload('${dept.key}', '${source}', ${att.id}, ${JSON.stringify(label).replace(/"/g,'&quot;')})">다운로드</button>`;
+            }
+            return `
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-light);">
+                <span style="font-size:1.2rem;flex-shrink:0;">${dept.icon}</span>
+                <div style="min-width:0;flex:1;">
+                    <div style="font-size:0.85rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(label)}">${escHtml(label)}</div>
+                    <div style="font-size:0.72rem;color:var(--text-muted);">${dept.label}${att.fileSize ? ' · ' + fmtBytes(att.fileSize) : ''}</div>
+                </div>
+                ${att.contentType === 'AUDIO' && att.fileUrl ? `<audio controls style="height:28px;max-width:180px;" src="${escHtml(att.fileUrl)}"></audio>` : action}
+            </div>`;
+        }).join('');
+    } catch (e) {
+        el.innerHTML = '<p style="font-size:0.85rem;color:var(--text-muted);">공유 파일을 불러올 수 없습니다.</p>';
+    }
 }
 
 function computeDDay(eventDate) {
@@ -183,22 +224,17 @@ async function loadLatestNotice() {
             return;
         }
         const n = items[0];
-        const preview = (n.content || '').substring(0, 80) + ((n.content || '').length > 80 ? '...' : '');
         const isUnread = !n.read;
         const isPinned = n.isPinned || n.pinned || false;
         el.innerHTML = `
-            <a href="${dashboardUrl('announcements.html')}" style="text-decoration:none;color:inherit;">
-                <div style="display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:var(--radius);background:var(--gray-50);transition:background 0.15s;" onmouseover="this.style.background='var(--primary-bg)'" onmouseout="this.style.background='var(--gray-50)'">
-                    ${isUnread ? `<span style="width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0;margin-top:5px;"></span>` : `<span style="width:8px;height:8px;flex-shrink:0;"></span>`}
-                    <div style="min-width:0;">
-                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-                            ${isPinned ? `<span style="font-size:0.7rem;background:var(--primary-bg);color:var(--primary);padding:1px 5px;border-radius:4px;font-weight:600;flex-shrink:0;">📌 고정</span>` : ''}
-                            <span style="font-weight:${isUnread ? '600' : '500'};font-size:0.9rem;">${escHtml(n.title)}</span>
-                        </div>
-                        ${preview ? `<div style="font-size:0.8rem;color:var(--text-muted);line-height:1.4;">${escHtml(preview)}</div>` : ''}
-                        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:6px;">${fmtDate(n.createdAt)}</div>
-                    </div>
+            <a href="${dashboardUrl('announcements.html')}" style="text-decoration:none;color:inherit;display:block;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+                    ${isUnread ? `<span style="width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0;"></span>` : ''}
+                    ${isPinned ? `<span style="font-size:0.7rem;background:var(--primary-bg);color:var(--primary);padding:1px 5px;border-radius:4px;font-weight:600;flex-shrink:0;">📌 고정</span>` : ''}
+                    <span style="font-weight:${isUnread ? '600' : '500'};font-size:0.95rem;">${escHtml(n.title)}</span>
                 </div>
+                ${n.content ? `<div style="font-size:0.875rem;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap;word-break:break-word;">${escHtml(n.content)}</div>` : ''}
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:10px;">${fmtDate(n.createdAt)}</div>
             </a>
         `;
     } catch(e) {
