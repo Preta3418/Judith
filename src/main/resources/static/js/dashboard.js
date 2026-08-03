@@ -230,8 +230,16 @@ async function boardMultipart(url, dataObj, files) {
     });
     if (!response.ok) {
         const text = await response.text();
-        let msg = '요청에 실패했습니다';
-        try { msg = JSON.parse(text).message || msg; } catch (e) {}
+        console.error('boardMultipart failed', response.status, text);
+        let msg = `요청에 실패했습니다 (${response.status})`;
+        try {
+            const parsed = JSON.parse(text);
+            if (parsed.message) msg = parsed.message;
+        } catch (e) {
+            // Non-JSON body (Spring error HTML etc.) — show a snippet
+            const snippet = text.replace(/<[^>]+>/g, '').trim().slice(0, 120);
+            if (snippet) msg = `요청 실패 (${response.status}): ${snippet}`;
+        }
         throw new Error(msg);
     }
     return response.json();
