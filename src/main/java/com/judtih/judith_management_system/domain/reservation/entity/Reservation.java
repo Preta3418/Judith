@@ -43,8 +43,17 @@ public class Reservation {
 
     private LocalDateTime reservedAt;
 
+    /** Door check-in flag. Default false (haven't shown up yet); flipped to true when
+     *  the door volunteer taps the checkbox in 예약자 보기. Purely for door-of-house use. */
+    @Column(nullable = false)
+    private boolean attended = false;
+
     @PrePersist
     protected void onCreate() {
         reservedAt = LocalDateTime.now();
+    }
+
+    public void setAttended(boolean attended) {
+        this.attended = attended;
     }
 }

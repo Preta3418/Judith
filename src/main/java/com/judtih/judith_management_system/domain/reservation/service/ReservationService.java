@@ -7,7 +7,6 @@ import com.judtih.judith_management_system.domain.reservation.repository.EventSc
 import com.judtih.judith_management_system.domain.reservation.repository.ReservationRepository;
 import com.judtih.judith_management_system.domain.reservation.reservationDto.ReservationRequest;
 import com.judtih.judith_management_system.domain.reservation.reservationDto.ReservationResponse;
-import com.judtih.judith_management_system.domain.reservation.reservationDto.ReservationSummaryResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,18 +38,6 @@ public class ReservationService {
         }
 
         return responseList;
-    }
-
-    /** Member-facing summary — no phoneNumber. Anyone in the club may look up who's coming to a show. */
-    @Transactional(readOnly = true)
-    public List<ReservationSummaryResponse> getReservationSummariesByScheduleId(Long scheduleId) {
-        return reservationRepository.findByEventScheduleId(scheduleId).stream()
-                .map(r -> ReservationSummaryResponse.builder()
-                        .name(r.getName())
-                        .ticketCount(r.getTicketCount())
-                        .reservedAt(r.getReservedAt())
-                        .build())
-                .toList();
     }
 
     //User Method //////////////////////////////////////////////////////////////////////////
@@ -120,6 +107,16 @@ public class ReservationService {
 
 
 
+    /** Door check-in — flips the attended flag. Called from 예약자 보기 modal.
+     *  Any authenticated member may set it (this is a front-of-house helper, not a security decision). */
+    @Transactional
+    public void updateAttendance(Long reservationId, boolean attended) {
+        log.info("updateAttendance: reservationId={}, attended={}", reservationId, attended);
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("reservation not found: " + reservationId));
+        reservation.setAttended(attended);
+    }
+
     //Helper Method ///////////////////////////////////////////////////////////////////
     private ReservationResponse createReservationResponse (Reservation reservation) {
         return ReservationResponse.builder()
@@ -132,6 +129,7 @@ public class ReservationService {
                 .phoneNumber((reservation.getPhoneNumber()))
                 .reservedAt(reservation.getReservedAt())
                 .eventDate(reservation.getEventSchedule().getEventDate())
+                .attended(reservation.isAttended())
                 .build();
     }
 

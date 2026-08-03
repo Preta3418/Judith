@@ -526,18 +526,45 @@ async function submitAddSchedule(e) {
 async function viewReservations(scheduleId) {
     try {
         const reservations = await scheduleApi.getReservations(scheduleId);
-        document.getElementById('reservationsTitle').textContent = `예매 목록 (${reservations.length}건)`;
-        document.getElementById('reservationsBody').innerHTML = reservations.length === 0
-            ? '<p style="color:var(--text-muted);text-align:center;padding:24px;">예매 내역이 없습니다.</p>'
-            : reservations.map(r => `
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border-light);">
-                    <div>
-                        <div style="font-weight:500;">${escHtml(r.name)}</div>
-                        <div style="font-size:0.82rem;color:var(--text-muted);">${formatPhone(r.phoneNumber)}</div>
-                    </div>
-                    <span style="font-size:0.875rem;">${r.ticketCount}명</span>
-                </div>
-            `).join('');
+        const totalTickets = reservations.reduce((sum, r) => sum + (r.ticketCount || 0), 0);
+        document.getElementById('reservationsTitle').textContent =
+            `예매 목록 · ${reservations.length}건 / ${totalTickets}매`;
+
+        if (reservations.length === 0) {
+            document.getElementById('reservationsBody').innerHTML =
+                '<p style="color:var(--text-muted);text-align:center;padding:24px;">예매 내역이 없습니다.</p>';
+            openModal('reservationsModal');
+            return;
+        }
+
+        // Sort by reservation time, newest first
+        const sorted = [...reservations].sort((a, b) =>
+            new Date(b.reservedAt || 0) - new Date(a.reservedAt || 0));
+
+        document.getElementById('reservationsBody').innerHTML = `
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                <thead>
+                    <tr style="border-bottom:2px solid var(--border-light);text-align:left;">
+                        <th style="padding:8px 6px;">이름</th>
+                        <th style="padding:8px 6px;">연락처</th>
+                        <th style="padding:8px 6px;text-align:center;">매수</th>
+                        <th style="padding:8px 6px;">예약 일시</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sorted.map(r => `
+                        <tr style="border-bottom:1px solid var(--border-light);">
+                            <td style="padding:8px 6px;font-weight:500;">${escHtml(r.name)}</td>
+                            <td style="padding:8px 6px;font-family:monospace;">${formatPhone(r.phoneNumber)}</td>
+                            <td style="padding:8px 6px;text-align:center;">
+                                <span class="badge badge-primary">${r.ticketCount}</span>
+                            </td>
+                            <td style="padding:8px 6px;color:var(--text-muted);font-size:0.8rem;">${fmtDT(r.reservedAt)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
         openModal('reservationsModal');
     } catch(e) { showToast('예매 목록을 불러오지 못했습니다', 'error'); }
 }

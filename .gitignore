@@ -51,3 +51,6 @@ RESUME.md
 aws-s3-guide.md
 rest-client-guide.md
 github-actions-guide.md
+
+# Personal Java practice files (kept locally, not part of the app)
+src/main/java/com/judtih/judith_management_system/domain/practice/
