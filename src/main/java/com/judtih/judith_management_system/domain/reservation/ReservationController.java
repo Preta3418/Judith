@@ -7,14 +7,13 @@ import com.judtih.judith_management_system.domain.reservation.reservationDto.Res
 import com.judtih.judith_management_system.domain.reservation.reservationDto.ReservationResponse;
 import com.judtih.judith_management_system.domain.reservation.service.EventService;
 import com.judtih.judith_management_system.domain.reservation.service.ReservationService;
+import com.judtih.judith_management_system.global.download.FileDownloadService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.net.URL;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -26,6 +25,7 @@ public class ReservationController {
 
     private final EventService eventService;
     private final ReservationService reservationService;
+    private final FileDownloadService fileDownloadService;
 
 
     // ==================== Public Endpoints ====================
@@ -39,14 +39,12 @@ public class ReservationController {
         }
     }
 
+    // Streams the pamphlet through our origin so iOS Safari downloads it properly — see FileDownloadService.
     @GetMapping("/api/public/events/{eventId}/pamphlet/download")
     public ResponseEntity<byte[]> downloadPamphlet(@PathVariable Long eventId) throws IOException {
         String pamphletUrl = eventService.getPamphletUrl(eventId);
-        byte[] bytes = new URL(pamphletUrl).openStream().readAllBytes();
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + java.net.URLEncoder.encode("26_1 <물리학자들: Die Physiker> 공연 팸플릿.pdf", java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20"))
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(bytes);
+        return fileDownloadService.buildDownloadResponse(
+                pamphletUrl, "26_1 <물리학자들: Die Physiker> 공연 팸플릿.pdf", MediaType.APPLICATION_PDF);
     }
 
     @GetMapping("/api/public/events/{eventId}")
