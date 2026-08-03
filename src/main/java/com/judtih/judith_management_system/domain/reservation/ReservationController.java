@@ -102,6 +102,14 @@ public class ReservationController {
         return ResponseEntity.ok(reservationService.getReservationByEventScheduleId(scheduleId));
     }
 
+    /** Door check-in toggle for a reservation. Any authenticated member (front-of-house volunteer). */
+    @PutMapping("/api/dashboard/reservations/{reservationId}/attendance")
+    public ResponseEntity<Void> updateAttendance(@PathVariable Long reservationId,
+                                                  @RequestParam boolean attended) {
+        reservationService.updateAttendance(reservationId, attended);
+        return ResponseEntity.noContent().build();
+    }
+
 
     // ==================== Admin Endpoints ====================
 

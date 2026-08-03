@@ -107,6 +107,16 @@ public class ReservationService {
 
 
 
+    /** Door check-in — flips the attended flag. Called from 예약자 보기 modal.
+     *  Any authenticated member may set it (this is a front-of-house helper, not a security decision). */
+    @Transactional
+    public void updateAttendance(Long reservationId, boolean attended) {
+        log.info("updateAttendance: reservationId={}, attended={}", reservationId, attended);
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("reservation not found: " + reservationId));
+        reservation.setAttended(attended);
+    }
+
     //Helper Method ///////////////////////////////////////////////////////////////////
     private ReservationResponse createReservationResponse (Reservation reservation) {
         return ReservationResponse.builder()
@@ -119,6 +129,7 @@ public class ReservationService {
                 .phoneNumber((reservation.getPhoneNumber()))
                 .reservedAt(reservation.getReservedAt())
                 .eventDate(reservation.getEventSchedule().getEventDate())
+                .attended(reservation.isAttended())
                 .build();
     }
 

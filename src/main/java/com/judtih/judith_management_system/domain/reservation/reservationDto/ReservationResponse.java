@@ -24,5 +24,6 @@ public class ReservationResponse {
     private String phoneNumber;
     private LocalDateTime reservedAt;
     private LocalDateTime eventDate;
+    private boolean attended;
 
 }

@@ -180,7 +180,10 @@ async function loadEvent() {
 
 // ==================== Reservation list modal ====================
 
+let _currentScheduleId = null;
+
 async function openReservationList(scheduleId, scheduleLabel) {
+    _currentScheduleId = scheduleId;
     document.getElementById('reservationModalTitle').textContent = `예약자 목록 · ${scheduleLabel}`;
     document.getElementById('reservationModalBody').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
     document.getElementById('reservationModal').style.display = 'flex';
@@ -200,16 +203,18 @@ function renderReservationList(list) {
         return;
     }
     const totalTickets = list.reduce((sum, r) => sum + (r.ticketCount || 0), 0);
+    const attendedCount = list.filter(r => r.attended).length;
     // Newest first
     const sorted = [...list].sort((a, b) => new Date(b.reservedAt || 0) - new Date(a.reservedAt || 0));
     body.innerHTML = `
         <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:10px;">
-            총 ${list.length}건 · ${totalTickets}매
+            총 ${list.length}건 · ${totalTickets}매 · 참석 ${attendedCount} / ${list.length}
         </div>
         <div style="overflow-x:auto;">
             <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
                 <thead>
                     <tr style="border-bottom:2px solid var(--border-light);text-align:left;">
+                        <th style="padding:8px 6px;text-align:center;" title="참석 여부">참석</th>
                         <th style="padding:8px 6px;">이름</th>
                         <th style="padding:8px 6px;">연락처</th>
                         <th style="padding:8px 6px;text-align:center;">매수</th>
@@ -218,7 +223,12 @@ function renderReservationList(list) {
                 </thead>
                 <tbody>
                     ${sorted.map(r => `
-                        <tr style="border-bottom:1px solid var(--border-light);">
+                        <tr id="reservation-row-${r.id}" style="border-bottom:1px solid var(--border-light);">
+                            <td style="padding:8px 6px;text-align:center;">
+                                <input type="checkbox" ${r.attended ? 'checked' : ''}
+                                       onchange="toggleAttendance(${r.id}, this.checked)"
+                                       style="width:18px;height:18px;cursor:pointer;">
+                            </td>
                             <td style="padding:8px 6px;font-weight:500;">${escHtml(r.name)}</td>
                             <td style="padding:8px 6px;font-family:monospace;">${escHtml(r.phoneNumber || '')}</td>
                             <td style="padding:8px 6px;text-align:center;">
@@ -231,6 +241,22 @@ function renderReservationList(list) {
             </table>
         </div>
     `;
+}
+
+async function toggleAttendance(reservationId, attended) {
+    try {
+        await api(`/api/dashboard/reservations/${reservationId}/attendance?attended=${attended}`, { method: 'PUT' });
+        // Refetch to refresh the "참석 X / Y" header count
+        if (_currentScheduleId != null) {
+            const list = await api(`/api/dashboard/schedule/${_currentScheduleId}/reservations`) || [];
+            renderReservationList(list);
+        }
+    } catch (e) {
+        showToast('참석 처리에 실패했습니다', 'error');
+        // Revert the checkbox
+        const cb = document.querySelector(`#reservation-row-${reservationId} input[type=checkbox]`);
+        if (cb) cb.checked = !attended;
+    }
 }
 
 function closeReservationModal() {
