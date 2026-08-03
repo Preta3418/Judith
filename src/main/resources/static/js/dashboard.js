@@ -27,11 +27,15 @@ async function loadDashboard() {
         const urlParams = new URLSearchParams(window.location.search);
         const paramSeasonId = urlParams.get('seasonId');
         const hasActiveSeason = mySeasons.some(s => s.status === 'ACTIVE');
-        const onSeasonsPage = window.location.pathname === '/dashboard/seasons.html';
+        const path = window.location.pathname;
+        const onSeasonsPage = path === '/dashboard/seasons.html';
+        // Bell inbox is user-scoped (not season-scoped) — skip the "no active season" redirect
+        // so users with only closed seasons can still open their notifications.
+        const onNotifBell   = path === '/dashboard/notifications.html';
 
         // Only redirect when no season is explicitly selected and there's no active season to default to.
         // Without the !paramSeasonId guard, clicking a past-season card loops: index?seasonId=X → redirect → seasons.html → repeat.
-        if (!paramSeasonId && !hasActiveSeason && !onSeasonsPage) {
+        if (!paramSeasonId && !hasActiveSeason && !onSeasonsPage && !onNotifBell) {
             window.location.href = '/dashboard/seasons.html';
             return;
         }
