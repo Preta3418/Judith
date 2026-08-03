@@ -204,6 +204,12 @@ function getDeptConfig(key) {
 
 // Mirrors backend Department.canPost() — used only to show/hide buttons.
 // The backend re-checks on every write; this is UX, not security.
+function isImageFile(name) {
+    if (!name) return false;
+    const ext = name.split('.').pop().toLowerCase();
+    return ['png','jpg','jpeg','gif','webp','svg','bmp'].includes(ext);
+}
+
 function canPostToDept(deptKey) {
     if (currentSeason && currentSeason.myFullAccess) return true;
     const dept = getDeptConfig(deptKey);

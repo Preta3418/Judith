@@ -187,6 +187,16 @@ async function loadPinnedFiles() {
         el.innerHTML = pinned.map(({ dept, att }) => {
             const label = att.fileName || att.linkUrl || '(첨부)';
             const source = att.source === 'COMMENT' ? 'comment' : 'post';
+            const isImage = att.contentType === 'FILE' && isImageFile(att.fileName);
+
+            // Photo pins: bigger thumbnail on the left, click to view full
+            const leftCell = isImage && att.fileUrl
+                ? `<img src="${escHtml(att.fileUrl)}" alt="preview"
+                        style="width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer;flex-shrink:0;"
+                        onclick="window.open('${escHtml(att.fileUrl)}', '_blank')"
+                        onerror="this.outerHTML='<span style=\\'font-size:1.2rem;flex-shrink:0;\\'>${dept.icon}</span>'">`
+                : `<span style="font-size:1.2rem;flex-shrink:0;">${dept.icon}</span>`;
+
             let action;
             if (att.contentType === 'URL') {
                 action = `<a href="${escHtml(att.linkUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="font-size:0.72rem;flex-shrink:0;">열기</a>`;
@@ -195,7 +205,7 @@ async function loadPinnedFiles() {
             }
             return `
             <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-light);">
-                <span style="font-size:1.2rem;flex-shrink:0;">${dept.icon}</span>
+                ${leftCell}
                 <div style="min-width:0;flex:1;">
                     <div style="font-size:0.85rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(label)}">${escHtml(label)}</div>
                     <div style="font-size:0.72rem;color:var(--text-muted);">${dept.label}${att.fileSize ? ' · ' + fmtBytes(att.fileSize) : ''}</div>

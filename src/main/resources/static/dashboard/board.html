@@ -17,11 +17,32 @@
         .board-folder:hover { background: var(--gray-50); }
         .board-folder.selected { background: var(--primary-bg); color: var(--primary); font-weight:600; }
         .board-unread-dot { width:7px; height:7px; border-radius:50%; background:var(--primary); flex-shrink:0; }
-        .file-card { border:1px solid var(--border-light); border-radius:var(--radius); padding:12px;
-                     display:flex; flex-direction:column; gap:8px; position:relative; }
-        .file-card.pin-selected { border-color: var(--primary); background: var(--primary-bg); }
+        /* File finder — table-like rows, thin, no oversized icons */
+        .file-row { display:grid; grid-template-columns: 44px 1fr auto; gap:12px; align-items:center;
+                    padding:8px 12px; border-bottom:1px solid var(--border-light); font-size:0.85rem; }
+        .file-row:hover { background: var(--gray-50); }
+        .file-row-thumb { width:40px; height:40px; display:flex; align-items:center; justify-content:center;
+                          background: var(--gray-50); border-radius:6px; overflow:hidden; flex-shrink:0; }
+        .file-row-thumb img { width:100%; height:100%; object-fit:cover; cursor:pointer; }
+        .file-row-thumb-icon { font-size:1.2rem; }
+        .file-row-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500; }
+        .file-row-meta { font-size:0.72rem; color:var(--text-muted); margin-top:2px; display:flex; gap:8px; flex-wrap:wrap; }
+        .file-row-actions { display:flex; gap:4px; flex-shrink:0; }
+        .file-row-actions button, .file-row-actions a {
+            font-size:0.75rem; padding:4px 8px;
+        }
+        .file-pinned { color: var(--primary); }
         .post-row { padding:14px 16px; border-bottom:1px solid var(--border-light); cursor:pointer; }
         .post-row:hover { background: var(--gray-50); }
+        /* Inline preview inside post detail */
+        .attachment-inline-img { max-width:100%; max-height:400px; border-radius:6px; margin-top:6px; cursor:pointer; display:block; }
+        /* Image preview modal — full-viewport */
+        .preview-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:2000;
+                         align-items:center; justify-content:center; padding:20px; cursor:zoom-out; }
+        .preview-modal.open { display:flex; }
+        .preview-modal img { max-width:100%; max-height:100%; object-fit:contain; }
+        .preview-modal-close { position:absolute; top:16px; right:20px; color:white; background:transparent;
+                               border:none; font-size:2rem; cursor:pointer; }
     </style>
 </head>
 <body>
@@ -87,7 +108,7 @@
             <div class="form-group">
                 <label class="form-label">저장 위치</label>
                 <select class="form-input" id="postFolderSelect">
-                    <option value="">루트 (폴더 없음)</option>
+                    <option value="">링크 (카테고리 없음)</option>
                 </select>
             </div>
             <div id="postError" class="error-message" style="display:none;"></div>
@@ -110,6 +131,12 @@
     </div>
 </div>
 
+<!-- Full-viewport image preview -->
+<div class="preview-modal" id="imagePreviewModal" onclick="closeImagePreview()">
+    <button class="preview-modal-close" onclick="closeImagePreview()">&times;</button>
+    <img id="imagePreviewImg" alt="preview">
+</div>
+
 <script src="/js/auth.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/dashboard.js"></script>
@@ -120,8 +147,6 @@ let deptKey = null;
 let folders = [];
 let currentSelection = 'all'; // 'all' | 'root' | folderId(number)
 let currentPosts = [];
-let pinMode = false;
-let selectedPins = { post: new Set(), comment: new Set() };
 let _canPost = false;
 let _isClosed = false;
 
@@ -142,7 +167,6 @@ async function loadPageContent() {
                     <div class="dash-subtitle">${escHtml(currentSeason.seasonName)}${_isClosed ? ' · 읽기 전용 (시즌 종료)' : ''}</div>
                 </div>
                 <div style="display:flex;gap:8px;">
-                    ${currentSeason.myFullAccess && !_isClosed ? `<button class="btn btn-secondary btn-sm" id="pinModeBtn" onclick="togglePinMode()">📌 핀 관리</button>` : ''}
                     ${_canPost ? `<button class="btn btn-primary btn-sm" onclick="openPostModal()">+ 게시물 작성</button>` : ''}
                 </div>
             </div>
@@ -152,31 +176,21 @@ async function loadPageContent() {
             <!-- Left: folders -->
             <div class="dash-card" style="padding:12px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:0 4px;">
-                    <span style="font-size:0.8rem;font-weight:600;color:var(--text-muted);">폴더</span>
-                    ${_canPost ? `<button class="btn btn-ghost btn-sm" style="font-size:0.75rem;padding:2px 6px;" onclick="createFolderPrompt()">+ 새 폴더</button>` : ''}
+                    <span style="font-size:0.8rem;font-weight:600;color:var(--text-muted);">카테고리</span>
+                    ${_canPost ? `<button class="btn btn-ghost btn-sm" style="font-size:0.75rem;padding:2px 6px;" onclick="createFolderPrompt()">+ 새 카테고리</button>` : ''}
                 </div>
                 <div id="folderList"><div class="spinner" style="width:18px;height:18px;"></div></div>
             </div>
 
             <!-- Right: files + posts -->
             <div style="display:flex;flex-direction:column;gap:20px;min-width:0;">
-                <div class="dash-card" id="pinBar" style="display:none;background:var(--primary-bg);padding:12px 16px;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
-                        <span style="font-size:0.85rem;">파일 카드를 클릭해 선택하세요 (<span id="pinCount">0</span>개 선택됨)</span>
-                        <div style="display:flex;gap:6px;">
-                            <button class="btn btn-primary btn-sm" onclick="applyPin(true)">핀 고정</button>
-                            <button class="btn btn-secondary btn-sm" onclick="applyPin(false)">핀 해제</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dash-card">
-                    <div class="dash-card-header"><span class="dash-card-title">파일</span></div>
-                    <div id="fileSection" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;"></div>
+                <div class="dash-card" style="padding:0;overflow:hidden;">
+                    <div class="dash-card-header" style="padding:14px 16px 6px;"><span class="dash-card-title">파일</span></div>
+                    <div id="fileSection"></div>
                 </div>
 
                 <div class="dash-card" style="padding:0;overflow:hidden;">
-                    <div class="dash-card-header" style="padding:16px 16px 8px;"><span class="dash-card-title">게시물</span></div>
+                    <div class="dash-card-header" style="padding:14px 16px 6px;"><span class="dash-card-title">게시물</span></div>
                     <div id="postSection"></div>
                 </div>
             </div>
@@ -204,13 +218,13 @@ function renderFolders() {
             <span>전체</span>
         </div>
         <div class="board-folder ${currentSelection === 'root' ? 'selected' : ''}" onclick="selectFolder('root')">
-            <span>루트</span>
+            <span>링크</span>
         </div>
         ${folders.map(f => `
             <div class="board-folder ${currentSelection === f.id ? 'selected' : ''}" onclick="selectFolder(${f.id})">
                 <span style="display:flex;align-items:center;gap:6px;min-width:0;">
                     ${f.hasUnread ? '<span class="board-unread-dot"></span>' : ''}
-                    <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📁 ${escHtml(f.name)}</span>
+                    <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(f.name)}</span>
                     <span style="font-size:0.72rem;color:var(--text-muted);flex-shrink:0;">${f.postCount}</span>
                 </span>
                 ${_canPost ? `
@@ -234,13 +248,13 @@ async function selectFolder(sel) {
 }
 
 async function createFolderPrompt() {
-    const name = prompt('새 폴더 이름을 입력하세요');
+    const name = prompt('새 카테고리 이름을 입력하세요');
     if (!name || !name.trim()) return;
     try {
         await api(`${boardApiBase(deptKey)}/folders`, { method: 'POST', body: JSON.stringify({ name: name.trim() }) });
-        showToast('폴더가 생성되었습니다', 'success');
+        showToast('카테고리가 생성되었습니다', 'success');
         await loadFolders();
-    } catch (e) { showToast(e.message || '폴더 생성에 실패했습니다', 'error'); }
+    } catch (e) { showToast(e.message || '카테고리 생성에 실패했습니다', 'error'); }
 }
 
 async function renameFolderPrompt(folderId, currentName) {
@@ -253,14 +267,14 @@ async function renameFolderPrompt(folderId, currentName) {
 }
 
 async function deleteFolderConfirm(folderId) {
-    if (!confirm('폴더를 삭제하시겠습니까? 폴더 안의 게시물은 루트로 이동합니다.')) return;
+    if (!confirm('카테고리를 삭제하시겠습니까? 카테고리 안의 게시물은 루트로 이동합니다.')) return;
     try {
         await api(`${boardApiBase(deptKey)}/folders/${folderId}`, { method: 'DELETE' });
         if (currentSelection === folderId) currentSelection = 'all';
-        showToast('폴더가 삭제되었습니다', 'success');
+        showToast('카테고리가 삭제되었습니다', 'success');
         await loadFolders();
         await loadPosts();
-    } catch (e) { showToast(e.message || '폴더 삭제에 실패했습니다', 'error'); }
+    } catch (e) { showToast(e.message || '카테고리 삭제에 실패했습니다', 'error'); }
 }
 
 // ==================== Posts (right panel) ====================
@@ -277,40 +291,100 @@ async function loadPosts() {
     renderPostSection();
 }
 
-// 파일 섹션 — every attachment of the currently listed posts, as cards
+// 파일 섹션 — Google Drive / Windows Explorer style row list.
+// Each row: [thumbnail if photo | small type indicator] filename + meta | actions
 function renderFileSection() {
     const el = document.getElementById('fileSection');
     if (!el) return;
-    const cards = [];
-    currentPosts.forEach(p => (p.attachments || []).forEach(a => cards.push({ post: p, att: a })));
+    const items = [];
+    currentPosts.forEach(p => (p.attachments || []).forEach(a => items.push({ post: p, att: a })));
 
-    if (cards.length === 0) {
-        el.innerHTML = '<p style="font-size:0.85rem;color:var(--text-muted);grid-column:1/-1;">첨부된 파일이 없습니다.</p>';
+    if (items.length === 0) {
+        el.innerHTML = '<p style="font-size:0.85rem;color:var(--text-muted);padding:16px;">첨부된 파일이 없습니다.</p>';
         return;
     }
 
-    el.innerHTML = cards.map(({ post, att }) => {
-        const icon = att.contentType === 'URL' ? '🔗' : att.contentType === 'AUDIO' ? '🎵' : fileIcon(att.fileName);
+    el.innerHTML = items.map(({ post, att }) => {
         const pinKey = att.source === 'COMMENT' ? 'comment' : 'post';
-        const isSelected = selectedPins[pinKey].has(att.id);
+        const label = att.fileName || att.linkUrl || '(이름 없음)';
+        const isImage = att.contentType === 'FILE' && isImageFile(att.fileName);
+        const canPinToggle = currentSeason.myFullAccess && !_isClosed;
+
+        // Left cell: photo thumbnail if image, else small file-type indicator
+        let thumb;
+        if (isImage && att.fileUrl) {
+            thumb = `<img src="${escHtml(att.fileUrl)}" alt="preview"
+                onclick="openImagePreview('${escHtml(att.fileUrl)}')"
+                onerror="this.parentElement.innerHTML='<span class=\\'file-row-thumb-icon\\'>🖼️</span>'">`;
+        } else {
+            const icon = att.contentType === 'URL' ? '🔗' : att.contentType === 'AUDIO' ? '🎵' : fileIcon(att.fileName);
+            thumb = `<span class="file-row-thumb-icon">${icon}</span>`;
+        }
+
+        // Right cell: type-specific actions + universal pin (full-access) and go-to-post
+        let primaryAction;
+        if (att.contentType === 'URL') {
+            primaryAction = `<a href="${escHtml(att.linkUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">열기</a>`;
+        } else if (att.contentType === 'AUDIO' && att.fileUrl) {
+            primaryAction = `<audio controls style="height:30px;width:180px;" src="${escHtml(att.fileUrl)}"></audio>`;
+        } else {
+            primaryAction = `<button class="btn btn-secondary btn-sm"
+                onclick="boardDownload('${deptKey}', '${pinKey}', ${att.id}, ${JSON.stringify(label).replace(/"/g,'&quot;')})">다운로드</button>`;
+        }
+        const previewBtn = isImage
+            ? `<button class="btn btn-ghost btn-sm" onclick="openImagePreview('${escHtml(att.fileUrl)}')">미리보기</button>`
+            : '';
+        const pinBtn = canPinToggle
+            ? `<button class="btn btn-ghost btn-sm ${att.isPinnedToDashboard ? 'file-pinned' : ''}"
+                    title="${att.isPinnedToDashboard ? '핀 해제' : '홈에 핀 고정'}"
+                    onclick="togglePin('${pinKey}', ${att.id}, ${!att.isPinnedToDashboard})">📌</button>`
+            : (att.isPinnedToDashboard ? '<span class="file-pinned" title="홈에 고정됨">📌</span>' : '');
+
         return `
-        <div class="file-card ${pinMode && isSelected ? 'pin-selected' : ''}"
-             ${pinMode ? `onclick="togglePinSelect('${pinKey}', ${att.id})" style="cursor:pointer;"` : ''}>
-            ${att.isPinnedToDashboard ? '<span style="position:absolute;top:6px;right:8px;font-size:0.7rem;">📌</span>' : ''}
-            <div style="font-size:1.6rem;">${icon}</div>
-            <div style="font-size:0.82rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
-                 title="${escHtml(att.fileName || att.linkUrl || '')}">${escHtml(att.fileName || att.linkUrl || '(이름 없음)')}</div>
-            <div style="font-size:0.72rem;color:var(--text-muted);">${att.fileSize ? fmtBytes(att.fileSize) : att.contentType}</div>
-            ${att.contentType === 'AUDIO' && att.fileUrl ? `<audio controls style="width:100%;height:30px;" src="${escHtml(att.fileUrl)}"></audio>` : ''}
-            ${!pinMode ? `
-            <div style="display:flex;gap:6px;margin-top:2px;">
-                ${att.contentType === 'URL'
-                    ? `<a href="${escHtml(att.linkUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="font-size:0.72rem;">열기</a>`
-                    : `<button class="btn btn-secondary btn-sm" style="font-size:0.72rem;" onclick="boardDownload('${deptKey}', '${pinKey}', ${att.id}, ${JSON.stringify(att.fileName || 'file').replace(/"/g,'&quot;')})">다운로드</button>`}
-                <button class="btn btn-ghost btn-sm" style="font-size:0.72rem;" onclick="openDetail(${att.postId})">게시물로</button>
-            </div>` : ''}
+        <div class="file-row">
+            <div class="file-row-thumb">${thumb}</div>
+            <div style="min-width:0;">
+                <div class="file-row-name" title="${escHtml(label)}">${escHtml(label)}</div>
+                <div class="file-row-meta">
+                    <span>${att.fileSize ? fmtBytes(att.fileSize) : att.contentType}</span>
+                    <span>·</span>
+                    <span>${fmtDate(att.createdAt)}</span>
+                    <span>·</span>
+                    <span title="게시물">${escHtml(post.title)}</span>
+                </div>
+            </div>
+            <div class="file-row-actions">
+                ${previewBtn}
+                ${primaryAction}
+                ${pinBtn}
+                <button class="btn btn-ghost btn-sm" title="게시물 열기" onclick="openDetail(${att.postId})">→</button>
+            </div>
         </div>`;
     }).join('');
+}
+
+// ==================== Image preview ====================
+function openImagePreview(url) {
+    document.getElementById('imagePreviewImg').src = url;
+    document.getElementById('imagePreviewModal').classList.add('open');
+}
+function closeImagePreview() {
+    document.getElementById('imagePreviewModal').classList.remove('open');
+    document.getElementById('imagePreviewImg').src = '';
+}
+
+// ==================== Pin toggle (per file) ====================
+async function togglePin(source, attachmentId, pinned) {
+    try {
+        const body = {
+            postAttachmentIds: source === 'post' ? [attachmentId] : null,
+            commentAttachmentIds: source === 'comment' ? [attachmentId] : null,
+            pinned
+        };
+        await api(`${boardApiBase(deptKey)}/attachments/bulk-pin`, { method: 'POST', body: JSON.stringify(body) });
+        showToast(pinned ? '홈에 고정되었습니다' : '핀이 해제되었습니다', 'success');
+        await loadPosts();
+    } catch (e) { showToast(e.message || '처리에 실패했습니다', 'error'); }
 }
 
 function fileIcon(name) {
@@ -340,7 +414,7 @@ function renderPostSection() {
             </div>
             <div style="display:flex;align-items:center;gap:10px;margin-top:4px;font-size:0.78rem;color:var(--text-muted);">
                 <span>${escHtml(p.createdByUserName || '')}</span>
-                ${p.folderName ? `<span>📁 ${escHtml(p.folderName)}</span>` : ''}
+                ${p.folderName ? `<span>${escHtml(p.folderName)}</span>` : ''}
                 ${(p.attachments || []).length > 0 ? `<span>📎 ${p.attachments.length}</span>` : ''}
                 <span>💬 ${p.commentCount}</span>
             </div>
@@ -364,7 +438,7 @@ async function openDetail(postId) {
             <span>${escHtml(post.createdByUserName || '')} · ${fmtDateTime(post.createdAt)}</span>
             ${canModify ? `
             <span style="display:flex;gap:6px;">
-                <button class="btn btn-ghost btn-sm" style="font-size:0.75rem;" onclick="movePostPrompt(${post.id})">폴더 이동</button>
+                <button class="btn btn-ghost btn-sm" style="font-size:0.75rem;" onclick="movePostPrompt(${post.id})">카테고리 이동</button>
                 <button class="btn btn-ghost btn-sm" style="font-size:0.75rem;color:#ef4444;" onclick="deletePostConfirm(${post.id})">삭제</button>
             </span>` : ''}
         </div>
@@ -395,6 +469,21 @@ async function openDetail(postId) {
 function attachmentRow(a) {
     const pinKey = a.source === 'COMMENT' ? 'comment' : 'post';
     const label = a.fileName || a.linkUrl || '(첨부)';
+    // Photo: inline preview above the download button, click to enlarge
+    if (a.contentType === 'FILE' && isImageFile(a.fileName)) {
+        return `
+        <div style="font-size:0.82rem;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                <span>${fileIcon(a.fileName)}</span>
+                <span style="font-weight:500;">${escHtml(label)}</span>
+                <button class="btn btn-ghost btn-sm" style="font-size:0.72rem;padding:2px 6px;margin-left:auto;"
+                    onclick="boardDownload('${deptKey}', '${pinKey}', ${a.id}, ${JSON.stringify(a.fileName || 'file').replace(/"/g,'&quot;')})">다운로드</button>
+            </div>
+            <img class="attachment-inline-img" src="${escHtml(a.fileUrl)}" alt="${escHtml(label)}"
+                 onclick="openImagePreview('${escHtml(a.fileUrl)}')"
+                 onerror="this.style.display='none'">
+        </div>`;
+    }
     if (a.contentType === 'URL')
         return `<a href="${escHtml(a.linkUrl)}" target="_blank" rel="noopener" style="font-size:0.82rem;">🔗 ${escHtml(label)}</a>`;
     if (a.contentType === 'AUDIO')
@@ -453,8 +542,8 @@ async function deletePostConfirm(postId) {
 }
 
 async function movePostPrompt(postId) {
-    const options = ['루트 (폴더 없음)', ...folders.map(f => f.name)];
-    const choice = prompt('이동할 폴더 번호를 입력하세요:\n' + options.map((o, i) => `${i}. ${o}`).join('\n'));
+    const options = ['링크 (카테고리 없음)', ...folders.map(f => f.name)];
+    const choice = prompt('이동할 카테고리 번호를 입력하세요:\n' + options.map((o, i) => `${i}. ${o}`).join('\n'));
     if (choice === null) return;
     const idx = parseInt(choice, 10);
     if (isNaN(idx) || idx < 0 || idx >= options.length) { showToast('잘못된 번호입니다', 'error'); return; }
@@ -490,7 +579,7 @@ function closePostModal() {
 function populateFolderSelect() {
     const sel = document.getElementById('postFolderSelect');
     if (!sel) return;
-    sel.innerHTML = '<option value="">루트 (폴더 없음)</option>' +
+    sel.innerHTML = '<option value="">링크 (카테고리 없음)</option>' +
         folders.map(f => `<option value="${f.id}" ${currentSelection === f.id ? 'selected' : ''}>${escHtml(f.name)}</option>`).join('');
 }
 
@@ -550,39 +639,6 @@ async function submitPost() {
     }
 }
 
-// ==================== Pin mode (full access) ====================
-function togglePinMode() {
-    pinMode = !pinMode;
-    selectedPins = { post: new Set(), comment: new Set() };
-    document.getElementById('pinBar').style.display = pinMode ? 'block' : 'none';
-    const btn = document.getElementById('pinModeBtn');
-    if (btn) btn.textContent = pinMode ? '📌 핀 관리 종료' : '📌 핀 관리';
-    renderFileSection();
-}
-
-function togglePinSelect(kind, id) {
-    if (selectedPins[kind].has(id)) selectedPins[kind].delete(id);
-    else selectedPins[kind].add(id);
-    document.getElementById('pinCount').textContent = selectedPins.post.size + selectedPins.comment.size;
-    renderFileSection();
-}
-
-async function applyPin(pinned) {
-    if (selectedPins.post.size + selectedPins.comment.size === 0) { showToast('선택된 파일이 없습니다', 'error'); return; }
-    try {
-        await api(`${boardApiBase(deptKey)}/attachments/bulk-pin`, {
-            method: 'POST',
-            body: JSON.stringify({
-                postAttachmentIds: [...selectedPins.post],
-                commentAttachmentIds: [...selectedPins.comment],
-                pinned
-            })
-        });
-        showToast(pinned ? '핀 고정되었습니다' : '핀이 해제되었습니다', 'success');
-        togglePinMode();
-        await loadPosts();
-    } catch (e) { showToast(e.message || '처리에 실패했습니다', 'error'); }
-}
 </script>
 </body>
 </html>
