@@ -42,6 +42,19 @@
 
 </div>
 
+<!-- Reservation list modal -->
+<div class="modal-overlay" id="reservationModal" style="display:none;">
+    <div class="modal" style="max-width:480px;max-height:80vh;overflow-y:auto;">
+        <div class="modal-header">
+            <h3 class="modal-title" id="reservationModalTitle">예약자 목록</h3>
+            <button class="modal-close" onclick="closeReservationModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="reservationModalBody">
+            <div class="loading"><div class="spinner"></div></div>
+        </div>
+    </div>
+</div>
+
 <script src="/js/auth.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/dashboard.js"></script>
@@ -111,7 +124,10 @@ async function loadEvent() {
                         <div style="font-weight:500;">${fmtDateTime(s.eventDate)}</div>
                         <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">예매 마감 ${fmtDateTime(s.registrationDeadLine)}</div>
                     </div>
-                    ${remainingText}
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        ${remainingText}
+                        <button class="btn btn-ghost btn-sm" style="font-size:0.75rem;" onclick="openReservationList(${s.id}, '${escHtml(fmtDateTime(s.eventDate)).replace(/'/g,'')}')">예약자 보기</button>
+                    </div>
                 </div>`;
         }).join('');
 
@@ -160,6 +176,50 @@ async function loadEvent() {
             }
         </style>
     `;
+}
+
+// ==================== Reservation list modal ====================
+
+async function openReservationList(scheduleId, scheduleLabel) {
+    document.getElementById('reservationModalTitle').textContent = `예약자 목록 · ${scheduleLabel}`;
+    document.getElementById('reservationModalBody').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    document.getElementById('reservationModal').style.display = 'flex';
+    try {
+        const list = await api(`/api/dashboard/schedule/${scheduleId}/reservations`) || [];
+        renderReservationList(list);
+    } catch (e) {
+        document.getElementById('reservationModalBody').innerHTML =
+            '<p style="color:var(--text-muted);font-size:0.85rem;">예약자 정보를 불러올 수 없습니다.</p>';
+    }
+}
+
+function renderReservationList(list) {
+    const body = document.getElementById('reservationModalBody');
+    if (!list.length) {
+        body.innerHTML = '<p style="font-size:0.9rem;color:var(--text-muted);padding:8px 0;">아직 예약자가 없습니다.</p>';
+        return;
+    }
+    const totalTickets = list.reduce((sum, r) => sum + (r.ticketCount || 0), 0);
+    body.innerHTML = `
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:10px;">
+            총 ${list.length}건 · ${totalTickets}매
+        </div>
+        <div>
+            ${list.map(r => `
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-light);">
+                    <div>
+                        <span style="font-weight:500;">${escHtml(r.name)}</span>
+                        <span style="font-size:0.75rem;color:var(--text-muted);margin-left:8px;">${fmtDateTime(r.reservedAt)}</span>
+                    </div>
+                    <span class="badge badge-primary">${r.ticketCount}매</span>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function closeReservationModal() {
+    document.getElementById('reservationModal').style.display = 'none';
 }
 </script>
 </body>

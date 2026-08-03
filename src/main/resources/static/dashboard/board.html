@@ -19,7 +19,8 @@
         .board-unread-dot { width:7px; height:7px; border-radius:50%; background:var(--primary); flex-shrink:0; }
         /* File finder — table-like rows, thin, no oversized icons */
         .file-row { display:grid; grid-template-columns: 44px 1fr auto; gap:12px; align-items:center;
-                    padding:8px 12px; border-bottom:1px solid var(--border-light); font-size:0.85rem; }
+                    padding:8px 12px; border-bottom:1px solid var(--border-light); font-size:0.85rem;
+                    cursor: pointer; }
         .file-row:hover { background: var(--gray-50); }
         .file-row-thumb { width:40px; height:40px; display:flex; align-items:center; justify-content:center;
                           background: var(--gray-50); border-radius:6px; overflow:hidden; flex-shrink:0; }
@@ -312,37 +313,41 @@ function renderFileSection() {
         const canPinToggle = currentSeason.myFullAccess && !_isClosed;
 
         // Left cell: photo thumbnail if image, else small file-type indicator
+        // Thumbnail image click opens the preview modal — stop propagation so the row's
+        // navigate-to-post click doesn't also fire.
         let thumb;
         if (isImage && att.fileUrl) {
             thumb = `<img src="${escHtml(att.fileUrl)}" alt="preview"
-                onclick="openImagePreview('${escHtml(att.fileUrl)}')"
+                onclick="event.stopPropagation(); openImagePreview('${escHtml(att.fileUrl)}')"
                 onerror="this.parentElement.innerHTML='<span class=\\'file-row-thumb-icon\\'>🖼️</span>'">`;
         } else {
             const icon = att.contentType === 'URL' ? '🔗' : att.contentType === 'AUDIO' ? '🎵' : fileIcon(att.fileName);
             thumb = `<span class="file-row-thumb-icon">${icon}</span>`;
         }
 
-        // Right cell: type-specific actions + universal pin (full-access) and go-to-post
+        // Action buttons — every onclick MUST call event.stopPropagation() first,
+        // otherwise clicking them would also trigger the row's openDetail.
         let primaryAction;
         if (att.contentType === 'URL') {
-            primaryAction = `<a href="${escHtml(att.linkUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">열기</a>`;
+            primaryAction = `<a href="${escHtml(att.linkUrl)}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" onclick="event.stopPropagation()">열기</a>`;
         } else if (att.contentType === 'AUDIO' && att.fileUrl) {
-            primaryAction = `<audio controls style="height:30px;width:180px;" src="${escHtml(att.fileUrl)}"></audio>`;
+            primaryAction = `<audio controls style="height:30px;width:180px;" src="${escHtml(att.fileUrl)}" onclick="event.stopPropagation()"></audio>`;
         } else {
             primaryAction = `<button class="btn btn-secondary btn-sm"
-                onclick="boardDownload('${deptKey}', '${pinKey}', ${att.id}, ${JSON.stringify(label).replace(/"/g,'&quot;')})">다운로드</button>`;
+                onclick="event.stopPropagation(); boardDownload('${deptKey}', '${pinKey}', ${att.id}, ${JSON.stringify(label).replace(/"/g,'&quot;')})">다운로드</button>`;
         }
         const previewBtn = isImage
-            ? `<button class="btn btn-ghost btn-sm" onclick="openImagePreview('${escHtml(att.fileUrl)}')">미리보기</button>`
+            ? `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); openImagePreview('${escHtml(att.fileUrl)}')">미리보기</button>`
             : '';
         const pinBtn = canPinToggle
             ? `<button class="btn btn-ghost btn-sm ${att.isPinnedToDashboard ? 'file-pinned' : ''}"
                     title="${att.isPinnedToDashboard ? '핀 해제' : '홈에 핀 고정'}"
-                    onclick="togglePin('${pinKey}', ${att.id}, ${!att.isPinnedToDashboard})">📌</button>`
+                    onclick="event.stopPropagation(); togglePin('${pinKey}', ${att.id}, ${!att.isPinnedToDashboard})">📌</button>`
             : (att.isPinnedToDashboard ? '<span class="file-pinned" title="홈에 고정됨">📌</span>' : '');
 
+        // Entire row is clickable — takes you to the parent post's detail modal.
         return `
-        <div class="file-row">
+        <div class="file-row" onclick="openDetail(${att.postId})">
             <div class="file-row-thumb">${thumb}</div>
             <div style="min-width:0;">
                 <div class="file-row-name" title="${escHtml(label)}">${escHtml(label)}</div>
@@ -358,7 +363,6 @@ function renderFileSection() {
                 ${previewBtn}
                 ${primaryAction}
                 ${pinBtn}
-                <button class="btn btn-ghost btn-sm" title="게시물 열기" onclick="openDetail(${att.postId})">→</button>
             </div>
         </div>`;
     }).join('');
