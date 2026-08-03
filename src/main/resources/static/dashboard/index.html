@@ -25,6 +25,7 @@
                 <a href="/dashboard/scripts.html" class="dash-tab">대본</a>
                 <a href="/dashboard/schedule.html" class="dash-tab">일정</a>
                 <a href="/dashboard/board-select.html" class="dash-tab">게시판</a>
+                <a href="/dashboard/events.html" class="dash-tab">공연</a>
             </div>
             <div class="dash-nav-right">
                 <button class="dash-season-btn" id="seasonSelector"></button>
@@ -254,6 +255,18 @@ async function loadLatestNotice() {
 
 async function loadTodayTodos(canEdit) {
     const el = document.getElementById('todayTodos');
+    // Closed season = "the season is over" — show the same congratulations banner as schedule.html
+    if (currentSeason.status === 'CLOSED') {
+        el.innerHTML = `
+            <div style="display:flex;align-items:center;gap:10px;padding:12px 4px;">
+                <span style="font-size:1.4rem;">🎭</span>
+                <div>
+                    <div style="font-weight:600;color:var(--primary);font-size:0.9rem;">한학기 동안 수고하셨습니다!</div>
+                    <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">이번 시즌이 종료되었습니다.</div>
+                </div>
+            </div>`;
+        return;
+    }
     try {
         const today = new Date().toISOString().split('T')[0];
         const events = await calendarApi.getEvents(today, today);

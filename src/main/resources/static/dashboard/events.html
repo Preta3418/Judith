@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공연 — JUDITH</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<div class="dash-shell">
+
+    <nav class="dash-nav">
+        <div class="dash-nav-inner">
+            <a href="/" class="dash-logo">
+                <img src="/images/logo-symbol-light.png" alt="JUDITH">
+                <span class="dash-logo-text">JUDITH</span>
+            </a>
+            <div class="dash-nav-tabs" id="navTabs">
+                <a href="/dashboard/index.html" class="dash-tab">홈</a>
+                <a href="/dashboard/announcements.html" class="dash-tab">공지사항</a>
+                <a href="/dashboard/scripts.html" class="dash-tab">대본</a>
+                <a href="/dashboard/schedule.html" class="dash-tab">일정</a>
+                <a href="/dashboard/board-select.html" class="dash-tab">게시판</a>
+                <a href="/dashboard/events.html" class="dash-tab active">공연</a>
+            </div>
+            <div class="dash-nav-right">
+                <button class="dash-season-btn" id="seasonSelector"></button>
+                <div class="dash-avatar" id="userAvatar">U</div>
+                <span class="dash-user-name" id="userName"></span>
+                <button class="dash-btn-logout" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dash-main" id="pageContainer">
+        <div class="loading"><div class="spinner"></div></div>
+    </main>
+
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/dashboard.js"></script>
+<script>
+async function loadPageContent() {
+    const container = document.getElementById('pageContainer');
+    container.innerHTML = `
+        <div class="dash-page-header">
+            <div class="dash-greeting">공연</div>
+            <div class="dash-subtitle">${escHtml(currentSeason.seasonName)}</div>
+        </div>
+        <div id="eventPanel"><div class="loading"><div class="spinner"></div></div></div>
+    `;
+    await loadEvent();
+}
+
+async function loadEvent() {
+    const panel = document.getElementById('eventPanel');
+    let event;
+    try {
+        event = await api(`/api/dashboard/seasons/${currentSeasonId}/event`);
+    } catch (e) {
+        panel.innerHTML = '<div class="alert alert-danger">공연 정보를 불러올 수 없습니다.</div>';
+        return;
+    }
+
+    // 204 No Content = no event for this season yet
+    if (!event) {
+        panel.innerHTML = `
+            <div class="dash-card" style="text-align:center;padding:40px 20px;">
+                <div style="font-size:2.5rem;margin-bottom:8px;">🎭</div>
+                <div style="font-weight:600;margin-bottom:6px;">이 시즌은 아직 공연 정보가 없습니다</div>
+                <div style="font-size:0.85rem;color:var(--text-muted);">공연이 등록되면 여기에 표시됩니다.</div>
+            </div>`;
+        return;
+    }
+
+    const schedules = event.schedules || [];
+    const upcoming = schedules
+        .map(s => ({ ...s, dateObj: new Date(s.eventDate) }))
+        .sort((a, b) => a.dateObj - b.dateObj);
+
+    // D-day to the earliest upcoming schedule (if any still ahead)
+    const now = new Date();
+    const nextUp = upcoming.find(s => s.dateObj > now);
+    let ddayHtml = '';
+    if (nextUp) {
+        const diffDays = Math.floor((nextUp.dateObj - now) / (1000 * 60 * 60 * 24));
+        const label = diffDays === 0 ? 'D-DAY' : diffDays > 0 ? `D-${diffDays}` : `D+${Math.abs(diffDays)}`;
+        ddayHtml = `<span class="badge badge-primary" style="font-size:0.85rem;">${label}</span>`;
+    }
+
+    const statusBadgeMap = { OPEN: 'badge-success', CLOSED: 'badge-secondary', COMPLETED: 'badge-secondary' };
+    const statusLabelMap = { OPEN: '예매 진행 중', CLOSED: '예매 마감', COMPLETED: '종료' };
+    const statusBadge = `<span class="badge ${statusBadgeMap[event.status] || ''}">${statusLabelMap[event.status] || event.status}</span>`;
+
+    const scheduleRows = schedules.length === 0
+        ? '<p style="font-size:0.85rem;color:var(--text-muted);">등록된 회차가 없습니다.</p>'
+        : schedules.map(s => {
+            const remaining = s.remainingSeats != null ? s.remainingSeats : null;
+            const remainingText = remaining != null
+                ? (remaining > 0 ? `<span style="color:var(--primary);">잔여 ${remaining}석</span>` : '<span style="color:#ef4444;">매진</span>')
+                : '';
+            return `
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-light);">
+                    <div>
+                        <div style="font-weight:500;">${fmtDateTime(s.eventDate)}</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">예매 마감 ${fmtDateTime(s.registrationDeadLine)}</div>
+                    </div>
+                    ${remainingText}
+                </div>`;
+        }).join('');
+
+    const posterHtml = event.posterImageUrl
+        ? `<img src="${escHtml(event.posterImageUrl)}" alt="poster" style="width:100%;border-radius:var(--radius);object-fit:cover;box-shadow:var(--shadow);">`
+        : `<div style="width:100%;aspect-ratio:2/3;background:var(--gray-50);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.85rem;">포스터 없음</div>`;
+
+    const pamphletBtn = event.pamphletUrl
+        ? `<a href="/public/pamphlet.html?id=${event.id}" target="_blank" class="btn btn-secondary" style="width:100%;">📖 팸플릿 보기</a>`
+        : '';
+
+    const bookBtn = event.status === 'OPEN'
+        ? `<a href="/public/book.html?id=${event.id}" target="_blank" class="btn btn-primary" style="width:100%;">🎫 예매 페이지</a>`
+        : `<a href="/public/book.html?id=${event.id}" target="_blank" class="btn btn-secondary" style="width:100%;">공연 정보 보기</a>`;
+
+    panel.innerHTML = `
+        <div class="dash-card">
+            <div style="display:grid;grid-template-columns:200px 1fr;gap:24px;align-items:start;">
+                <!-- Left: poster + action buttons -->
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    ${posterHtml}
+                    ${bookBtn}
+                    ${pamphletBtn}
+                </div>
+
+                <!-- Right: title, status, location, schedules -->
+                <div style="min-width:0;">
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+                        <h2 style="margin:0;font-size:1.4rem;">${escHtml(event.title)}</h2>
+                        ${statusBadge}
+                        ${ddayHtml}
+                    </div>
+                    ${event.location ? `<div style="font-size:0.9rem;color:var(--text-muted);margin-bottom:14px;">📍 ${escHtml(event.location)}</div>` : ''}
+                    ${event.description ? `<div style="font-size:0.9rem;line-height:1.6;margin-bottom:20px;white-space:pre-wrap;word-break:break-word;">${escHtml(event.description)}</div>` : ''}
+
+                    <div style="margin-bottom:8px;font-weight:600;font-size:0.9rem;">회차 정보</div>
+                    <div>${scheduleRows}</div>
+                    ${event.capacityLimit ? `<div style="font-size:0.78rem;color:var(--text-muted);margin-top:8px;">회차당 정원 ${event.capacityLimit}명</div>` : ''}
+                </div>
+            </div>
+        </div>
+
+        <style>
+            @media (max-width: 700px) {
+                #eventPanel .dash-card > div { grid-template-columns: 1fr !important; }
+            }
+        </style>
+    `;
+}
+</script>
+</body>
+</html>
