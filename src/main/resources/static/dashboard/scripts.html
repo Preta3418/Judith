@@ -24,6 +24,7 @@
                 <a href="/dashboard/announcements.html" class="dash-tab">공지사항</a>
                 <a href="/dashboard/scripts.html" class="dash-tab active">대본</a>
                 <a href="/dashboard/schedule.html" class="dash-tab">일정</a>
+                <a href="/dashboard/board-select.html" class="dash-tab">게시판</a>
             </div>
             <div class="dash-nav-right">
                 <button class="dash-season-btn" id="seasonSelector"></button>
@@ -44,12 +45,29 @@
 <script src="/js/api.js"></script>
 <script src="/js/dashboard.js"></script>
 <script>
+let _canUpload = false;
+
 async function loadPageContent() {
+    const isClosed = currentSeason.status === 'CLOSED';
+    _canUpload = currentSeason.myFullAccess && !isClosed;
+
     const container = document.getElementById('pageContainer');
     container.innerHTML = `
         <div class="dash-page-header">
-            <div class="dash-greeting">대본</div>
-            <div class="dash-subtitle">${escHtml(currentSeason.seasonName)} · 파일을 클릭해 다운로드하세요</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                <div>
+                    <div class="dash-greeting">대본</div>
+                    <div class="dash-subtitle">${escHtml(currentSeason.seasonName)} · 파일을 클릭해 다운로드하세요</div>
+                </div>
+                ${_canUpload ? `
+                    <div>
+                        <input type="file" id="scriptFileInput" style="display:none;" onchange="handleScriptUpload(event)">
+                        <button class="btn btn-primary btn-sm" onclick="document.getElementById('scriptFileInput').click()">
+                            + 대본 업로드
+                        </button>
+                    </div>
+                ` : ''}
+            </div>
         </div>
         <div class="dash-scripts" id="scriptsList">
             <div class="loading"><div class="spinner"></div></div>
@@ -67,7 +85,7 @@ async function loadScripts() {
         if (scripts.length === 0) {
             list.innerHTML = `<div class="dash-empty">
                 <div class="dash-empty-icon">&#x1F4DC;</div>
-                <p class="dash-empty-text">업로드된 대본이 없습니다<br>관리자에게 문의하세요</p>
+                <p class="dash-empty-text">업로드된 대본이 없습니다${_canUpload ? '' : '<br>관리자에게 문의하세요'}</p>
             </div>`;
             return;
         }
@@ -83,6 +101,22 @@ async function loadScripts() {
         `).join('');
     } catch(e) {
         list.innerHTML = '<div class="alert alert-danger">대본 목록을 불러올 수 없습니다.</div>';
+    }
+}
+
+async function handleScriptUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+        await uploadFile(file, 'SCRIPT', currentSeasonId);
+        showToast('대본이 업로드되었습니다', 'success');
+        await loadScripts();
+    } catch(e) {
+        showToast(e.message || '업로드에 실패했습니다', 'error');
+    } finally {
+        // Reset input so uploading the same file twice works
+        event.target.value = '';
     }
 }
 </script>

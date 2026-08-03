@@ -188,6 +188,73 @@ function dashboardUrl(page) {
     return url.toString();
 }
 
+// ==================== Board (departments config + helpers) ====================
+// Single source of truth for department labels/icons/roles on the frontend.
+// Must mirror backend Department enum — PLANNING is intentionally absent (Phase 4, admin tab).
+const BOARD_DEPARTMENTS = [
+    { key: 'STAGE_DESIGN', label: '무대 디자인', icon: '🎭', roles: ['STAGE_DESIGN'] },
+    { key: 'SOUND_DESIGN', label: '음향 디자인', icon: '🔊', roles: ['SOUND_DESIGN', 'SOUND_OPERATOR'] },
+    { key: 'PRINT_DESIGN', label: '인쇄/홍보',   icon: '🖨️', roles: ['IMAGE_DESIGN'] },
+    { key: 'PROP_DESIGN',  label: '소품',        icon: '📦', roles: [] },  // empty = everyone can post
+];
+
+function getDeptConfig(key) {
+    return BOARD_DEPARTMENTS.find(d => d.key === key) || null;
+}
+
+// Mirrors backend Department.canPost() — used only to show/hide buttons.
+// The backend re-checks on every write; this is UX, not security.
+function canPostToDept(deptKey) {
+    if (currentSeason && currentSeason.myFullAccess) return true;
+    const dept = getDeptConfig(deptKey);
+    if (!dept) return false;
+    if (dept.roles.length === 0) return true;
+    const myRoles = currentSeason && currentSeason.myRoles ? [...currentSeason.myRoles] : [];
+    return myRoles.some(r => dept.roles.includes(r));
+}
+
+function boardApiBase(deptKey) {
+    return `/api/board/seasons/${currentSeasonId}/${deptKey}`;
+}
+
+// Multipart helper — api() forces JSON content type, so board uploads need raw fetch.
+// "data" part carries the JSON body, "files" carries the uploaded files.
+async function boardMultipart(url, dataObj, files) {
+    const formData = new FormData();
+    formData.append('data', new Blob([JSON.stringify(dataObj)], { type: 'application/json' }));
+    (files || []).forEach(f => formData.append('files', f));
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${getToken()}` },
+        body: formData
+    });
+    if (!response.ok) {
+        const text = await response.text();
+        let msg = '요청에 실패했습니다';
+        try { msg = JSON.parse(text).message || msg; } catch (e) {}
+        throw new Error(msg);
+    }
+    return response.json();
+}
+
+// Authenticated blob download — the board download proxy requires a JWT header,
+// so a plain <a href> cannot be used (no way to attach Authorization).
+async function boardDownload(deptKey, source, attachmentId, fileName) {
+    const response = await fetch(`${boardApiBase(deptKey)}/download/${source}/${attachmentId}`, {
+        headers: { 'Authorization': `Bearer ${getToken()}` }
+    });
+    if (!response.ok) { showToast('다운로드에 실패했습니다', 'error'); return; }
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName || 'attachment';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+}
+
 // ==================== Calendar API ====================
 const calendarApi = {
     getEvents: (from, to) => api(`/api/dashboard/calendar?from=${from}&to=${to}`),

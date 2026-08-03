@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시판 — JUDITH</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<div class="dash-shell">
+
+    <nav class="dash-nav">
+        <div class="dash-nav-inner">
+            <a href="/" class="dash-logo">
+                <img src="/images/logo-symbol-light.png" alt="JUDITH">
+                <span class="dash-logo-text">JUDITH</span>
+            </a>
+            <div class="dash-nav-tabs" id="navTabs">
+                <a href="/dashboard/index.html" class="dash-tab">홈</a>
+                <a href="/dashboard/announcements.html" class="dash-tab">공지사항</a>
+                <a href="/dashboard/scripts.html" class="dash-tab">대본</a>
+                <a href="/dashboard/schedule.html" class="dash-tab">일정</a>
+                <a href="/dashboard/board-select.html" class="dash-tab active">게시판</a>
+            </div>
+            <div class="dash-nav-right">
+                <button class="dash-season-btn" id="seasonSelector"></button>
+                <div class="dash-avatar" id="userAvatar">U</div>
+                <span class="dash-user-name" id="userName"></span>
+                <button class="dash-btn-logout" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dash-main" id="pageContainer">
+        <div class="loading"><div class="spinner"></div></div>
+    </main>
+
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/dashboard.js"></script>
+<script>
+async function loadPageContent() {
+    const container = document.getElementById('pageContainer');
+
+    container.innerHTML = `
+        <div class="dash-page-header">
+            <div class="dash-greeting">게시판</div>
+            <div class="dash-subtitle">${escHtml(currentSeason.seasonName)} · 부서를 선택하세요</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;" id="deptGrid">
+            ${BOARD_DEPARTMENTS.map(d => `
+                <a href="${boardPageUrl(d.key)}" style="text-decoration:none;color:inherit;">
+                    <div class="dash-card" style="text-align:center;padding:32px 20px;cursor:pointer;transition:transform 0.15s, box-shadow 0.15s;"
+                         onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow-lg)'"
+                         onmouseout="this.style.transform='';this.style.boxShadow=''">
+                        <div style="font-size:2.5rem;margin-bottom:12px;">${d.icon}</div>
+                        <div style="font-weight:600;font-size:1.05rem;">${d.label}</div>
+                        <div style="font-size:0.8rem;color:var(--text-muted);margin-top:6px;" id="count-${d.key}">&nbsp;</div>
+                        ${canPostToDept(d.key) ? '<div style="font-size:0.72rem;color:var(--primary);margin-top:4px;">글쓰기 가능</div>' : ''}
+                    </div>
+                </a>
+            `).join('')}
+        </div>
+    `;
+
+    loadPostCounts();
+}
+
+function boardPageUrl(deptKey) {
+    const url = new URL('/dashboard/board.html', window.location.origin);
+    url.searchParams.set('seasonId', currentSeasonId);
+    url.searchParams.set('department', deptKey);
+    return url.toString();
+}
+
+async function loadPostCounts() {
+    for (const d of BOARD_DEPARTMENTS) {
+        try {
+            const posts = await api(`${boardApiBase(d.key)}/posts`) || [];
+            const el = document.getElementById(`count-${d.key}`);
+            if (el) el.textContent = `게시물 ${posts.length}개`;
+        } catch (e) { /* leave blank on failure */ }
+    }
+}
+</script>
+</body>
+</html>
