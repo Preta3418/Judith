@@ -126,7 +126,7 @@ async function loadEvent() {
                     </div>
                     <div style="display:flex;align-items:center;gap:8px;">
                         ${remainingText}
-                        <button class="btn btn-ghost btn-sm" style="font-size:0.75rem;" onclick="openReservationList(${s.id}, '${escHtml(fmtDateTime(s.eventDate)).replace(/'/g,'')}')">예약자 보기</button>
+                        <button class="btn btn-ghost btn-sm" style="font-size:0.75rem;" onclick="openReservationList(${s.eventScheduleId}, '${escHtml(fmtDateTime(s.eventDate)).replace(/'/g,'')}')">예약자 보기</button>
                     </div>
                 </div>`;
         }).join('');
@@ -200,20 +200,35 @@ function renderReservationList(list) {
         return;
     }
     const totalTickets = list.reduce((sum, r) => sum + (r.ticketCount || 0), 0);
+    // Newest first
+    const sorted = [...list].sort((a, b) => new Date(b.reservedAt || 0) - new Date(a.reservedAt || 0));
     body.innerHTML = `
         <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:10px;">
             총 ${list.length}건 · ${totalTickets}매
         </div>
-        <div>
-            ${list.map(r => `
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-light);">
-                    <div>
-                        <span style="font-weight:500;">${escHtml(r.name)}</span>
-                        <span style="font-size:0.75rem;color:var(--text-muted);margin-left:8px;">${fmtDateTime(r.reservedAt)}</span>
-                    </div>
-                    <span class="badge badge-primary">${r.ticketCount}매</span>
-                </div>
-            `).join('')}
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                <thead>
+                    <tr style="border-bottom:2px solid var(--border-light);text-align:left;">
+                        <th style="padding:8px 6px;">이름</th>
+                        <th style="padding:8px 6px;">연락처</th>
+                        <th style="padding:8px 6px;text-align:center;">매수</th>
+                        <th style="padding:8px 6px;">예약 일시</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sorted.map(r => `
+                        <tr style="border-bottom:1px solid var(--border-light);">
+                            <td style="padding:8px 6px;font-weight:500;">${escHtml(r.name)}</td>
+                            <td style="padding:8px 6px;font-family:monospace;">${escHtml(r.phoneNumber || '')}</td>
+                            <td style="padding:8px 6px;text-align:center;">
+                                <span class="badge badge-primary">${r.ticketCount}</span>
+                            </td>
+                            <td style="padding:8px 6px;color:var(--text-muted);font-size:0.8rem;">${fmtDateTime(r.reservedAt)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
         </div>
     `;
 }
