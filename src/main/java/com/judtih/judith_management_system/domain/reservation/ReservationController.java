@@ -95,6 +95,14 @@ public class ReservationController {
                 .orElse(ResponseEntity.noContent().build());
     }
 
+    /** Member-safe reservation list for a schedule — names and ticket counts only.
+     *  Phone numbers stay in the admin endpoint (/api/admin/schedule/{id}/reservations). */
+    @GetMapping("/api/dashboard/schedule/{scheduleId}/reservations")
+    public ResponseEntity<List<com.judtih.judith_management_system.domain.reservation.reservationDto.ReservationSummaryResponse>>
+    getScheduleReservationSummaries(@PathVariable Long scheduleId) {
+        return ResponseEntity.ok(reservationService.getReservationSummariesByScheduleId(scheduleId));
+    }
+
 
     // ==================== Admin Endpoints ====================
 

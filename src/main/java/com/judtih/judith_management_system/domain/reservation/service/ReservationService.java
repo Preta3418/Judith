@@ -7,6 +7,7 @@ import com.judtih.judith_management_system.domain.reservation.repository.EventSc
 import com.judtih.judith_management_system.domain.reservation.repository.ReservationRepository;
 import com.judtih.judith_management_system.domain.reservation.reservationDto.ReservationRequest;
 import com.judtih.judith_management_system.domain.reservation.reservationDto.ReservationResponse;
+import com.judtih.judith_management_system.domain.reservation.reservationDto.ReservationSummaryResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,18 @@ public class ReservationService {
         }
 
         return responseList;
+    }
+
+    /** Member-facing summary — no phoneNumber. Anyone in the club may look up who's coming to a show. */
+    @Transactional(readOnly = true)
+    public List<ReservationSummaryResponse> getReservationSummariesByScheduleId(Long scheduleId) {
+        return reservationRepository.findByEventScheduleId(scheduleId).stream()
+                .map(r -> ReservationSummaryResponse.builder()
+                        .name(r.getName())
+                        .ticketCount(r.getTicketCount())
+                        .reservedAt(r.getReservedAt())
+                        .build())
+                .toList();
     }
 
     //User Method //////////////////////////////////////////////////////////////////////////

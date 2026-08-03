@@ -126,7 +126,7 @@ function setupAdminNav() {
     const adminLinks = [
         { href: '/users.html',    label: '부원' },
         { href: '/seasons.html',  label: '시즌' },
-        { href: '/events.html',   label: '공연' },
+        { href: '/events.html',   label: '공연 관리' },
         { href: '/messages.html', label: '문자' },
     ];
 

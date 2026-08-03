@@ -29,7 +29,7 @@
                 <span class="dash-tab-divider">|</span>
                 <a href="/users.html" class="dash-tab">부원</a>
                 <a href="/seasons.html" class="dash-tab">시즌</a>
-                <a href="/events.html" class="dash-tab active">공연</a>
+                <a href="/events.html" class="dash-tab active">공연 관리</a>
                 <a href="/messages.html" class="dash-tab">문자</a>
             </div>
             <div class="dash-nav-right">
@@ -68,6 +68,33 @@
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeModal('addScheduleModal')">취소</button>
             <button class="btn btn-primary" onclick="document.getElementById('addScheduleForm').requestSubmit()">추가</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Schedule Modal -->
+<div class="modal-overlay" id="editScheduleModal">
+    <div class="modal" style="max-width:400px;">
+        <div class="modal-header">
+            <h3 class="modal-title">일정 수정</h3>
+            <button class="modal-close" onclick="closeModal('editScheduleModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="editScheduleForm" onsubmit="submitEditSchedule(event)">
+                <input type="hidden" id="editScheduleId">
+                <div class="form-group">
+                    <label class="form-label required">공연 일시</label>
+                    <input type="datetime-local" class="form-input" id="editScheduleDate" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label required">예약 마감일</label>
+                    <input type="datetime-local" class="form-input" id="editScheduleDeadline" required>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('editScheduleModal')">취소</button>
+            <button class="btn btn-primary" onclick="document.getElementById('editScheduleForm').requestSubmit()">저장</button>
         </div>
     </div>
 </div>
@@ -361,16 +388,44 @@ function renderScheduleList() {
         return '<p style="color:var(--text-muted);font-size:0.875rem;">등록된 일정이 없습니다.</p>';
     }
     return currentEvent.schedules.map(s => `
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border-light);">
-            <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border-light);gap:10px;flex-wrap:wrap;">
+            <div style="min-width:0;">
                 <div style="font-weight:500;">${fmtDT(s.eventDate)}</div>
                 <div style="font-size:0.8rem;color:var(--text-muted);">
                     예약 마감 ${fmtDT(s.registrationDeadLine)} &middot; 잔여 ${s.remainingSeats}석
                 </div>
             </div>
-            <button class="btn btn-sm btn-ghost" onclick="viewReservations(${s.eventScheduleId})">예매 목록</button>
+            <div style="display:flex;gap:6px;flex-shrink:0;">
+                <button class="btn btn-sm btn-ghost" onclick="openEditSchedule(${s.eventScheduleId}, '${s.eventDate}', '${s.registrationDeadLine}')">수정</button>
+                <button class="btn btn-sm btn-ghost" onclick="viewReservations(${s.eventScheduleId})">예매 목록</button>
+            </div>
         </div>
     `).join('');
+}
+
+function openEditSchedule(scheduleId, eventDate, deadline) {
+    document.getElementById('editScheduleId').value = scheduleId;
+    // datetime-local inputs need "yyyy-MM-ddTHH:mm" — strip seconds and any zone suffix
+    document.getElementById('editScheduleDate').value = String(eventDate).slice(0, 16);
+    document.getElementById('editScheduleDeadline').value = String(deadline).slice(0, 16);
+    openModal('editScheduleModal');
+}
+
+async function submitEditSchedule(e) {
+    e.preventDefault();
+    const id = document.getElementById('editScheduleId').value;
+    try {
+        await scheduleApi.update(id, {
+            eventId: currentEvent.id,
+            eventDate: document.getElementById('editScheduleDate').value,
+            registrationDeadLine: document.getElementById('editScheduleDeadline').value
+        });
+        showToast('일정이 수정되었습니다', 'success');
+        closeModal('editScheduleModal');
+        await refreshPage();
+    } catch (err) {
+        showToast('수정 실패: ' + err.message, 'error');
+    }
 }
 
 // ==================== Create ====================
