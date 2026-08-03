@@ -48,6 +48,7 @@ jobs:
             docker rm judith || true
             docker pull ghcr.io/preta3418/judith-app:latest
             docker run -d --restart unless-stopped --name judith -p 8080:8080 \
+              -e TZ=Asia/Seoul \
               -e SPRING_PROFILES_ACTIVE=prod \
               -e DB_HOST=${{ secrets.DB_HOST }} \
               -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
