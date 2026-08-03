@@ -7,5 +7,7 @@ public enum NotificationType {
     D_DAY_REMINDER,      // auto-sent near the performance date
     EVENT_REMINDER,      // reminder for a reservation event
     NEW_FILES_UPLOADED,  // triggered when scripts or assets are uploaded
-    PASSWORD_NOT_CHANGED // sent at login if the user still has the default password
+    PASSWORD_NOT_CHANGED,// sent at login if the user still has the default password
+    BOARD_POST,          // new post created in a department board
+    BOARD_COMMENT        // new comment on a post the recipient authored
 }

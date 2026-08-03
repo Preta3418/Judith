@@ -1,6 +1,7 @@
 package com.judtih.judith_management_system.global.notification.service;
 
 import com.judtih.judith_management_system.domain.user.entity.User;
+import com.judtih.judith_management_system.domain.user.enums.UserRole;
 import com.judtih.judith_management_system.domain.user.enums.UserStatus;
 import com.judtih.judith_management_system.domain.user.repository.UserSeasonRepository;
 import com.judtih.judith_management_system.global.notification.dto.UserNotificationResponse;
@@ -16,7 +17,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /** Delivers notifications and manages per-user read state. Owns bell delivery only; content is owned by callers (Announcement, password reminder, etc.). */
 @Slf4j
@@ -41,12 +44,32 @@ public class NotificationService {
     /** Fans out a notification to all active members of a season. */
     @Transactional
     public void sendToSeasonMembers(Long seasonId, String title, String content, NotificationType type, SourceType sourceType, Long sourceId) {
-        log.info("sendToSeasonMembers: seasonId={}, type={}", seasonId, type);
+        sendToSeasonMembers(seasonId, Set.of(), null, title, content, type, sourceType, sourceId);
+    }
+
+    /**
+     * Role-filtered fan-out — used by the board so "new post in 무대 디자인" only
+     * reaches STAGE_DESIGN members instead of the whole cast.
+     *
+     * Rules:
+     *  - empty targetRoles          → every active member of the season
+     *  - non-empty targetRoles      → members whose roles intersect targetRoles,
+     *                                 PLUS full-access members (they oversee all departments)
+     *  - excludeUserId (nullable)   → skipped (used so post authors don't get notified of their own post)
+     */
+    @Transactional
+    public void sendToSeasonMembers(Long seasonId, Set<UserRole> targetRoles, Long excludeUserId,
+                                    String title, String content, NotificationType type, SourceType sourceType, Long sourceId) {
+        log.info("sendToSeasonMembers: seasonId={}, type={}, targetRoles={}", seasonId, type, targetRoles);
         Notification n = notificationRepository.save(Notification.builder()
                 .title(title).content(content).notificationType(type)
                 .sourceType(sourceType).sourceId(sourceId).build());
         List<UserNotification> uns = userSeasonRepository.findBySeasonId(seasonId).stream()
                 .filter(us -> us.getUser().getStatus() == UserStatus.ACTIVE)
+                .filter(us -> excludeUserId == null || !us.getUser().getId().equals(excludeUserId))
+                .filter(us -> targetRoles == null || targetRoles.isEmpty()
+                        || UserRole.hasFullAccess(us.getUserRoles())
+                        || !Collections.disjoint(us.getUserRoles(), targetRoles))
                 .map(us -> new UserNotification(us.getUser(), n))
                 .toList();
         userNotificationRepository.saveAll(uns);
