@@ -86,6 +86,15 @@ public class ReservationController {
         return ResponseEntity.ok(response);
     }
 
+    /** Member view of the event for a given season — same service call as the admin endpoint,
+     *  but reachable under /api/dashboard/** so any authenticated user can see it. */
+    @GetMapping("/api/dashboard/seasons/{seasonId}/event")
+    public ResponseEntity<EventResponse> getSeasonEvent(@PathVariable Long seasonId) {
+        return eventService.getEventBySeasonId(seasonId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build());
+    }
+
 
     // ==================== Admin Endpoints ====================
 
